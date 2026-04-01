@@ -283,8 +283,8 @@ func _show_banner() -> void:
 	_banner_label.size = Vector2(160, 30)
 	layer.add_child(_banner_label)
 
-	# Pulse animation
-	var tw = create_tween().set_loops()
+	# Pulse animation (bind to _banner_label so it auto-dies when banner is freed)
+	var tw = _banner_label.create_tween().set_loops()
 	tw.tween_property(_banner_label, "modulate:a", 0.5, 0.8)
 	tw.tween_property(_banner_label, "modulate:a", 1.0, 0.8)
 
@@ -293,6 +293,7 @@ func _show_banner() -> void:
 	await get_tree().create_timer(3.0).timeout
 	if not is_inside_tree(): return
 	if is_instance_valid(_banner_label):
+		tw.kill()  # Stop the looping pulse before freeing
 		var fade_tw = create_tween()
 		fade_tw.tween_property(_banner_label, "modulate:a", 0.0, 1.0)
 		fade_tw.tween_callback(_banner_label.queue_free)
