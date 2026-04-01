@@ -304,6 +304,14 @@ func _build_sidebar_tabs() -> void:
 		btn.custom_minimum_size = Vector2(110, 80)
 		btn.add_theme_font_size_override("font_size", 11)
 		btn.clip_text = false
+		# Text outline + shadow for readability over textured buttons
+		btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+		btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.85))
+		btn.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		btn.add_theme_constant_override("outline_size", 3)
+		btn.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		btn.add_theme_constant_override("shadow_offset_x", 1)
+		btn.add_theme_constant_override("shadow_offset_y", 2)
 		var tab_id = tab_def.id
 		btn.pressed.connect(func(): _switch_tab(tab_id))
 		_style_tab_button(btn, btn_normal_tex)
@@ -332,9 +340,11 @@ func _switch_tab(tab_id: String) -> void:
 				break
 		if tid == tab_id:
 			btn.add_theme_color_override("font_color", tab_def.color if tab_def else CLR_GOLD)
+			btn.add_theme_color_override("font_hover_color", (tab_def.color if tab_def else CLR_GOLD).lightened(0.15))
 			_style_tab_button(btn, btn_active_tex)
 		else:
-			btn.add_theme_color_override("font_color", CLR_DIM)
+			btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+			btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.85))
 			_style_tab_button(btn, btn_normal_tex)
 
 # ===================================================================
