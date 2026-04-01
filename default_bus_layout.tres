@@ -1,0 +1,66 @@
+[gd_resource type="AudioBusLayout" format=3 uid="uid://b34ij27oaycr7"]
+
+[sub_resource type="AudioEffectCompressor" id="1"]
+threshold = -15.0
+ratio = 2.5
+gain = 2.0
+attack_us = 5000.0
+release_ms = 50.0
+
+[sub_resource type="AudioEffectEQ6" id="2"]
+
+[sub_resource type="AudioEffectLimiter" id="3"]
+ceiling_db = -1.0
+threshold_db = -2.0
+
+[sub_resource type="AudioEffectCompressor" id="4"]
+threshold = -12.0
+ratio = 2.0
+gain = 1.0
+attack_us = 10000.0
+release_ms = 100.0
+
+[sub_resource type="AudioEffectLimiter" id="5"]
+ceiling_db = -0.5
+threshold_db = -1.0
+
+[sub_resource type="AudioEffectCompressor" id="6"]
+threshold = -18.0
+ratio = 3.0
+gain = 1.5
+attack_us = 3000.0
+release_ms = 40.0
+
+[resource]
+bus/1/name = &"SFX"
+bus/1/solo = false
+bus/1/mute = false
+bus/1/bypass_fx = false
+bus/1/volume_db = 0.0
+bus/1/send = &"Master"
+bus/1/effect/0/effect = SubResource("1")
+bus/1/effect/0/enabled = true
+bus/1/effect/1/effect = SubResource("2")
+bus/1/effect/1/enabled = true
+bus/1/effect/2/effect = SubResource("3")
+bus/1/effect/2/enabled = true
+bus/2/name = &"Music"
+bus/2/solo = false
+bus/2/mute = false
+bus/2/bypass_fx = false
+bus/2/volume_db = 0.0
+bus/2/send = &"Master"
+bus/2/effect/0/effect = SubResource("4")
+bus/2/effect/0/enabled = true
+bus/2/effect/1/effect = SubResource("5")
+bus/2/effect/1/enabled = true
+bus/3/name = &"UI"
+bus/3/solo = false
+bus/3/mute = false
+bus/3/bypass_fx = false
+bus/3/volume_db = 0.0
+bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("6")
+bus/3/effect/0/enabled = true
+bus/3/effect/1/effect = SubResource("3")
+bus/3/effect/1/enabled = true

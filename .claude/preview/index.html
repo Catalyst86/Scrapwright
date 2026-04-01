@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Junkyard Cards — Design Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1209;
+    font-family: 'Press Start 2P', monospace;
+    color: #e8d5a0;
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 11px;
+    color: #f5c842;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px #3a2000;
+  }
+
+  .subtitle {
+    font-size: 7px;
+    color: #8a7040;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    margin-bottom: 56px;
+  }
+  .section-label {
+    font-size: 7px;
+    color: #a07830;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #3a2800;
+    padding-bottom: 8px;
+  }
+
+  /* ─── SINGLE CARD ─── */
+  .card {
+    width: 88px;
+    height: 120px;
+    border-radius: 4px;
+    border: 2px solid #8a6020;
+    background: #2a1a06;
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 5px 5px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    image-rendering: pixelated;
+    box-shadow: 3px 3px 0 #0a0500, inset 0 0 0 1px #5a3a10;
+  }
+  .card:hover {
+    transform: translateY(-6px) rotate(-1deg);
+    box-shadow: 3px 9px 0 #0a0500, inset 0 0 0 1px #8a6020;
+  }
+
+  .card-corner {
+    font-size: 5px;
+    color: #c89040;
+    line-height: 1.4;
+    align-self: flex-start;
+  }
+  .card-corner.br {
+    align-self: flex-end;
+    transform: rotate(180deg);
+  }
+
+  .card-art {
+    width: 60px;
+    height: 60px;
+    background: #1a0e03;
+    border: 1px solid #5a3a10;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px, rgba(255,200,50,0.03) 3px, rgba(255,200,50,0.03) 4px
+    );
+    pointer-events: none;
+  }
+
+  .card-name {
+    font-size: 4.5px;
+    color: #e8c070;
+    text-align: center;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px #0a0500;
+  }
+
+  /* card variants */
+  .card.found {
+    border-color: #c89040;
+    background: linear-gradient(160deg, #2e1a06 0%, #1e1004 100%);
+    box-shadow: 3px 3px 0 #0a0500, inset 0 0 0 1px #7a5020, 0 0 12px rgba(200,144,64,0.15);
+  }
+  .card.found .card-name { color: #f5d080; }
+
+  .card.locked {
+    border-color: #3a2808;
+    background: #0e0804;
+    filter: brightness(0.5);
+  }
+  .card.locked .card-art { filter: grayscale(1) brightness(0.4); }
+  .card.locked .card-name { color: #504030; }
+
+  .card.new-find {
+    border-color: #f5c842;
+    animation: newcard 1.2s ease-in-out infinite alternate;
+    box-shadow: 3px 3px 0 #0a0500, 0 0 20px rgba(245,200,66,0.4);
+  }
+  @keyframes newcard {
+    from { box-shadow: 3px 3px 0 #0a0500, 0 0 8px rgba(245,200,66,0.3); }
+    to   { box-shadow: 3px 3px 0 #0a0500, 0 0 24px rgba(245,200,66,0.7); }
+  }
+
+  /* ─── COLLECTION GRID ─── */
+  .collection-screen {
+    background: #120c03;
+    border: 3px solid #5a3a10;
+    border-radius: 4px;
+    padding: 24px;
+    display: inline-block;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .collection-title {
+    font-size: 9px;
+    color: #f5c842;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .collection-subtitle {
+    font-size: 6px;
+    color: #8a6030;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 88px);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .progress-bar-wrap {
+    margin-top: 16px;
+    background: #0a0604;
+    border: 2px solid #3a2808;
+    height: 14px;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8a4a00, #f5c842);
+    width: 30%;
+    transition: width 0.5s;
+    position: relative;
+  }
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: #fff8d0;
+    opacity: 0.6;
+    filter: blur(1px);
+  }
+  .progress-label {
+    font-size: 6px;
+    color: #8a6030;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .progress-label span { color: #f5c842; }
+
+  /* ─── POPUP ─── */
+  .popup-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .game-bg {
+    width: 480px;
+    height: 200px;
+    background: #5a3a1a;
+    border: 2px solid #3a2008;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+  }
+
+  .game-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 60%, rgba(100,60,20,0.4) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 40%, rgba(80,50,15,0.3) 0%, transparent 50%),
+      repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(0,0,0,0.05) 47px, rgba(0,0,0,0.05) 48px),
+      repeating-linear-gradient(0deg, transparent, transparent 47px, rgba(0,0,0,0.05) 47px, rgba(0,0,0,0.05) 48px);
+  }
+
+  .junk-scatter {
+    position: absolute;
+    font-size: 18px;
+    opacity: 0.4;
+  }
+
+  .card-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a0e03;
+    border: 3px solid #f5c842;
+    border-radius: 4px;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(245,200,66,0.4), 4px 4px 0 #000;
+    animation: popup-appear 0.3s ease-out;
+    min-width: 220px;
+  }
+
+  @keyframes popup-appear {
+    from { transform: translate(-50%, -40%) scale(0.85); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1);    opacity: 1; }
+  }
+
+  .popup-header {
+    font-size: 6px;
+    color: #f5c842;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(245,200,66,0.6);
+  }
+
+  .popup-card-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .popup-desc {
+    font-size: 5.5px;
+    color: #c89050;
+    line-height: 1.8;
+    text-align: left;
+  }
+  .popup-desc span {
+    color: #f5d080;
+  }
+
+  .popup-footer {
+    font-size: 5px;
+    color: #604820;
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── CARD BACK ─── */
+  .card-back {
+    width: 88px;
+    height: 120px;
+    border-radius: 4px;
+    border: 2px solid #8a6020;
+    background: #1a0e03;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 3px 3px 0 #0a0500;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-back::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid #3a2408;
+    border-radius: 2px;
+    background: repeating-linear-gradient(
+      45deg,
+      #1e1206 0px, #1e1206 4px,
+      #221408 4px, #221408 8px
+    );
+  }
+  .card-back-icon {
+    font-size: 28px;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 6px rgba(200,144,64,0.5));
+  }
+
+  /* ─── SCRAP DROP ─── */
+  .scrap-drop {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: #120c03;
+    border: 2px solid #3a2808;
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 6px;
+    color: #8a6030;
+  }
+  .scrap-icon { font-size: 24px; }
+  .drop-chance { color: #f5c842; }
+
+  .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<h1>⚙ JUNKYARD CARDS — VISUAL DESIGN</h1>
+<p class="subtitle">design mockup · not final art</p>
+
+<!-- SECTION 1: Individual card designs -->
+<div class="section">
+  <div class="section-label">▸ CARD DESIGNS — FOUND vs LOCKED vs NEW</div>
+  <div class="row">
+
+    <!-- Found card -->
+    <div style="text-align:center">
+      <div class="card found" style="display:inline-flex">
+        <div class="card-corner">⚙<br>+1</div>
+        <div class="card-art">🔧</div>
+        <div class="card-name">BENT<br>WRENCH</div>
+        <div class="card-corner br">⚙<br>+1</div>
+      </div>
+      <div style="font-size:5px;color:#6a5030;margin-top:8px">COLLECTED</div>
+    </div>
+
+    <!-- New find (glowing) -->
+    <div style="text-align:center">
+      <div class="card new-find" style="display:inline-flex">
+        <div class="card-corner">⚙<br>+1</div>
+        <div class="card-art">⚡</div>
+        <div class="card-name">SPARK<br>PLUG</div>
+        <div class="card-corner br">⚙<br>+1</div>
+      </div>
+      <div style="font-size:5px;color:#f5c842;margin-top:8px">NEW FIND!</div>
+    </div>
+
+    <!-- Locked card -->
+    <div style="text-align:center">
+      <div class="card locked" style="display:inline-flex">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+      <div style="font-size:5px;color:#3a2808;margin-top:8px">NOT FOUND</div>
+    </div>
+
+    <!-- Card back -->
+    <div style="text-align:center">
+      <div class="card-back">
+        <div class="card-back-icon">⚙</div>
+      </div>
+      <div style="font-size:5px;color:#6a5030;margin-top:8px">CARD BACK</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 2: Collection screen -->
+<div class="section">
+  <div class="section-label">▸ COLLECTION SCREEN (BASE HUB)</div>
+  <div class="collection-screen">
+    <div class="collection-title">JUNKYARD CARDS</div>
+    <div class="collection-subtitle">FIND ALL 10 TO UNLOCK A NEW POWER</div>
+    <div class="card-grid">
+
+      <div class="card found">
+        <div class="card-corner">⚙<br>+1</div>
+        <div class="card-art">🔧</div>
+        <div class="card-name">BENT<br>WRENCH</div>
+        <div class="card-corner br">⚙<br>+1</div>
+      </div>
+
+      <div class="card found">
+        <div class="card-corner">⚙<br>+1</div>
+        <div class="card-art">⚡</div>
+        <div class="card-name">SPARK<br>PLUG</div>
+        <div class="card-corner br">⚙<br>+1</div>
+      </div>
+
+      <div class="card found">
+        <div class="card-corner">⚙<br>+1</div>
+        <div class="card-art">🔩</div>
+        <div class="card-name">RUSTED<br>BOLT</div>
+        <div class="card-corner br">⚙<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+      <div class="card locked">
+        <div class="card-corner">?<br>+1</div>
+        <div class="card-art">❓</div>
+        <div class="card-name">???</div>
+        <div class="card-corner br">?<br>+1</div>
+      </div>
+
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" style="width:30%"></div>
+    </div>
+    <div class="progress-label"><span>3</span> / 10 CARDS FOUND · <span>+3 MAX HP · +3% ATK</span></div>
+
+    <div style="margin-top:16px;background:#0a0604;border:2px solid #3a2808;padding:10px;border-radius:2px;font-size:5.5px;color:#604828;text-align:center;line-height:2">
+      FULL SET BONUS: <span style="color:#f5c842">??? POWER UNLOCKED</span><br>
+      <span style="color:#3a2808">collect all 10 cards to reveal</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: In-game card pickup popup -->
+<div class="section">
+  <div class="section-label">▸ IN-GAME PICKUP POPUP</div>
+  <div class="popup-wrap">
+    <div class="game-bg">
+      <span class="junk-scatter" style="top:20%;left:10%">🔩</span>
+      <span class="junk-scatter" style="top:60%;left:80%">⚙</span>
+      <span class="junk-scatter" style="top:40%;left:60%">🔧</span>
+
+      <div class="card-popup">
+        <div class="popup-header">✦ JUNKYARD CARD FOUND ✦</div>
+        <div class="popup-card-row">
+          <div class="card new-find" style="transform:scale(0.85);transform-origin:center">
+            <div class="card-corner">⚙<br>+1</div>
+            <div class="card-art">⚡</div>
+            <div class="card-name">SPARK<br>PLUG</div>
+            <div class="card-corner br">⚙<br>+1</div>
+          </div>
+          <div class="popup-desc">
+            <span>SPARK PLUG</span><br>
+            card 4 of 10<br><br>
+            +<span>1 MAX HP</span><br>
+            +<span>1% ATTACK</span><br><br>
+            <span style="color:#8a6030">3 cards collected</span>
+          </div>
+        </div>
+        <div class="popup-footer">[ press any key to continue ]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: Drop chance indicator -->
+<div class="section">
+  <div class="section-label">▸ SCRAP PILE DROP INDICATOR</div>
+  <div class="row">
+    <div class="scrap-drop">
+      <span class="scrap-icon">📦</span>
+      <span>SCRAP PILE</span>
+      <span class="drop-chance">★ CARD CHANCE</span>
+      <span style="color:#604828;font-size:5px">rare drop</span>
+    </div>
+    <div style="font-size:6px;color:#604828;max-width:200px;line-height:2.2;padding-top:8px">
+      Scrap piles with a card<br>
+      get a small gold star<br>
+      indicator above them.<br><br>
+      <span style="color:#8a6030">No star = no card chance.</span><br>
+      <span style="color:#8a6030">Star = worth checking!</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

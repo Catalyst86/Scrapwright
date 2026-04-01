@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UsersdanieDesktoprogueliteassetssprites -type f -name *.png)",
+      "Bash(find /c/Users/danie/Desktop/roguelite/assets/sprites -type f -name *.png)",
+      "Bash(find /c/Users/danie/Desktop/roguelite/assets/sprites/player -type f -name *.png)",
+      "Bash(find /c/Users/danie/Desktop/roguelite/assets/sprites/player -maxdepth 1 -type f -name *.png)",
+      "Bash(ls -la \"C:/Users/danie/Desktop/roguelite/assets/sprites/ui/title_card\"*)",
+      "Bash(ls /c/Users/danie/Desktop/roguelite/assets/sprites/*/)",
+      "mcp__pixellab__list_characters",
+      "Bash(grep -E \"\\\\.\\(tscn|gd\\)$\")",
+      "Bash(grep -v \"\\\\.import$\")",
+      "mcp__pixellab__create_character",
+      "mcp__pixellab__create_map_object",
+      "mcp__pixellab__animate_character",
+      "mcp__pixellab__get_map_object",
+      "Bash(curl --fail -o \"C:\\\\Users\\\\danie\\\\Desktop\\\\roguelite\\\\assets\\\\sprites\\\\items\\\\chest_secret_closed.png\" \"https://api.pixellab.ai/mcp/map-objects/2d7525b9-5294-4f20-8408-0fe0829309c5/download\")",
+      "mcp__pixellab__get_character",
+      "Bash(curl --fail -o \"C:\\\\Users\\\\danie\\\\Desktop\\\\roguelite\\\\assets\\\\sprites\\\\items\\\\chest_secret_open.png\" \"https://api.pixellab.ai/mcp/map-objects/5bd51037-1433-4361-b080-b93ff5ab1d4f/download\")",
+      "Bash(curl --fail -o \"C:\\\\Users\\\\danie\\\\Desktop\\\\roguelite\\\\assets\\\\sprites\\\\enemies\\\\junkyard_mech.zip\" \"https://api.pixellab.ai/mcp/characters/2b31189b-7cf3-4d1a-99a7-af2a4d5d28f7/download\")",
+      "Bash(curl --fail -o \"C:\\\\Users\\\\danie\\\\Desktop\\\\roguelite\\\\assets\\\\sprites\\\\enemies\\\\enemy_junkyard_mech.png\" \"https://backblaze.pixellab.ai/file/pixellab-characters/7e329a32-087c-4aeb-a4c3-639eedb2bd90/2b31189b-7cf3-4d1a-99a7-af2a4d5d28f7/rotations/south.png?t=1773789984008\")",
+      "Bash(where python:*)",
+      "Bash(where py:*)",
+      "Bash(where pip:*)",
+      "Bash(py -c \":*)",
+      "Bash(curl --fail -o \"C:/Users/danie/Desktop/roguelite/.claude/preview/gear.png\" \"https://api.pixellab.ai/mcp/map-objects/c288eca3-306f-4285-8018-c99d3c71fe59/download\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(for d:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/danie/Desktop/roguelite/.claude/preview/cards/**)",
+      "Bash(done)",
+      "Bash(python -c \":*)",
+      "Bash(grep -r \"4194325\\\\|4194326\\\\|KEY_SHIFT\\\\|KEY_CTRL\" C:UsersdanieDesktoproguelite --include=*.md)",
+      "WebSearch",
+      "WebFetch(domain:docs.godotengine.org)",
+      "Bash(grep -r \"add_scrap\\\\|junkyard_scrap\" /c/Users/danie/Desktop/roguelite --include=*.gd)",
+      "Bash(grep -r \"add_material\\\\|materials\\\\[\" /c/Users/danie/Desktop/roguelite/scripts --include=*.gd)",
+      "Bash(grep -r \"interact\\\\|destructible\" /c/Users/danie/Desktop/roguelite/scripts/player --include=*.gd)",
+      "Bash(grep -r \"CardDB\\\\|card_db\\\\|card_collection\" /c/Users/danie/Desktop/roguelite --include=*.gd)"
+    ]
+  }
+}

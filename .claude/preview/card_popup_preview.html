@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Completed Cards — All 40</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1209;
+    font-family: 'Press Start 2P', monospace;
+    color: #e8d5a0;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 12px;
+    color: #f5c842;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-shadow: 2px 2px #3a2000;
+  }
+  .subtitle {
+    font-size: 7px;
+    color: #8a7040;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+  }
+
+  .deck-section {
+    margin-bottom: 40px;
+  }
+  .deck-title {
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #3a2800;
+  }
+  .deck-title.scrap { color: #b3a68c; }
+  .deck-title.lost { color: #a673bf; }
+  .deck-title.critter { color: #73b866; }
+  .deck-title.overgrowth { color: #8c6b47; }
+
+  .card-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .card {
+    width: 88px;
+    height: 128px;
+    border-radius: 4px;
+    border: 2px solid var(--deck-clr, #8a6020);
+    background: linear-gradient(160deg, #2e1a06 0%, #1e1004 100%);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 5px 4px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    image-rendering: pixelated;
+    box-shadow: 3px 3px 0 #0a0500, inset 0 0 0 1px rgba(255,255,255,0.05);
+    gap: 2px;
+  }
+  .card:hover {
+    transform: translateY(-6px) rotate(-1deg);
+    box-shadow: 3px 9px 0 #0a0500, 0 0 14px var(--deck-glow, rgba(200,144,64,0.3));
+  }
+
+  .card .deck-lbl {
+    font-size: 4.5px;
+    color: var(--deck-clr, #a07830);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .card .art-frame {
+    width: 62px;
+    height: 62px;
+    background: #1a0e03;
+    border: 1px solid var(--deck-clr, #5a3a10);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .card .art-frame img {
+    width: 56px;
+    height: 56px;
+    image-rendering: pixelated;
+    object-fit: contain;
+  }
+
+  .card .sep {
+    width: 100%;
+    height: 1px;
+    background: var(--deck-clr, #5a3a10);
+    opacity: 0.6;
+  }
+
+  .card .card-name {
+    font-size: 4.5px;
+    color: #e8c070;
+    text-align: center;
+    line-height: 1.6;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px #0a0500;
+  }
+
+  .card .card-num {
+    font-size: 4px;
+    color: #504028;
+    letter-spacing: 1px;
+  }
+
+  /* Deck colors */
+  .scrap-cards .card { --deck-clr: #b3a68c; --deck-glow: rgba(179,166,140,0.35); }
+  .lost-cards .card { --deck-clr: #a673bf; --deck-glow: rgba(166,115,191,0.35); }
+  .critter-cards .card { --deck-clr: #73b866; --deck-glow: rgba(115,184,102,0.35); }
+  .overgrowth-cards .card { --deck-clr: #8c6b47; --deck-glow: rgba(140,107,71,0.35); }
+
+  /* In-game popup mockup */
+  .popup-section {
+    margin-top: 48px;
+    margin-bottom: 32px;
+  }
+  .popup-section .section-label {
+    font-size: 9px;
+    color: #a07830;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #3a2800;
+    padding-bottom: 6px;
+  }
+
+  .viewport {
+    width: 960px;
+    height: 540px;
+    background: #0d0a06;
+    border: 3px solid #3a2a15;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .arena-floor {
+    width: 100%;
+    height: 100%;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 31px, #1a150e 31px, #1a150e 32px),
+      repeating-linear-gradient(90deg, transparent, transparent 31px, #1a150e 31px, #1a150e 32px),
+      #12100a;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .popup-card {
+    background: rgba(20,15,10,0.96);
+    border: 3px solid #73b866;
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6), 0 0 15px rgba(115,184,102,0.3);
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .popup-card .deck-lbl { font-size: 8px; color: #73b866; letter-spacing: 3px; }
+  .popup-card .art-frame {
+    width: 80px; height: 80px;
+    background: #1a0e03;
+    border: 2px solid #73b866;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .popup-card .art-frame img { width: 72px; height: 72px; image-rendering: pixelated; object-fit: contain; }
+  .popup-card .sep { width: 100%; height: 2px; background: #73b866; }
+  .popup-card .card-name { font-size: 12px; color: #f2d259; text-shadow: 1px 1px #000; }
+  .popup-card .new-badge { font-size: 10px; color: #33ff66; animation: pulse 0.8s ease-in-out infinite alternate; }
+
+  @keyframes popIn { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<h1>JUNKYARD CARDS — COMPLETE COLLECTION</h1>
+<p class="subtitle">40 cards across 4 decks</p>
+
+<!-- DECK 1: SCRAP -->
+<div class="deck-section scrap-cards">
+  <div class="deck-title scrap">SCRAP DECK — 10 CARDS</div>
+  <div class="card-row" id="scrap-row"></div>
+</div>
+
+<!-- DECK 2: LOST -->
+<div class="deck-section lost-cards">
+  <div class="deck-title lost">LOST DECK — 10 CARDS</div>
+  <div class="card-row" id="lost-row"></div>
+</div>
+
+<!-- DECK 3: CRITTER -->
+<div class="deck-section critter-cards">
+  <div class="deck-title critter">CRITTER DECK — 10 CARDS</div>
+  <div class="card-row" id="critter-row"></div>
+</div>
+
+<!-- DECK 4: OVERGROWTH -->
+<div class="deck-section overgrowth-cards">
+  <div class="deck-title overgrowth">OVERGROWTH DECK — 10 CARDS</div>
+  <div class="card-row" id="overgrowth-row"></div>
+</div>
+
+<!-- IN-GAME POPUP MOCKUP -->
+<div class="popup-section">
+  <div class="section-label">IN-GAME DROP POPUP</div>
+  <div class="viewport">
+    <div class="arena-floor"></div>
+    <div class="overlay">
+      <div class="popup-card">
+        <div class="deck-lbl">CRITTER</div>
+        <div class="art-frame"><img src="cards/deck3_critter/04_stag_beetle.png"></div>
+        <div class="sep"></div>
+        <div class="card-name">Stag Beetle</div>
+        <div class="new-badge">NEW!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const decks = [
+  { id: 'scrap-row', folder: 'deck1_scrap', label: 'SCRAP', items: [
+    ['01_bent_nail','Bent Nail'],['02_rusty_spring','Rusty Spring'],['03_cracked_bolt','Cracked Bolt'],
+    ['04_iron_chain','Iron Chain'],['05_dented_can','Dented Can'],['06_copper_wire','Copper Wire'],
+    ['07_busted_hinge','Busted Hinge'],['08_old_gear','Old Gear'],['09_spark_plug','Spark Plug'],['10_steel_jaw','Steel Jaw']
+  ]},
+  { id: 'lost-row', folder: 'deck2_lost', label: 'LOST', items: [
+    ['01_chewed_ball','Chewed Ball'],['02_torn_teddy','Torn Teddy'],['03_lost_shoe','Lost Shoe'],
+    ['04_cracked_marble','Cracked Marble'],['05_old_whistle','Old Whistle'],['06_broken_watch','Broken Watch'],
+    ['07_faded_photo','Faded Photo'],['08_tangled_yarn','Tangled Yarn'],['09_empty_locket','Empty Locket'],['10_music_box','Music Box']
+  ]},
+  { id: 'critter-row', folder: 'deck3_critter', label: 'CRITTER', items: [
+    ['01_pill_bug','Pill Bug'],['02_rat_king','Rat King'],['03_crow_feather','Crow Feather'],
+    ['04_stag_beetle','Stag Beetle'],['05_garden_snake','Garden Snake'],['06_toad','Toad'],
+    ['07_firefly_jar','Firefly Jar'],['08_spider_web','Spider Web'],['09_snail_shell','Snail Shell'],['10_moth_wing','Moth Wing']
+  ]},
+  { id: 'overgrowth-row', folder: 'deck4_overgrowth', label: 'OVERGROWTH', items: [
+    ['01_moss_clump','Moss Clump'],['02_dandelion','Dandelion'],['03_ivy_vine','Ivy Vine'],
+    ['04_wild_mushroom','Wild Mushroom'],['05_acorn','Acorn'],['06_pine_cone','Pine Cone'],
+    ['07_bird_nest','Bird Nest'],['08_dried_leaf','Dried Leaf'],['09_berry_bush','Berry Bush'],['10_old_stump','Old Stump']
+  ]}
+];
+
+decks.forEach(deck => {
+  const row = document.getElementById(deck.id);
+  deck.items.forEach((item, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    row.innerHTML += `
+      <div class="card">
+        <div class="deck-lbl">${deck.label}</div>
+        <div class="art-frame"><img src="cards/${deck.folder}/${item[0]}.png" alt="${item[1]}"></div>
+        <div class="sep"></div>
+        <div class="card-name">${item[1].toUpperCase()}</div>
+        <div class="card-num">${num}/10</div>
+      </div>`;
+  });
+});
+</script>
+
+</body>
+</html>

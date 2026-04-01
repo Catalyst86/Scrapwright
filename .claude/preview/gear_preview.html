@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Card Collection — All 4 Decks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1209;
+    padding: 30px;
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+  }
+
+  h1 {
+    color: #f5c842;
+    font-size: 10px;
+    text-align: center;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+  }
+
+  .deck-section {
+    margin-bottom: 40px;
+  }
+  .deck-title {
+    font-size: 8px;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .deck-title .deck-name { color: #f5c842; }
+  .deck-title .deck-desc { color: #6a5030; font-size: 5px; }
+
+  .deck-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ========== TCG CARD ========== */
+  .card {
+    width: 130px;
+    height: 182px;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid #888;
+    background: #1c1208;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.06);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Rarity borders */
+  .card.common  { border-color: #666; }
+  .card.uncommon { border-color: #4a9e4a; }
+  .card.rare { border-color: #4a7abf; }
+  .card.legendary { border-color: #d4a030; }
+
+  /* Card header */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 6px 3px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    min-height: 20px;
+  }
+  .card-name {
+    font-size: 4.5px;
+    color: #f0e0c0;
+    text-shadow: 1px 1px 0 #000;
+    line-height: 1.4;
+    flex: 1;
+  }
+  .card-cost {
+    font-size: 5px;
+    color: #fff;
+    background: #3a3a3a;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 3px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  /* Art window */
+  .card-art {
+    margin: 3px 5px;
+    height: 80px;
+    background: #0a0604;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .card-art img {
+    image-rendering: pixelated;
+    width: 72px;
+    height: 72px;
+  }
+
+  /* Type line */
+  .card-type {
+    font-size: 3.5px;
+    color: #b0a080;
+    padding: 2px 6px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.02);
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  /* Text box */
+  .card-textbox {
+    flex: 1;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card-desc {
+    font-size: 3.5px;
+    color: #d0c8b0;
+    line-height: 1.8;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .card-flavor {
+    font-size: 3px;
+    color: #807060;
+    font-style: italic;
+    line-height: 1.6;
+    margin-top: 2px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+    padding-top: 2px;
+  }
+
+  /* Stats footer */
+  .card-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 2px 5px 4px;
+  }
+  .card-stat {
+    font-size: 6px;
+    color: #f0e0c0;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 2px;
+    padding: 1px 4px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  /* Rarity header tints */
+  .card.common .card-header { background: linear-gradient(180deg, rgba(150,150,150,0.06) 0%, transparent 100%); }
+  .card.uncommon .card-header { background: linear-gradient(180deg, rgba(74,158,74,0.08) 0%, transparent 100%); }
+  .card.rare .card-header { background: linear-gradient(180deg, rgba(74,122,191,0.08) 0%, transparent 100%); }
+  .card.legendary .card-header { background: linear-gradient(180deg, rgba(212,160,48,0.1) 0%, transparent 100%); }
+
+  .card.common .card-cost { background: #444; }
+  .card.uncommon .card-cost { background: #2d6e2d; }
+  .card.rare .card-cost { background: #2d4e7a; }
+  .card.legendary .card-cost { background: #8a6a1a; }
+
+  .card.common .card-art { border-color: rgba(150,150,150,0.12); }
+  .card.uncommon .card-art { border-color: rgba(74,158,74,0.15); }
+  .card.rare .card-art { border-color: rgba(74,122,191,0.15); }
+  .card.legendary .card-art { border-color: rgba(212,160,48,0.2); }
+
+  /* Deck colors */
+  .deck-scrap .deck-name { color: #c0a070; }
+  .deck-lost .deck-name { color: #c07090; }
+  .deck-critter .deck-name { color: #70c070; }
+  .deck-overgrowth .deck-name { color: #70b0c0; }
+
+  .deck-counter {
+    font-size: 4px;
+    color: #504030;
+    margin-top: 6px;
+    padding-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>SCRAPWRIGHT CARD COLLECTION</h1>
+
+<!-- DECK 1: SCRAP PILE -->
+<div class="deck-section deck-scrap">
+  <div class="deck-title">
+    <span class="deck-name">DECK 1: SCRAP PILE</span>
+    <span class="deck-desc">Rusty junk from the yard</span>
+  </div>
+  <div class="deck-grid">
+    <div class="card common">
+      <div class="card-header"><div class="card-name">BENT NAIL</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/01_bent_nail.png"></div>
+      <div class="card-type">Scrap — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Pointy end up."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">RUSTY SPRING</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/02_rusty_spring.png"></div>
+      <div class="card-type">Scrap — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Still bouncy."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">CRACKED BOLT</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/03_cracked_bolt.png"></div>
+      <div class="card-type">Scrap — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Holds nothing together."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">IRON CHAIN</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/04_iron_chain.png"></div>
+      <div class="card-type">Scrap — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Heavy but reliable."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">DENTED CAN</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/05_dented_can.png"></div>
+      <div class="card-type">Scrap — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Contents unknown."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">COPPER WIRE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/06_copper_wire.png"></div>
+      <div class="card-type">Scrap — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Tangled but useful."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">BUSTED HINGE</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/07_busted_hinge.png"></div>
+      <div class="card-type">Scrap — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Door's long gone."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">OLD GEAR</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/08_old_gear.png"></div>
+      <div class="card-type">Scrap — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Still turns, if you push."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">SPARK PLUG</div><div class="card-cost">4</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/09_spark_plug.png"></div>
+      <div class="card-type">Scrap — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Got some juice left."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card legendary">
+      <div class="card-header"><div class="card-name">STEEL JAW</div><div class="card-cost">5</div></div>
+      <div class="card-art"><img src="cards/deck1_scrap/10_steel_jaw.png"></div>
+      <div class="card-type">Scrap — Legendary</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Don't step on it."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+  </div>
+  <div class="deck-counter">COMPLETE SET: Unlock SCRAP SHIELD ability</div>
+</div>
+
+<!-- DECK 2: LOST & FOUND -->
+<div class="deck-section deck-lost">
+  <div class="deck-title">
+    <span class="deck-name">DECK 2: LOST & FOUND</span>
+    <span class="deck-desc">Forgotten treasures</span>
+  </div>
+  <div class="deck-grid">
+    <div class="card common">
+      <div class="card-header"><div class="card-name">CHEWED BALL</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/01_chewed_ball.png"></div>
+      <div class="card-type">Lost — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Good boy's favorite."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">TORN TEDDY</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/02_torn_teddy.png"></div>
+      <div class="card-type">Lost — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Missing an eye."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">LOST SHOE</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/03_lost_shoe.png"></div>
+      <div class="card-type">Lost — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Where's the other one?"</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">CRACKED MARBLE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/04_cracked_marble.png"></div>
+      <div class="card-type">Lost — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Still pretty inside."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">OLD WHISTLE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/05_old_whistle.png"></div>
+      <div class="card-type">Lost — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Faint tune remains."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">BROKEN WATCH</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/06_broken_watch.png"></div>
+      <div class="card-type">Lost — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Right twice a day."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">FADED PHOTO</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/07_faded_photo.png"></div>
+      <div class="card-type">Lost — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Someone's memory."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">TANGLED YARN</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/08_tangled_yarn.png"></div>
+      <div class="card-type">Lost — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Never untangle this."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">EMPTY LOCKET</div><div class="card-cost">4</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/09_empty_locket.png"></div>
+      <div class="card-type">Lost — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Photo's long gone."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card legendary">
+      <div class="card-header"><div class="card-name">MUSIC BOX</div><div class="card-cost">5</div></div>
+      <div class="card-art"><img src="cards/deck2_lost/10_music_box.png"></div>
+      <div class="card-type">Lost — Legendary</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"A gentle melody."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+  </div>
+  <div class="deck-counter">COMPLETE SET: Unlock FETCH ability</div>
+</div>
+
+<!-- DECK 3: CRITTER CARDS -->
+<div class="deck-section deck-critter">
+  <div class="deck-title">
+    <span class="deck-name">DECK 3: CRITTER CARDS</span>
+    <span class="deck-desc">Junkyard creatures</span>
+  </div>
+  <div class="deck-grid">
+    <div class="card common">
+      <div class="card-header"><div class="card-name">PILL BUG</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/01_pill_bug.png"></div>
+      <div class="card-type">Critter — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Curls up when scared."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">RAT KING</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/02_rat_king.png"></div>
+      <div class="card-type">Critter — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"He runs this place."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">CROW FEATHER</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/03_crow_feather.png"></div>
+      <div class="card-type">Critter — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Left behind as a gift."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">STAG BEETLE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/04_stag_beetle.png"></div>
+      <div class="card-type">Critter — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Strong for its size."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">GARDEN SNAKE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/05_garden_snake.png"></div>
+      <div class="card-type">Critter — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Harmless. Probably."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">TOAD</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/06_toad.png"></div>
+      <div class="card-type">Critter — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Ribbit."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">FIREFLY JAR</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/07_firefly_jar.png"></div>
+      <div class="card-type">Critter — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Night light."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">SPIDER WEB</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/08_spider_web.png"></div>
+      <div class="card-type">Critter — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Intricate work."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">SNAIL SHELL</div><div class="card-cost">4</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/09_snail_shell.png"></div>
+      <div class="card-type">Critter — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Vacant property."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card legendary">
+      <div class="card-header"><div class="card-name">MOTH WING</div><div class="card-cost">5</div></div>
+      <div class="card-art"><img src="cards/deck3_critter/10_moth_wing.png"></div>
+      <div class="card-type">Critter — Legendary</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Drawn to the light."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+  </div>
+  <div class="deck-counter">COMPLETE SET: Unlock CRITTER SWARM ability</div>
+</div>
+
+<!-- DECK 4: OVERGROWTH -->
+<div class="deck-section deck-overgrowth">
+  <div class="deck-title">
+    <span class="deck-name">DECK 4: OVERGROWTH</span>
+    <span class="deck-desc">Nature reclaims the yard</span>
+  </div>
+  <div class="deck-grid">
+    <div class="card common">
+      <div class="card-header"><div class="card-name">MOSS CLUMP</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/01_moss_clump.png"></div>
+      <div class="card-type">Growth — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Soft and damp."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">DANDELION</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/02_dandelion.png"></div>
+      <div class="card-type">Growth — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Make a wish."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card common">
+      <div class="card-header"><div class="card-name">IVY VINE</div><div class="card-cost">1</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/03_ivy_vine.png"></div>
+      <div class="card-type">Growth — Common</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Climbs everything."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">WILD MUSHROOM</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/04_wild_mushroom.png"></div>
+      <div class="card-type">Growth — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Don't eat this one."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">ACORN</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/05_acorn.png"></div>
+      <div class="card-type">Growth — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Tiny tree in waiting."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card uncommon">
+      <div class="card-header"><div class="card-name">PINE CONE</div><div class="card-cost">2</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/06_pine_cone.png"></div>
+      <div class="card-type">Growth — Uncommon</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Prickly souvenir."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">BIRD NEST</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/07_bird_nest.png"></div>
+      <div class="card-type">Growth — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Eggs still warm."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">DRIED LEAF</div><div class="card-cost">3</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/08_dried_leaf.png"></div>
+      <div class="card-type">Growth — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Autumn's bookmark."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card rare">
+      <div class="card-header"><div class="card-name">BERRY BUSH</div><div class="card-cost">4</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/09_berry_bush.png"></div>
+      <div class="card-type">Growth — Rare</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Sweet and wild."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+    <div class="card legendary">
+      <div class="card-header"><div class="card-name">OLD STUMP</div><div class="card-cost">5</div></div>
+      <div class="card-art"><img src="cards/deck4_overgrowth/10_old_stump.png"></div>
+      <div class="card-type">Growth — Legendary</div>
+      <div class="card-textbox"><div class="card-desc">+1 Max HP<br>+1% Attack</div><div class="card-flavor">"Life finds a way."</div></div>
+      <div class="card-footer"><div class="card-stat">+1</div></div>
+    </div>
+  </div>
+  <div class="deck-counter">COMPLETE SET: Unlock REGROWTH ability</div>
+</div>
+
+</body>
+</html>

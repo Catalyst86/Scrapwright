@@ -1,0 +1,1 @@
+I really appreciate you for purchasing this font! It's the first thing I've ever published here besides WIPs of my game! Thanks! Really!

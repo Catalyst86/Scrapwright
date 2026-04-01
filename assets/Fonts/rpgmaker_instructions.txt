@@ -1,0 +1,36 @@
+==============================================
+RPG MAKER MV PLUGINS:
+VE_SFONT (Required)
+YEP_CoreEngine (Optional)
+==============================================
+
+Hi!
+
+If you use RPG Maker MV and use Victor's SFont plugin, you're in luck! The spritesheet that is labeled "SweetSunset_bitmap_x3" is already formatted to work with it!
+
+My paramaters for the plugin are as follows:
+
+>USE ONLY SFONT: 
+true
+
+>DEFAULT WHITESPACE: 
+0 (The space is already provided in the SFont as provided exactly as-is.)
+
+>TITLE SFONT: 
+(Not applicable here. Can be left blank.)
+
+>TIMER SFONT:
+(Not applicable here. Can be left blank.)
+
+>SFONT DIGITS: 
+0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz.!?:;,'{}%/\<>@-+=()~#&*^áéíóú ∞
+
+Please copy and paste the string after >SFONT DIGITS: into the parameter field exactly. 
+There's a space there before infinity that is left there on purpose as that is what I chose for the spacing when the space sybol is actually used.
+(Follow the plugin's help section for instructions on how to use it in-game.)
+
+If all goes well, it should look great! Remember to adjust the game's font size if it doesn't display right--you may need to increase this to about 52
+if you're using the x3 size. YEP_CoreEngine is a fast way to change that. You may especially need to play with the font size paramater if you're using the
+x1 or x2 sizes. 
+
+Anywho, once again, thank you so much for considering the use of this bitmap font in your projects! Good luck RPG maker!

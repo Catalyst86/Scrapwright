@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://c3wus1grdpwkq"
+path="res://.godot/imported/sweet_sunrise.fnt-1d78a41b91c71ae294a2a82a75ca3fb9.fontdata"
+
+[deps]
+
+source_file="res://assets/Fonts/godot/sweet_sunrise.fnt"
+dest_files=["res://.godot/imported/sweet_sunrise.fnt-1d78a41b91c71ae294a2a82a75ca3fb9.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=2
