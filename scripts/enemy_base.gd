@@ -496,7 +496,7 @@ func _get_wave_aggression() -> float:
 	return clampf(0.15 + wave * 0.01, 0.15, 0.95)
 
 func _animate_sprite(delta: float) -> void:
-	if not sprite: return
+	if not sprite or is_dead: return
 	_anim_time += delta
 	# Calculate base_scale from TYPE_SIZES and actual sprite frame size
 	var target = TYPE_SIZES.get(enemy_type, Vector2(56, 56))
@@ -636,7 +636,7 @@ func _animate_sprite(delta: float) -> void:
 		sprite.rotation = 0.0
 
 func _update_facing() -> void:
-	if not sprite: return
+	if not sprite or is_dead: return
 	var sf = sprite.sprite_frames
 	if not sf: return
 
@@ -804,6 +804,13 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 	elif velocity.length() > 1.0:
 		_hit_retreat_timer = HIT_RETREAT_DURATION
 		_hit_retreat_dir = -velocity.normalized()
+	_show_damage_number(amount)
+	if health <= 0:
+		# Skip damage flash on killing blow — go straight to death
+		if sprite: sprite.modulate = Color.WHITE
+		_die()
+		return
+	# Damage flash (only on non-lethal hits)
 	if sprite:
 		sprite.modulate = Color(1.6, 0.4, 0.4)
 		var tw = create_tween()
@@ -812,8 +819,6 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 		_dot.modulate = Color(2.0, 0.5, 0.5)
 		var tw2 = create_tween()
 		tw2.tween_property(_dot, "modulate", Color.WHITE, 0.12)
-	_show_damage_number(amount)
-	if health <= 0: _die()
 
 func _show_damage_number(amount: int) -> void:
 	var lbl = Label.new()
@@ -864,8 +869,8 @@ func _die() -> void:
 	# Hide the colored square placeholder during death
 	if _dot:
 		_dot.visible = false
-	var die_duration := 0.5
 	var die_anim = _get_directional_anim("die")
+	var die_duration := 0.5
 	if sprite and sprite.sprite_frames and sprite.sprite_frames.has_animation(die_anim):
 		var fc = sprite.sprite_frames.get_frame_count(die_anim)
 		if fc > 0:
@@ -879,20 +884,27 @@ func _die() -> void:
 			if die_tex and die_tex.get_width() > 0:
 				var base_s = target_size.x / float(die_tex.get_width())
 				sprite.scale = Vector2(base_s, base_s)
-			# Force non-looping and set speed for clean playback
+			# Force non-looping and speed for ~1s playback
 			sprite.sprite_frames.set_animation_loop(die_anim, false)
-			# Cap die animation to ~1 second max — speed up if too many frames
-			var die_fps = maxf(float(fc) / 1.0, 6.0)  # At least 6fps, or faster to fit in 1s
+			var die_fps = maxf(float(fc) / 1.0, 6.0)
 			sprite.sprite_frames.set_animation_speed(die_anim, die_fps)
 			sprite.play(die_anim)
-			die_duration = fc / die_fps + 0.05
-	else:
-		pass
-	await get_tree().create_timer(die_duration).timeout
+			die_duration = fc / die_fps
+			# Freeze on last frame when done — explicitly lock frame index
+			var last_frame = fc - 1
+			sprite.animation_finished.connect(func():
+				if sprite:
+					sprite.pause()
+					sprite.frame = last_frame
+			, CONNECT_ONE_SHOT)
+	await get_tree().create_timer(die_duration + 0.1).timeout
 	if not is_inside_tree(): return
-	# Pause on the last frame (NOT stop — stop resets to frame 0)
+	# Safety: force-lock to last frame in case animation_finished didn't fire cleanly
 	if sprite:
 		sprite.pause()
+		var final_fc = sprite.sprite_frames.get_frame_count(die_anim) if sprite.sprite_frames.has_animation(die_anim) else 0
+		if final_fc > 0:
+			sprite.frame = final_fc - 1
 	# Hold the final death frame briefly, then fade out
 	await get_tree().create_timer(0.4).timeout
 	if not is_inside_tree(): return
