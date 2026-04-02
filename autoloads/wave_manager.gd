@@ -106,6 +106,7 @@ func clear_spawn_points() -> void:
 	spawn_points.clear()
 
 func start_wave(wave_num: int) -> void:
+	seed(Time.get_ticks_msec())  # Ensure varied spawn order each run
 	current_wave = wave_num
 	# Don't set GameState.current_wave here — only set it on wave COMPLETE
 	# so quitting mid-wave doesn't advance the campaign

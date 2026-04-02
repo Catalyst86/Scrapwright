@@ -108,6 +108,18 @@ func _ready() -> void:
 	_setup_audio()
 
 
+func _exit_tree() -> void:
+	# Clean up signal connections to prevent stale callbacks during teardown
+	if attack_timer and attack_timer.timeout.is_connected(_auto_attack):
+		attack_timer.timeout.disconnect(_auto_attack)
+	if hurt_timer and hurt_timer.timeout.is_connected(_stop_hurt_flash):
+		hurt_timer.timeout.disconnect(_stop_hurt_flash)
+	if detection:
+		if detection.body_entered.is_connected(_on_enemy_entered):
+			detection.body_entered.disconnect(_on_enemy_entered)
+		if detection.body_exited.is_connected(_on_enemy_exited):
+			detection.body_exited.disconnect(_on_enemy_exited)
+
 func _apply_saved_perks() -> void:
 	# Re-apply perk stat bonuses from GameState (survives scene changes)
 	SPEED = 90.0 * GameState.perk_speed_multiplier

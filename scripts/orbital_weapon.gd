@@ -20,10 +20,14 @@ var slot_index: int = 0
 # Shared orbit time — pauses when game is paused (unlike Time.get_ticks_msec)
 static var _shared_orbit_time: float = 0.0
 static var _active_slots: Array = []
+static var _cached_enemies: Array = []
+static var _cached_frame: int = -1
 
 static func reset_orbit() -> void:
 	_shared_orbit_time = 0.0
 	_active_slots.clear()
+	_cached_enemies.clear()
+	_cached_frame = -1
 
 var visual_tier: int = 0
 
@@ -125,10 +129,18 @@ func _find_target() -> Node:
 	var player = get_parent()
 	if not player or not is_instance_valid(player):
 		return null
+	# Cache enemy list once per frame — shared across all orbitals
+	var frame = Engine.get_physics_frames()
+	if _cached_frame != frame:
+		_cached_frame = frame
+		_cached_enemies.clear()
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if is_instance_valid(enemy) and not enemy.get("is_dead"):
+				_cached_enemies.append(enemy)
 	var best_enemy: Node = null
 	var best_dist: float = attack_range
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(enemy) or enemy.get("is_dead"):
+	for enemy in _cached_enemies:
+		if not is_instance_valid(enemy):
 			continue
 		var d = player.global_position.distance_to(enemy.global_position)
 		if d < best_dist:

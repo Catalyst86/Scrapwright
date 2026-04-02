@@ -1462,6 +1462,7 @@ func _start_run() -> void:
 	else:
 		GameState.reapply_permanent_bonuses()
 		GameState._materials_at_run_start = GameState.materials.duplicate()
+		OrbitalWeapon.reset_orbit()  # Clear stale slots when resuming a run
 	SaveManager.save_game()
 	GameState.set_phase(GameState.Phase.ARENA_PREP)
 	_close_overlay()
