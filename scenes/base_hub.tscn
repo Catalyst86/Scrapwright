@@ -1,8 +1,318 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://1avw35q81k60"]
 
-[ext_resource type="Script" path="res://scripts/base_hub.gd" id="1"]
+[ext_resource type="Script" uid="uid://b0eb14j2vqvyo" path="res://scripts/base_hub.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://blkb8owa8uck7" path="res://assets/sprites/hub_bg.jpg" id="2"]
+[ext_resource type="Texture2D" uid="uid://uwkaa0vh7lkt" path="res://assets/sprites/hub_ui/bust_orbital_frame.png" id="6"]
 
-[node name="BaseHub" type="Control"]
+[sub_resource type="Shader" id="glow_ring_shader"]
+code = "shader_type canvas_item;
+uniform vec4 glow_color : source_color = vec4(0.0, 0.85, 0.85, 0.55);
+uniform float ring_radius = 0.38;
+uniform float ring_width = 0.035;
+uniform float glow_spread = 0.09;
+void fragment() {
+	vec2 uv = UV - vec2(0.5);
+	float d = length(uv);
+	float ring = abs(d - ring_radius);
+	float alpha = smoothstep(ring_width + glow_spread, ring_width, ring);
+	alpha *= (0.7 + 0.3 * sin(TIME * 2.0));
+	COLOR = vec4(glow_color.rgb, alpha * glow_color.a);
+}"
+
+[sub_resource type="ShaderMaterial" id="glow_ring_mat"]
+shader = SubResource("glow_ring_shader")
+shader_parameter/glow_color = Color(0, 0.85, 0.85, 0.55)
+shader_parameter/ring_radius = 0.38
+shader_parameter/ring_width = 0.035
+shader_parameter/glow_spread = 0.09
+
+[node name="BaseHub" type="Control" unique_id=1454872548]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 script = ExtResource("1")
+
+[node name="Background" type="TextureRect" parent="." unique_id=15221872]
+unique_name_in_owner = true
+z_index = -10
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="DarkenOverlay" type="ColorRect" parent="." unique_id=596687960]
+unique_name_in_owner = true
+z_index = -9
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.08)
+
+[node name="TopBarBg" type="ColorRect" parent="." unique_id=1657748072]
+z_index = 50
+layout_mode = 0
+offset_right = 960.0
+offset_bottom = 36.0
+mouse_filter = 2
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+[node name="TopBar" type="HBoxContainer" parent="." unique_id=2064247342]
+unique_name_in_owner = true
+z_index = 51
+layout_mode = 0
+offset_left = 8.0
+offset_top = 3.0
+offset_right = 952.0
+offset_bottom = 33.0
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="KeyContainer" type="HBoxContainer" parent="TopBar" unique_id=1652373009]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="VSeparator" type="VSeparator" parent="TopBar" unique_id=308037730]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MatContainer" type="HBoxContainer" parent="TopBar" unique_id=449361337]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="SaveButton" type="Button" parent="TopBar" unique_id=129999787]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 12
+text = "SAVE"
+
+[node name="DenUpgradesBtn" type="Button" parent="." unique_id=689885861]
+unique_name_in_owner = true
+z_index = 40
+layout_mode = 0
+offset_left = 21.0
+offset_top = 70.0
+offset_right = 178.0
+offset_bottom = 150.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "DEN
+UPGRADES"
+
+[node name="CardCollectionBtn" type="Button" parent="." unique_id=711873465]
+unique_name_in_owner = true
+z_index = 40
+layout_mode = 0
+offset_left = 20.0
+offset_top = 162.0
+offset_right = 179.0
+offset_bottom = 242.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "CARD
+COLLECTION"
+
+[node name="AchievementsBtn" type="Button" parent="." unique_id=801905463]
+unique_name_in_owner = true
+z_index = 40
+layout_mode = 0
+offset_left = 19.0
+offset_top = 253.0
+offset_right = 180.0
+offset_bottom = 338.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "ACHIEVEMENTS"
+
+[node name="ArchiveBtn" type="Button" parent="." unique_id=572892236]
+unique_name_in_owner = true
+z_index = 40
+layout_mode = 0
+offset_left = 22.0
+offset_top = 346.0
+offset_right = 179.0
+offset_bottom = 434.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "ARCHIVE"
+
+[node name="ContentArea" type="Control" parent="." unique_id=283069455]
+unique_name_in_owner = true
+z_index = 30
+anchors_preset = 0
+offset_left = 130.0
+offset_top = 36.0
+offset_right = 960.0
+offset_bottom = 500.0
+
+[node name="DenUpgradesTab" type="Control" parent="ContentArea" unique_id=918848493]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 53.0
+offset_top = -17.0
+offset_right = 53.0
+offset_bottom = -17.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GlowRing" type="ColorRect" parent="ContentArea/DenUpgradesTab" unique_id=487977568]
+unique_name_in_owner = true
+z_index = 10
+material = SubResource("glow_ring_mat")
+layout_mode = 0
+offset_left = 181.0
+offset_top = 53.0
+offset_right = 421.0
+offset_bottom = 293.0
+mouse_filter = 2
+
+[node name="OrbitalFrame" type="TextureRect" parent="ContentArea/DenUpgradesTab" unique_id=762693600]
+unique_name_in_owner = true
+z_index = 11
+texture_filter = 2
+layout_mode = 0
+offset_left = 191.0
+offset_top = 63.0
+offset_right = 411.0
+offset_bottom = 283.0
+mouse_filter = 2
+texture = ExtResource("6")
+stretch_mode = 5
+
+[node name="PuppySprite" type="AnimatedSprite2D" parent="ContentArea/DenUpgradesTab" unique_id=1516156969]
+unique_name_in_owner = true
+z_index = 12
+texture_filter = 2
+position = Vector2(301, 173)
+scale = Vector2(1.5, 1.5)
+
+[node name="LeftCardSlot" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=938248227]
+unique_name_in_owner = true
+z_index = 15
+layout_mode = 0
+offset_left = 97.0
+offset_top = 122.0
+offset_right = 192.0
+offset_bottom = 227.0
+
+[node name="RightCardSlot" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=2021980619]
+unique_name_in_owner = true
+z_index = 15
+layout_mode = 0
+offset_left = 410.0
+offset_top = 124.0
+offset_right = 505.0
+offset_bottom = 229.0
+
+[node name="BottomCard1" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=1813058179]
+unique_name_in_owner = true
+z_index = 15
+layout_mode = 0
+offset_left = 154.0
+offset_top = 286.0
+offset_right = 249.0
+offset_bottom = 391.0
+
+[node name="BottomCard2" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=1565733999]
+unique_name_in_owner = true
+z_index = 15
+layout_mode = 0
+offset_left = 253.0
+offset_top = 285.0
+offset_right = 348.0
+offset_bottom = 385.0
+
+[node name="BottomCard3" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=2089874776]
+unique_name_in_owner = true
+z_index = 15
+layout_mode = 0
+offset_left = 354.0
+offset_top = 286.0
+offset_right = 449.0
+offset_bottom = 391.0
+
+[node name="CardCollectionTab" type="Control" parent="ContentArea" unique_id=849798756]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="AchievementsTab" type="Control" parent="ContentArea" unique_id=1089729799]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="ArchiveTab" type="Control" parent="ContentArea" unique_id=2130486642]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="JunkyardBtn" type="Button" parent="." unique_id=777771876]
+unique_name_in_owner = true
+z_index = 51
+layout_mode = 0
+offset_left = 412.0
+offset_top = 469.0
+offset_right = 552.0
+offset_bottom = 503.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 12
+text = "JUNKYARD"
+
+[node name="EnterDungeonBtn" type="Button" parent="." unique_id=1790760424]
+unique_name_in_owner = true
+z_index = 51
+layout_mode = 0
+offset_left = 371.0
+offset_top = 431.0
+offset_right = 591.0
+offset_bottom = 465.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 15
+text = "ENTER DUNGEON"
+
+[node name="WardrobeBtn" type="Button" parent="." unique_id=723739198]
+unique_name_in_owner = true
+z_index = 51
+layout_mode = 0
+offset_left = 412.0
+offset_top = 501.0
+offset_right = 552.0
+offset_bottom = 535.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 12
+text = "WARDROBE"
