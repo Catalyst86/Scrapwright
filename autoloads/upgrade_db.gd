@@ -403,10 +403,10 @@ func get_effect_text(upgrade_id: String) -> String:
 		"health_regen":
 			if level > 0:
 				var tier = REGEN_TIERS[mini(level - 1, REGEN_TIERS.size() - 1)]
-				return "%d HP every %.1fs" % [tier[0], tier[1]]
+				return "%.1f%% max HP every %.1fs" % [tier[0], tier[1]]
 			return "No regen yet"
 		"damage_reduction":
-			return "%d%% damage reduction" % (level * 2) if level > 0 else "No bonus yet"
+			return "%d%% damage reduction" % (level * 3) if level > 0 else "No bonus yet"
 		"dig_charges":
 			return "+%d dig charges" % level if level > 0 else "No bonus yet"
 		"salvage_speed":

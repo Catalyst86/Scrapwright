@@ -37,7 +37,7 @@ const ALL_PERKS = [
 	{"id":"speed_up",     "name":"+15% Speed",        "desc":"Move faster through the arena"},
 	{"id":"damage_up",    "name":"+5 Attack Dmg",     "desc":"Auto-attacks hit harder"},
 	{"id":"attack_speed", "name":"Faster Attacks",    "desc":"-15% attack cooldown"},
-	{"id":"regen",        "name":"Slow Regen",        "desc":"+2 HP every 5 seconds"},
+	{"id":"regen",        "name":"Slow Regen",        "desc":"Regenerate 1% max HP every 5 seconds"},
 	{"id":"xp_boost",     "name":"+25% XP",           "desc":"Gain more XP from kills"},
 ]
 
