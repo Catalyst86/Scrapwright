@@ -987,10 +987,28 @@ func _on_wave_complete(wave_num: int) -> void:
 	phase = JYPhase.TRANSITION
 	SaveManager.save_game()
 	_show_banner("WAVE %d CLEAR!" % wave_num, Color(0.4, 1.0, 0.4), 1.5)
+	_vacuum_xp_orbs()
 	_respawn_props_between_waves()
 	_waiting_for_next_wave = true
 	_wave_pause_timer = 2.5
 	_update_hud()
+
+func _vacuum_xp_orbs() -> void:
+	if not pickups_container:
+		return
+	var p = get_tree().get_first_node_in_group("player")
+	if not p or not is_instance_valid(p):
+		return
+	for child in pickups_container.get_children():
+		if child.has_method("_collect") and not child.get("collected"):
+			var orb = child
+			orb.set_process(false)
+			var tw = orb.create_tween()
+			tw.tween_property(orb, "global_position", p.global_position, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+			tw.tween_callback(func():
+				if is_instance_valid(orb) and not orb.get("collected"):
+					orb._collect()
+			)
 
 func _check_level_up() -> void:
 	if GameState.player_level > last_player_level:

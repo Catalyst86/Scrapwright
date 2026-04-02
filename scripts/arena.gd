@@ -228,6 +228,8 @@ func _on_wave_complete(wave_num: int) -> void:
 	GameState.current_wave = wave_num
 	SaveManager.save_game()
 	_show_banner("WAVE CLEAR!", Color(0.4, 1.0, 0.4), 1.2)
+	# Auto-collect all remaining XP orbs
+	_vacuum_xp_orbs()
 	# Achievement checks
 	var ach = get_node_or_null("/root/Achievements")
 	if ach:
@@ -277,6 +279,24 @@ func _on_wave_complete(wave_num: int) -> void:
 		await _wait_for_chest_phase()
 		if not is_inside_tree(): return
 		_start_combat()
+
+func _vacuum_xp_orbs() -> void:
+	if not pickups_container:
+		return
+	var p = get_tree().get_first_node_in_group("player")
+	if not p or not is_instance_valid(p):
+		return
+	for child in pickups_container.get_children():
+		if child.has_method("_collect") and not child.get("collected"):
+			# Tween the orb to the player then collect
+			var orb = child
+			orb.set_process(false)  # Stop lifetime countdown
+			var tw = orb.create_tween()
+			tw.tween_property(orb, "global_position", p.global_position, 0.4).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+			tw.tween_callback(func():
+				if is_instance_valid(orb) and not orb.get("collected"):
+					orb._collect()
+			)
 
 func _start_chest_phase(count: int, _is_boss: bool) -> void:
 	arena_phase = ArenaPhase.CHEST_PHASE
