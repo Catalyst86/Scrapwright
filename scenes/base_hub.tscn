@@ -57,6 +57,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0.08)
 
 [node name="TopBarBg" type="ColorRect" parent="." unique_id=1657748072]
+visible = false
 z_index = 50
 layout_mode = 0
 offset_right = 960.0
@@ -66,6 +67,7 @@ color = Color(0.08, 0.08, 0.1, 0.8)
 
 [node name="TopBar" type="HBoxContainer" parent="." unique_id=2064247342]
 unique_name_in_owner = true
+visible = false
 z_index = 51
 layout_mode = 0
 offset_left = 8.0
@@ -101,10 +103,10 @@ text = "SAVE"
 unique_name_in_owner = true
 z_index = 40
 layout_mode = 0
-offset_left = 21.0
-offset_top = 70.0
-offset_right = 178.0
-offset_bottom = 150.0
+offset_left = 20.0
+offset_top = 95.0
+offset_right = 185.0
+offset_bottom = 165.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -117,10 +119,10 @@ UPGRADES"
 unique_name_in_owner = true
 z_index = 40
 layout_mode = 0
-offset_left = 20.0
-offset_top = 162.0
-offset_right = 179.0
-offset_bottom = 242.0
+offset_left = 775.0
+offset_top = 95.0
+offset_right = 940.0
+offset_bottom = 165.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -133,10 +135,10 @@ COLLECTION"
 unique_name_in_owner = true
 z_index = 40
 layout_mode = 0
-offset_left = 19.0
-offset_top = 253.0
-offset_right = 180.0
-offset_bottom = 338.0
+offset_left = 20.0
+offset_top = 265.0
+offset_right = 185.0
+offset_bottom = 335.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -148,25 +150,24 @@ text = "ACHIEVEMENTS"
 unique_name_in_owner = true
 z_index = 40
 layout_mode = 0
-offset_left = 22.0
-offset_top = 346.0
-offset_right = 179.0
-offset_bottom = 434.0
+offset_left = 775.0
+offset_top = 265.0
+offset_right = 940.0
+offset_bottom = 335.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 0.85, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 11
-text = "ARCHIVE"
+text = "INVENTORY"
 
 [node name="ContentArea" type="Control" parent="." unique_id=283069455]
 unique_name_in_owner = true
 z_index = 30
 anchors_preset = 0
-offset_left = 130.0
-offset_top = 36.0
 offset_right = 960.0
-offset_bottom = 500.0
+offset_bottom = 540.0
+mouse_filter = 2
 
 [node name="DenUpgradesTab" type="Control" parent="ContentArea" unique_id=918848493]
 unique_name_in_owner = true
@@ -174,22 +175,19 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 53.0
-offset_top = -17.0
-offset_right = 53.0
-offset_bottom = -17.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="GlowRing" type="ColorRect" parent="ContentArea/DenUpgradesTab" unique_id=487977568]
 unique_name_in_owner = true
 z_index = 10
 material = SubResource("glow_ring_mat")
 layout_mode = 0
-offset_left = 181.0
-offset_top = 53.0
-offset_right = 421.0
-offset_bottom = 293.0
+offset_left = 387.0
+offset_top = 129.0
+offset_right = 557.0
+offset_bottom = 299.0
 mouse_filter = 2
 
 [node name="OrbitalFrame" type="TextureRect" parent="ContentArea/DenUpgradesTab" unique_id=762693600]
@@ -197,10 +195,10 @@ unique_name_in_owner = true
 z_index = 11
 texture_filter = 2
 layout_mode = 0
-offset_left = 191.0
-offset_top = 63.0
-offset_right = 411.0
-offset_bottom = 283.0
+offset_left = 394.0
+offset_top = 136.0
+offset_right = 554.0
+offset_bottom = 296.0
 mouse_filter = 2
 texture = ExtResource("6")
 stretch_mode = 5
@@ -209,53 +207,53 @@ stretch_mode = 5
 unique_name_in_owner = true
 z_index = 12
 texture_filter = 2
-position = Vector2(301, 173)
-scale = Vector2(1.5, 1.5)
+position = Vector2(474, 223.99998)
+scale = Vector2(1.1, 1.1)
 
 [node name="LeftCardSlot" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=938248227]
 unique_name_in_owner = true
-z_index = 15
+z_index = 20
 layout_mode = 0
-offset_left = 97.0
-offset_top = 122.0
-offset_right = 192.0
-offset_bottom = 227.0
+offset_left = 305.0
+offset_top = 106.0
+offset_right = 380.0
+offset_bottom = 191.0
 
 [node name="RightCardSlot" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=2021980619]
 unique_name_in_owner = true
-z_index = 15
+z_index = 20
 layout_mode = 0
-offset_left = 410.0
-offset_top = 124.0
-offset_right = 505.0
-offset_bottom = 229.0
+offset_left = 569.0
+offset_top = 103.0
+offset_right = 644.0
+offset_bottom = 188.0
 
 [node name="BottomCard1" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=1813058179]
 unique_name_in_owner = true
-z_index = 15
+z_index = 20
 layout_mode = 0
-offset_left = 154.0
-offset_top = 286.0
-offset_right = 249.0
-offset_bottom = 391.0
+offset_left = 325.0
+offset_top = 271.0
+offset_right = 400.0
+offset_bottom = 356.0
 
 [node name="BottomCard2" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=1565733999]
 unique_name_in_owner = true
-z_index = 15
+z_index = 20
 layout_mode = 0
-offset_left = 253.0
-offset_top = 285.0
-offset_right = 348.0
-offset_bottom = 385.0
+offset_left = 439.0
+offset_top = 24.0
+offset_right = 514.0
+offset_bottom = 109.0
 
 [node name="BottomCard3" type="PanelContainer" parent="ContentArea/DenUpgradesTab" unique_id=2089874776]
 unique_name_in_owner = true
-z_index = 15
+z_index = 20
 layout_mode = 0
-offset_left = 354.0
-offset_top = 286.0
-offset_right = 449.0
-offset_bottom = 391.0
+offset_left = 549.0
+offset_top = 270.0
+offset_right = 624.0
+offset_bottom = 355.0
 
 [node name="CardCollectionTab" type="Control" parent="ContentArea" unique_id=849798756]
 unique_name_in_owner = true
@@ -263,6 +261,7 @@ visible = false
 anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 
 [node name="AchievementsTab" type="Control" parent="ContentArea" unique_id=1089729799]
 unique_name_in_owner = true
@@ -270,6 +269,7 @@ visible = false
 anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 
 [node name="ArchiveTab" type="Control" parent="ContentArea" unique_id=2130486642]
 unique_name_in_owner = true
@@ -277,41 +277,40 @@ visible = false
 anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 
 [node name="JunkyardBtn" type="Button" parent="." unique_id=777771876]
 unique_name_in_owner = true
 z_index = 51
 layout_mode = 0
-offset_left = 412.0
-offset_top = 469.0
-offset_right = 552.0
-offset_bottom = 503.0
+offset_left = 12.0
+offset_top = 470.0
+offset_right = 172.0
+offset_bottom = 510.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 12
-text = "JUNKYARD"
 
 [node name="EnterDungeonBtn" type="Button" parent="." unique_id=1790760424]
 unique_name_in_owner = true
 z_index = 51
 layout_mode = 0
-offset_left = 371.0
-offset_top = 431.0
-offset_right = 591.0
-offset_bottom = 465.0
+offset_left = 322.0
+offset_top = 467.0
+offset_right = 622.0
+offset_bottom = 536.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 15
-text = "ENTER DUNGEON"
 
 [node name="WardrobeBtn" type="Button" parent="." unique_id=723739198]
 unique_name_in_owner = true
 z_index = 51
 layout_mode = 0
-offset_left = 412.0
-offset_top = 501.0
-offset_right = 552.0
-offset_bottom = 535.0
+offset_left = 772.0
+offset_top = 470.0
+offset_right = 932.0
+offset_bottom = 510.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 12

@@ -37,7 +37,7 @@ const TAB_DEFS = [
 	{"id": "den_upgrades", "label": "DEN\nUPGRADES", "color": Color(0.95, 0.82, 0.35)},
 	{"id": "card_collection", "label": "CARD\nCOLLECTION", "color": Color(0.95, 0.55, 0.15)},
 	{"id": "achievements", "label": "ACHIEVE-\nMENTS", "color": Color(0.72, 0.35, 0.90)},
-	{"id": "archive", "label": "ARCHIVE", "color": Color(0.75, 0.75, 0.80)},
+	{"id": "archive", "label": "INVENTORY", "color": Color(0.75, 0.75, 0.80)},
 ]
 
 const CAT_ANIM_SHEETS = {
@@ -58,8 +58,8 @@ const CARD_SLOT_MAP = {
 }
 
 const BUST_ONESHOT_ANIMS: Array[String] = [
-	"snap_fly", "head_shake", "head_tilt", "look_left",
-	"look_right_to_center", "happy_panting", "sleepy",
+	"snap_fly", "head_shake", "head_tilt",
+	"happy_panting", "sleepy",
 	"idle_steady", "idle_sitting",
 ]
 
@@ -98,7 +98,7 @@ const BUST_ONESHOT_ANIMS: Array[String] = [
 var _tex_cache: Dictionary = {}
 var _bust_timer: float = 0.0
 var _bust_next_anim_time: float = 6.0
-var _puppy_base_y: float = 175.0
+var _puppy_base_y: float = 224.0
 var _bust_playing_oneshot: bool = false
 var _overlay_panel: Control = null
 var _confirm_building: String = ""
@@ -134,6 +134,9 @@ func _ready() -> void:
 	# Style tab buttons
 	_setup_tab_buttons()
 
+	# Add circular rings behind porthole
+	_setup_circular_rings()
+
 	# Setup puppy bust
 	_setup_puppy()
 
@@ -148,22 +151,27 @@ func _ready() -> void:
 	# Style bottom bar buttons
 	_setup_bottom_bar()
 
-	# Save button
-	_save_button.pressed.connect(func():
+	# Save button — create standalone in top-right since TopBar is hidden
+	var save_btn = Button.new()
+	save_btn.text = "SAVE"
+	save_btn.z_index = 55
+	save_btn.position = Vector2(900, 5)
+	save_btn.size = Vector2(55, 28)
+	save_btn.add_theme_font_size_override("font_size", 12)
+	save_btn.add_theme_color_override("font_color", CLR_GREEN)
+	save_btn.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	save_btn.add_theme_constant_override("outline_size", 2)
+	_style_button_flat(save_btn)
+	save_btn.pressed.connect(func():
 		SaveManager.save_game()
-		_save_button.text = "SAVED!"
-		var tw = _save_button.create_tween()
+		save_btn.text = "SAVED!"
+		var tw = save_btn.create_tween()
 		tw.tween_interval(1.0)
-		tw.tween_callback(func(): _save_button.text = "SAVE")
+		tw.tween_callback(func(): save_btn.text = "SAVE")
 	)
-	var save_tex = _load_tex("res://assets/sprites/hub_ui/save_button.png")
-	if save_tex:
-		_style_button_with_texture(_save_button, save_tex, CLR_GREEN)
-	else:
-		_style_button_flat(_save_button)
+	add_child(save_btn)
 
 	# Initial state
-	_refresh_top_bar()
 	_switch_tab("den_upgrades")
 
 	# Connect signals
@@ -184,6 +192,20 @@ func _process(delta: float) -> void:
 	# Gentle bob (base Y comes from scene position)
 	if _puppy_sprite and is_instance_valid(_puppy_sprite):
 		_puppy_sprite.position.y = _puppy_base_y + sin(Time.get_ticks_msec() * 0.001 * 1.5) * 1.2
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		# Close detail panel first, otherwise open pause menu
+		if _detail_panel and is_instance_valid(_detail_panel):
+			_close_detail_panel()
+		elif _overlay_panel and is_instance_valid(_overlay_panel):
+			_overlay_panel.queue_free()
+			_overlay_panel = null
+		else:
+			var pause = load("res://scripts/pause_menu.gd").new()
+			add_child(pause)
+			pause.open()
+		get_viewport().set_input_as_handled()
 
 func _exit_tree() -> void:
 	if GameState.materials_changed.is_connected(_refresh_top_bar):
@@ -213,16 +235,11 @@ func _setup_tab_buttons() -> void:
 
 func _switch_tab(tab_id: String) -> void:
 	_current_tab = tab_id
-	if _detail_panel and is_instance_valid(_detail_panel):
-		_detail_panel.queue_free()
-		_detail_panel = null
+	_close_detail_panel()
 	for tid in _tab_containers:
 		if _tab_containers[tid] and is_instance_valid(_tab_containers[tid]):
 			_tab_containers[tid].visible = (tid == tab_id)
-	var show_bottom = (tab_id == "den_upgrades")
-	_enter_dungeon_btn.visible = show_bottom
-	_junkyard_btn.visible = show_bottom
-	_wardrobe_btn.visible = show_bottom
+	# Bottom buttons always visible in new radial layout
 	for tid in _tab_buttons:
 		var btn: Button = _tab_buttons[tid]
 		var tex_path = TAB_RECT_TEXTURES.get(tid, "")
@@ -242,6 +259,29 @@ func _switch_tab(tab_id: String) -> void:
 			btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 0.85))
 			_style_tab_button(btn, tex)
 			btn.modulate = Color(0.8, 0.8, 0.8)
+
+# ===================================================================
+# CIRCULAR RINGS (radial wheel background)
+# ===================================================================
+
+func _setup_circular_rings() -> void:
+	var rings_tex = _load_tex("res://assets/sprites/hub_ui/circular_rings.png")
+	if not rings_tex:
+		return
+	var rings = TextureRect.new()
+	rings.texture = rings_tex
+	rings.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rings.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rings.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	rings.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rings.z_index = 1
+	# Center the rings on the porthole, sized to fill most of the screen
+	var ring_w = 1100.0
+	var ring_h = 640.0
+	rings.position = Vector2(480.0 - ring_w / 2.0, 224.0 - ring_h / 2.0)
+	rings.size = Vector2(ring_w, ring_h)
+	_den_tab.add_child(rings)
+	_den_tab.move_child(rings, 0)
 
 # ===================================================================
 # TOP BAR (materials + keys)
@@ -407,37 +447,17 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	var is_max = _udb.is_category_maxed(cat_id)
 	var can_buy = _udb.can_afford_any_in_category(cat_id)
 
-	# Style the slot — use steel plate texture as background
-	var plate_map = {
-		"scavenge_snout": "res://assets/sprites/hub_ui/steel_plate_1.jpg",
-		"combat_paws": "res://assets/sprites/hub_ui/steel_plate_2.jpg",
-		"mutation": "res://assets/sprites/hub_ui/steel_plate_3.jpg",
-		"companion_legacy": "res://assets/sprites/hub_ui/steel_plate_4.jpg",
-		"survival_den": "res://assets/sprites/hub_ui/steel_plate_5.jpg",
-	}
+	# Style the slot — transparent, content sits on the ring artwork
 	var sb_style = StyleBoxFlat.new()
 	sb_style.bg_color = Color(0, 0, 0, 0)
-	sb_style.set_content_margin_all(0)
+	sb_style.set_content_margin_all(2)
 	slot.add_theme_stylebox_override("panel", sb_style)
 	slot.mouse_filter = Control.MOUSE_FILTER_STOP
-	slot.clip_contents = true
-
-	# Steel plate background
-	var plate_path = plate_map.get(cat_id, "")
-	if ResourceLoader.exists(plate_path):
-		var plate_tex = load(plate_path)
-		var plate_bg = TextureRect.new()
-		plate_bg.texture = plate_tex
-		plate_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		plate_bg.stretch_mode = TextureRect.STRETCH_SCALE
-		plate_bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		plate_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		plate_bg.custom_minimum_size = Vector2.ZERO
-		slot.add_child(plate_bg)
+	slot.clip_contents = false
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", 1)
 	slot.add_child(vbox)
 
 	# Icon
@@ -469,11 +489,11 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 			anim_sprite = AnimatedSprite2D.new()
 			anim_sprite.sprite_frames = sf
 			anim_sprite.centered = false
-			anim_sprite.scale = Vector2(0.55, 0.55)
+			anim_sprite.scale = Vector2(0.4, 0.4)
 			anim_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			anim_sprite.play("idle")
 			var icon_wrap = Control.new()
-			icon_wrap.custom_minimum_size = Vector2(35, 35)
+			icon_wrap.custom_minimum_size = Vector2(28, 28)
 			icon_wrap.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			anim_sprite.position = Vector2(-1, -1)
 			icon_wrap.add_child(anim_sprite)
@@ -482,7 +502,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	if not anim_sprite and icon_tex:
 		var icon = TextureRect.new()
 		icon.texture = icon_tex
-		icon.custom_minimum_size = Vector2(35, 35)
+		icon.custom_minimum_size = Vector2(28, 28)
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -493,7 +513,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	name_lbl.text = cat.name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-	name_lbl.add_theme_font_size_override("font_size", 11)
+	name_lbl.add_theme_font_size_override("font_size", 9)
 	name_lbl.add_theme_color_override("font_color", accent)
 	name_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	name_lbl.add_theme_constant_override("outline_size", 2)
@@ -508,7 +528,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 		prog_lbl.text = "%d/%d" % [progress, max_progress]
 		prog_lbl.add_theme_color_override("font_color", CLR_SILVER)
 	prog_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prog_lbl.add_theme_font_size_override("font_size", 11)
+	prog_lbl.add_theme_font_size_override("font_size", 9)
 	prog_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	prog_lbl.add_theme_constant_override("outline_size", 2)
 	vbox.add_child(prog_lbl)
@@ -519,7 +539,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	slot.pivot_offset = slot.size / 2.0
 	slot.mouse_entered.connect(func():
 		p.pivot_offset = p.size / 2.0
-		p.z_index = 10
+		p.z_index = 25
 		var tw = p.create_tween()
 		tw.tween_property(p, "scale", Vector2(1.08, 1.08), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		if asp and is_instance_valid(asp):
@@ -528,7 +548,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	slot.mouse_exited.connect(func():
 		var tw = p.create_tween()
 		tw.tween_property(p, "scale", Vector2(1.0, 1.0), 0.08).set_ease(Tween.EASE_IN)
-		tw.finished.connect(func(): p.z_index = 0)
+		tw.finished.connect(func(): p.z_index = 20)
 		if asp and is_instance_valid(asp):
 			asp.play("idle")
 	)
@@ -565,31 +585,66 @@ func _refresh_category_nodes() -> void:
 # DETAIL PANEL
 # ===================================================================
 
-func _show_detail_panel(cat_id: String) -> void:
+func _close_detail_panel() -> void:
 	if _detail_panel and is_instance_valid(_detail_panel):
 		_detail_panel.queue_free()
 		_detail_panel = null
+	_enter_dungeon_btn.visible = true
+	_junkyard_btn.visible = true
+	_wardrobe_btn.visible = true
+
+func _show_detail_panel(cat_id: String) -> void:
+	_close_detail_panel()
 
 	var cat = _udb.CATEGORIES[cat_id]
 	var accent = _udb.CAT_COLORS.get(cat_id, CLR_GOLD)
 
+	# Full-screen overlay container
+	var overlay = Control.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = 50
+	add_child(overlay)
+	_detail_panel = overlay
+	_enter_dungeon_btn.visible = false
+	_junkyard_btn.visible = false
+	_wardrobe_btn.visible = false
+
+	# Dim background — click to close
+	var dim = ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_close_detail_panel()
+	)
+	overlay.add_child(dim)
+
+	# Centered panel
+	var panel_w = 340
+	var panel_h = 440
 	var panel = PanelContainer.new()
-	panel.position = Vector2(570, 0)
-	panel.size = Vector2(260, 464)
-	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0.08, 0.08, 0.12, 0.94)
-	sb.border_color = accent.lerp(Color.WHITE, 0.15)
-	sb.border_width_left = 3
-	sb.border_width_right = 2
-	sb.border_width_top = 2
-	sb.border_width_bottom = 2
-	sb.set_corner_radius_all(5)
-	sb.set_content_margin_all(16)
-	sb.shadow_color = Color(0, 0, 0, 0.6)
-	sb.shadow_size = 6
-	panel.add_theme_stylebox_override("panel", sb)
-	_content_area.add_child(panel)
-	_detail_panel = panel
+	panel.position = Vector2((960 - panel_w) / 2.0, (540 - panel_h) / 2.0)
+	panel.size = Vector2(panel_w, panel_h)
+	var menu_plate = _load_tex("res://assets/sprites/hub_ui/right_menu_plate.jpg")
+	if menu_plate:
+		var sb = StyleBoxTexture.new()
+		sb.texture = menu_plate
+		sb.texture_margin_left = 16
+		sb.texture_margin_right = 16
+		sb.texture_margin_top = 16
+		sb.texture_margin_bottom = 16
+		sb.set_content_margin_all(24)
+		panel.add_theme_stylebox_override("panel", sb)
+	else:
+		var sb = StyleBoxFlat.new()
+		sb.bg_color = Color(0.06, 0.06, 0.10, 0.95)
+		sb.border_color = accent.lerp(Color.WHITE, 0.15)
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(6)
+		sb.set_content_margin_all(20)
+		panel.add_theme_stylebox_override("panel", sb)
+	overlay.add_child(panel)
 
 	var scroll = ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -614,7 +669,7 @@ func _show_detail_panel(cat_id: String) -> void:
 	desc_lbl.text = cat.desc
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc_lbl.add_theme_font_size_override("font_size", 10)
-	desc_lbl.add_theme_color_override("font_color", CLR_DIM)
+	desc_lbl.add_theme_color_override("font_color", Color.WHITE)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	vbox.add_child(desc_lbl)
 
@@ -626,20 +681,23 @@ func _show_detail_panel(cat_id: String) -> void:
 		vbox.add_child(upgrade_card)
 
 	var close_btn = Button.new()
-	close_btn.text = "Close"
-	close_btn.add_theme_font_size_override("font_size", 11)
-	close_btn.add_theme_color_override("font_color", CLR_DIM)
+	close_btn.text = "✕  Close"
+	close_btn.add_theme_font_size_override("font_size", 12)
+	close_btn.add_theme_color_override("font_color", CLR_SILVER)
 	_style_button_flat(close_btn)
 	close_btn.pressed.connect(func():
-		if _detail_panel and is_instance_valid(_detail_panel):
-			_detail_panel.queue_free()
-			_detail_panel = null
+		_close_detail_panel()
 	)
 	vbox.add_child(close_btn)
 
-	panel.modulate.a = 0.0
-	var tw = panel.create_tween()
-	tw.tween_property(panel, "modulate:a", 1.0, 0.15)
+	overlay.modulate.a = 0.0
+	var tw = overlay.create_tween()
+	tw.tween_property(overlay, "modulate:a", 1.0, 0.15)
+	# Scale-in effect on the panel
+	panel.pivot_offset = Vector2(panel_w / 2.0, panel_h / 2.0)
+	panel.scale = Vector2(0.9, 0.9)
+	var tw2 = panel.create_tween()
+	tw2.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 func _create_upgrade_card(upgrade_id: String, accent: Color, cat_id: String) -> PanelContainer:
 	var upg = _udb.UPGRADES[upgrade_id]
@@ -775,9 +833,21 @@ func _build_card_collection_tab() -> void:
 		_card_tab.add_child(lbl)
 		return
 
+	# Background panel for readability
+	var bg = PanelContainer.new()
+	bg.position = Vector2(200, 0)
+	bg.size = Vector2(560, 420)
+	var bg_sb = StyleBoxFlat.new()
+	bg_sb.bg_color = Color(0.06, 0.06, 0.10, 0.92)
+	bg_sb.set_corner_radius_all(6)
+	bg_sb.set_content_margin_all(12)
+	bg.add_theme_stylebox_override("panel", bg_sb)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_card_tab.add_child(bg)
+
 	var scroll = ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 100
+	scroll.position = Vector2(210, 5)
+	scroll.size = Vector2(540, 410)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_card_tab.add_child(scroll)
 
@@ -824,15 +894,15 @@ func _build_card_collection_tab() -> void:
 
 		var grid = GridContainer.new()
 		grid.columns = 5
-		grid.add_theme_constant_override("h_separation", 6)
-		grid.add_theme_constant_override("v_separation", 6)
+		grid.add_theme_constant_override("h_separation", 4)
+		grid.add_theme_constant_override("v_separation", 4)
 		main_vbox.add_child(grid)
 
 		for card_def in deck_cards:
 			var card_id = card_def.id
 			var owned = card_db.collected.has(card_id)
 			var card_panel = PanelContainer.new()
-			card_panel.custom_minimum_size = Vector2(120, 50)
+			card_panel.custom_minimum_size = Vector2(95, 40)
 			var csb = StyleBoxFlat.new()
 			csb.bg_color = Color(0.10, 0.10, 0.12, 0.85) if owned else Color(0.06, 0.06, 0.08, 0.7)
 			csb.border_color = deck_color * Color(1, 1, 1, 0.5) if owned else Color(0.2, 0.2, 0.2, 0.3)
@@ -859,9 +929,21 @@ func _build_card_collection_tab() -> void:
 # ===================================================================
 
 func _build_achievements_tab() -> void:
+	# Background panel for readability
+	var bg = PanelContainer.new()
+	bg.position = Vector2(200, 0)
+	bg.size = Vector2(560, 420)
+	var bg_sb = StyleBoxFlat.new()
+	bg_sb.bg_color = Color(0.06, 0.06, 0.10, 0.92)
+	bg_sb.set_corner_radius_all(6)
+	bg_sb.set_content_margin_all(12)
+	bg.add_theme_stylebox_override("panel", bg_sb)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ach_tab.add_child(bg)
+
 	var scroll = ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 100
+	scroll.position = Vector2(210, 5)
+	scroll.size = Vector2(540, 410)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_ach_tab.add_child(scroll)
 
@@ -979,29 +1061,159 @@ func _create_achievement_row(id: String, ach: Dictionary, unlocked: bool) -> Pan
 # ===================================================================
 
 func _build_archive_tab() -> void:
-	var lbl = Label.new()
-	lbl.text = "ARCHIVE\n\nComing Soon..."
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.set_anchors_preset(Control.PRESET_CENTER)
-	lbl.position = Vector2(-100, -30)
-	lbl.add_theme_font_size_override("font_size", 18)
-	lbl.add_theme_color_override("font_color", CLR_DIM)
-	_archive_tab.add_child(lbl)
+	var bg = PanelContainer.new()
+	bg.position = Vector2(200, 0)
+	bg.size = Vector2(560, 420)
+	var bg_sb = StyleBoxFlat.new()
+	bg_sb.bg_color = Color(0.06, 0.06, 0.10, 0.92)
+	bg_sb.set_corner_radius_all(6)
+	bg_sb.set_content_margin_all(12)
+	bg.add_theme_stylebox_override("panel", bg_sb)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_archive_tab.add_child(bg)
+
+	# Inventory content — show materials and keys
+	var scroll = ScrollContainer.new()
+	scroll.position = Vector2(210, 5)
+	scroll.size = Vector2(540, 410)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_archive_tab.add_child(scroll)
+
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 12)
+	scroll.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "INVENTORY"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", CLR_GOLD)
+	title.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	title.add_theme_constant_override("outline_size", 2)
+	vbox.add_child(title)
+
+	# Materials section
+	var mat_header = Label.new()
+	mat_header.text = "— Materials —"
+	mat_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mat_header.add_theme_font_size_override("font_size", 13)
+	mat_header.add_theme_color_override("font_color", CLR_SILVER)
+	vbox.add_child(mat_header)
+
+	var mat_grid = GridContainer.new()
+	mat_grid.columns = 3
+	mat_grid.add_theme_constant_override("h_separation", 12)
+	mat_grid.add_theme_constant_override("v_separation", 8)
+	mat_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(mat_grid)
+
+	var mat_names = {
+		"iron_scrap": "Iron Scrap", "timber": "Timber", "fuel": "Fuel",
+		"organic": "Organic", "stone": "Stone", "blueprint": "Blueprint",
+	}
+	for mat_id in ["iron_scrap", "timber", "fuel", "organic", "stone", "blueprint"]:
+		var count = GameState.materials.get(mat_id, 0)
+		var mc = MAT_COLORS.get(mat_id, CLR_DIM)
+		var item_hbox = HBoxContainer.new()
+		item_hbox.add_theme_constant_override("separation", 6)
+		var icon = _load_tex(MAT_ICONS.get(mat_id, ""))
+		if icon:
+			var ir = TextureRect.new()
+			ir.texture = icon
+			ir.custom_minimum_size = Vector2(24, 24)
+			ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			ir.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			item_hbox.add_child(ir)
+		var info_vbox = VBoxContainer.new()
+		info_vbox.add_theme_constant_override("separation", 0)
+		var name_lbl = Label.new()
+		name_lbl.text = mat_names.get(mat_id, mat_id)
+		name_lbl.add_theme_font_size_override("font_size", 11)
+		name_lbl.add_theme_color_override("font_color", mc)
+		name_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		name_lbl.add_theme_constant_override("outline_size", 1)
+		info_vbox.add_child(name_lbl)
+		var count_lbl = Label.new()
+		count_lbl.text = "x %d" % count
+		count_lbl.add_theme_font_size_override("font_size", 13)
+		count_lbl.add_theme_color_override("font_color", Color.WHITE if count > 0 else CLR_DIM)
+		info_vbox.add_child(count_lbl)
+		item_hbox.add_child(info_vbox)
+		mat_grid.add_child(item_hbox)
+
+	vbox.add_child(HSeparator.new())
+
+	# Keys section
+	var key_header = Label.new()
+	key_header.text = "— Keys —"
+	key_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	key_header.add_theme_font_size_override("font_size", 13)
+	key_header.add_theme_color_override("font_color", CLR_SILVER)
+	vbox.add_child(key_header)
+
+	var key_grid = GridContainer.new()
+	key_grid.columns = 4
+	key_grid.add_theme_constant_override("h_separation", 16)
+	key_grid.add_theme_constant_override("v_separation", 8)
+	key_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(key_grid)
+
+	for tier in ["bronze", "silver", "gold", "secret"]:
+		var count = GameState.keys.get(tier, 0)
+		var kc = KEY_COLORS.get(tier, CLR_DIM)
+		var item_hbox = HBoxContainer.new()
+		item_hbox.add_theme_constant_override("separation", 6)
+		var icon = _load_tex("key_%s.png" % tier)
+		if icon:
+			var ir = TextureRect.new()
+			ir.texture = icon
+			ir.custom_minimum_size = Vector2(22, 22)
+			ir.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			ir.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			ir.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			item_hbox.add_child(ir)
+		var info_vbox = VBoxContainer.new()
+		info_vbox.add_theme_constant_override("separation", 0)
+		var name_lbl = Label.new()
+		name_lbl.text = tier.capitalize()
+		name_lbl.add_theme_font_size_override("font_size", 11)
+		name_lbl.add_theme_color_override("font_color", kc)
+		info_vbox.add_child(name_lbl)
+		var count_lbl = Label.new()
+		count_lbl.text = "x %d" % count
+		count_lbl.add_theme_font_size_override("font_size", 13)
+		count_lbl.add_theme_color_override("font_color", Color.WHITE if count > 0 else CLR_DIM)
+		info_vbox.add_child(count_lbl)
+		item_hbox.add_child(info_vbox)
+		key_grid.add_child(item_hbox)
 
 # ===================================================================
 # BOTTOM BAR
 # ===================================================================
 
 func _setup_bottom_bar() -> void:
-	var btn_tex = _load_tex("res://assets/sprites/hub_ui/wardrobe_button.png")
-	if btn_tex:
-		_style_button_with_texture(_enter_dungeon_btn, btn_tex, CLR_ORANGE)
-		_style_button_with_texture(_junkyard_btn, btn_tex, Color(0.85, 0.65, 0.30))
-		_style_button_with_texture(_wardrobe_btn, btn_tex, CLR_SILVER)
+	# Enter Dungeon — use dedicated button asset
+	var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
+	if dungeon_tex:
+		_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
 	else:
 		_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
+	_enter_dungeon_btn.add_theme_font_size_override("font_size", 16)
+
+	# Junkyard — use dedicated button asset
+	var junkyard_tex = _load_tex("res://assets/sprites/hub_ui/junkyard_btn.png")
+	if junkyard_tex:
+		_style_button_with_texture(_junkyard_btn, junkyard_tex, Color.WHITE)
+	else:
 		_style_button_accent(_junkyard_btn, Color(0.75, 0.55, 0.25))
+
+	# Wardrobe — use steel rect or fallback
+	var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_4.jpg")
+	if wardrobe_tex:
+		_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
+	else:
 		_style_button_accent(_wardrobe_btn, CLR_SILVER)
 	_enter_dungeon_btn.pressed.connect(_start_run)
 	_junkyard_btn.pressed.connect(_enter_junkyard)
@@ -1253,7 +1465,7 @@ func _start_run() -> void:
 	SaveManager.save_game()
 	GameState.set_phase(GameState.Phase.ARENA_PREP)
 	_close_overlay()
-	var door_center = Vector2(480, 270)
+	# Simple fade to black then load arena
 	var darkness = ColorRect.new()
 	darkness.color = Color(0.0, 0.0, 0.0, 0.0)
 	darkness.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1261,13 +1473,7 @@ func _start_run() -> void:
 	darkness.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(darkness)
 	var tw = create_tween()
-	tw.tween_property(darkness, "color:a", 0.5, 0.3).set_ease(Tween.EASE_IN)
-	tw.set_parallel(true)
-	tw.tween_property(self, "scale", Vector2(3.0, 3.0), 0.6).set_ease(Tween.EASE_IN)
-	tw.tween_property(self, "pivot_offset", door_center, 0.0)
-	tw.tween_property(darkness, "color:a", 1.0, 0.6).set_ease(Tween.EASE_IN)
-	tw.set_parallel(false)
-	tw.tween_interval(0.15)
+	tw.tween_property(darkness, "color:a", 1.0, 0.4).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func():
 		get_tree().change_scene_to_file("res://scenes/arena.tscn")
 	)
