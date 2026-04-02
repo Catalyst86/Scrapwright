@@ -13,8 +13,7 @@ var lifetime: float = 8.0
 var _time: float = 0.0
 var _flash_timer: float = 0.0
 
-var _core: ColorRect = null
-var _star: ColorRect = null
+var _sprite: AnimatedSprite2D = null
 var _player_ref: Node2D = null
 
 func _ready() -> void:
@@ -28,21 +27,28 @@ func _ready() -> void:
 	_player_ref = get_tree().get_first_node_in_group("player")
 
 func _build_visual() -> void:
-	# White glint core (4x4)
-	_core = ColorRect.new()
-	_core.color = Color(1.0, 1.0, 1.0, 0.95)
-	_core.size = Vector2(4, 4)
-	_core.position = Vector2(-2, -2)
-	_core.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_core)
-
-	# Red orbiting star (3x3)
-	_star = ColorRect.new()
-	_star.color = Color(1.0, 0.2, 0.2, 0.9)
-	_star.size = Vector2(3, 3)
-	_star.position = Vector2(-1.5, -1.5)
-	_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_star)
+	# Animated XP orb sprite — white orb with red star orbiting
+	var sheet_tex = load("res://assets/sprites/ui/xp_orb_sheet.png")
+	if not sheet_tex:
+		return
+	var frame_count = 9
+	var frame_w = 32
+	var sf = SpriteFrames.new()
+	sf.remove_animation("default")
+	sf.add_animation("spin")
+	sf.set_animation_speed("spin", 10.0)
+	sf.set_animation_loop("spin", true)
+	for i in range(frame_count):
+		var atlas = AtlasTexture.new()
+		atlas.atlas = sheet_tex
+		atlas.region = Rect2(i * frame_w, 0, frame_w, frame_w)
+		sf.add_frame("spin", atlas)
+	_sprite = AnimatedSprite2D.new()
+	_sprite.sprite_frames = sf
+	_sprite.scale = Vector2(0.5, 0.5)
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_sprite.play("spin")
+	add_child(_sprite)
 
 func _process(delta: float) -> void:
 	if collected:
@@ -69,20 +75,6 @@ func _process(delta: float) -> void:
 				var dir = (_player_ref.global_position - global_position).normalized()
 				global_position += dir * 130.0 * delta
 
-	# Orbiting red star
-	if _star:
-		var orbit_radius = 6.0
-		var orbit_speed = 4.0
-		_star.position = Vector2(
-			cos(_time * orbit_speed) * orbit_radius - 1.5,
-			sin(_time * orbit_speed) * orbit_radius - 1.5
-		)
-
-	# Gentle pulse on core
-	if _core:
-		var pulse = 0.7 + sin(_time * 5.0) * 0.3
-		_core.color.a = pulse
-
 	# Lifetime countdown
 	lifetime -= delta
 	if lifetime <= 0:
@@ -90,16 +82,10 @@ func _process(delta: float) -> void:
 		return
 
 	# Flashing when about to expire (last 3 seconds)
-	if lifetime < 3.0:
+	if lifetime < 3.0 and _sprite:
 		_flash_timer += delta
-		# Flash rate accelerates as expiration approaches
 		var flash_rate = 1.0 / maxf(0.1, lifetime * 0.3)
-		if fmod(_flash_timer * flash_rate, 1.0) < 0.5:
-			if _core: _core.visible = true
-			if _star: _star.visible = true
-		else:
-			if _core: _core.visible = false
-			if _star: _star.visible = false
+		_sprite.visible = fmod(_flash_timer * flash_rate, 1.0) < 0.5
 
 func _on_body_entered(body: Node2D) -> void:
 	if collected:
@@ -121,9 +107,8 @@ func _collect() -> void:
 	popup.position = Vector2(-12, -14)
 	popup.z_index = 50
 	add_child(popup)
-	# Hide the orb visuals
-	if _core: _core.visible = false
-	if _star: _star.visible = false
+	# Hide the orb visual
+	if _sprite: _sprite.visible = false
 	# Animate popup floating up and fading
 	var tw = create_tween()
 	tw.tween_property(popup, "position:y", popup.position.y - 18.0, 0.5).set_ease(Tween.EASE_OUT)
