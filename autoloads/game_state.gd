@@ -197,7 +197,12 @@ func spend_recipe(cost: Dictionary) -> bool:
 
 func take_damage(amount: int) -> void:
 	# Apply damage reduction from Tough Coat upgrade
-	var dr_pct = permanent.get("damage_reduction_level", 0) * 2
+	var dr_pct = permanent.get("damage_reduction_level", 0) * 3  # 3% per level, max 15%
+	# Shield Drone passive DR — 5% while equipped
+	for ow in orbital_weapons:
+		if ow.get("id", "") == "shield_drone":
+			dr_pct += 5
+			break
 	var reduced = amount
 	if dr_pct > 0:
 		reduced = maxi(1, int(amount * (1.0 - dr_pct / 100.0)))
@@ -386,7 +391,7 @@ func reapply_permanent_bonuses() -> void:
 			"damage_up":
 				perk_damage_bonus += 5
 			"speed_up":
-				perk_speed_multiplier *= 1.15
+				perk_speed_multiplier = minf(2.0, perk_speed_multiplier * 1.15)  # Cap at 2x base speed
 			"attack_speed":
 				perk_attack_speed_multiplier *= 0.85  # Faster = lower cooldown
 			"hp_up":

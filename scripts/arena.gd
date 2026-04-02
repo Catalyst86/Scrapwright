@@ -1158,21 +1158,23 @@ func _restore_regen_perk() -> void:
 		regen_lvl = clampi(GameState.permanent.get("armory_level", 0), 0, 10)
 	if regen_lvl > 0:
 		var udb = get_node_or_null("/root/UpgradeDB")
-		var heal_amt = 1
+		var heal_pct = 1.0
 		var interval = 8.0
 		if udb and regen_lvl <= udb.REGEN_TIERS.size():
 			var tier = udb.REGEN_TIERS[regen_lvl - 1]
-			heal_amt = tier[0]
+			heal_pct = tier[0]
 			interval = tier[1]
 		else:
-			var heal_amounts = [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
-			var intervals    = [0, 8.0, 6.0, 5.0, 4.0, 4.0, 3.0, 3.0, 2.5, 2.5, 2.0]
-			heal_amt = heal_amounts[clampi(regen_lvl, 0, 10)]
-			interval = intervals[clampi(regen_lvl, 0, 10)]
+			heal_pct = 1.0 + (regen_lvl - 1) * 0.3
+			interval = maxf(2.0, 8.0 - (regen_lvl - 1) * 0.6)
 		var dh_timer = Timer.new()
 		dh_timer.wait_time = interval
 		dh_timer.autostart = true
-		dh_timer.timeout.connect(func(): GameState.heal(heal_amt))
+		dh_timer.timeout.connect(func():
+			# Heal as percentage of max HP — scales naturally with HP upgrades
+			var heal_amt = maxi(1, int(GameState.player_max_health * heal_pct / 100.0))
+			GameState.heal(heal_amt)
+		)
 		add_child(dh_timer)
 
 func _spawn_secret_door() -> void:

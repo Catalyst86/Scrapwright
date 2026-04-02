@@ -151,7 +151,7 @@ const UPGRADES = {
 	},
 	"damage_reduction": {
 		"name": "Tough Coat",
-		"desc": "+2% damage reduction per level",
+		"desc": "+3% damage reduction per level",
 		"flavor": "That thick fur isn't just for show.",
 		"key": "damage_reduction_level",
 		"max_level": 5,
@@ -302,18 +302,19 @@ const UPGRADES = {
 }
 
 # ─── Regen tier table (health_regen_level 1-10) ────────────────
-# Format: [heal_amount, interval_seconds]
+# Format: [heal_percent_of_max_hp, interval_seconds]
+# At 300 HP: Lv1 = 3HP/8s, Lv5 = 9HP/4s, Lv10 = 12HP/2s (6 HP/s)
 const REGEN_TIERS = [
-	[1, 8.0],   # Lv 1
-	[1, 6.0],   # Lv 2
-	[2, 5.0],   # Lv 3
-	[2, 4.0],   # Lv 4
-	[3, 4.0],   # Lv 5
-	[3, 3.0],   # Lv 6
-	[4, 3.0],   # Lv 7
-	[4, 2.5],   # Lv 8
-	[5, 2.5],   # Lv 9
-	[5, 2.0],   # Lv 10
+	[1.0, 8.0],   # Lv 1: 1% max HP every 8s
+	[1.0, 6.0],   # Lv 2: 1% every 6s
+	[1.5, 5.0],   # Lv 3: 1.5% every 5s
+	[1.5, 4.0],   # Lv 4: 1.5% every 4s
+	[2.0, 4.0],   # Lv 5: 2% every 4s
+	[2.0, 3.0],   # Lv 6: 2% every 3s
+	[2.5, 3.0],   # Lv 7: 2.5% every 3s
+	[3.0, 2.5],   # Lv 8: 3% every 2.5s
+	[3.5, 2.5],   # Lv 9: 3.5% every 2.5s
+	[4.0, 2.0],   # Lv 10: 4% every 2s
 ]
 
 # ─── Chimera buff pool ─────────────────────────────────────────

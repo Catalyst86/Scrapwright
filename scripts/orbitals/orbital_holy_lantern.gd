@@ -8,8 +8,9 @@ func _fire(_target: Node) -> void:
 	var player = get_parent()
 	if not player:
 		return
-	# Heal player
-	var heal_amount = OrbitalDB.get_heal_amount("holy_lantern", level)
+	# Heal player — scales with max HP (2-4% based on level)
+	var base_heal_pct = OrbitalDB.get_heal_amount("holy_lantern", level)
+	var heal_amount = maxi(2, int(GameState.player_max_health * base_heal_pct / 100.0))
 	GameState.heal(heal_amount)
 
 	# Holy burst — expanding golden ring with light rays

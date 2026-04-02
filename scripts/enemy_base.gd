@@ -19,6 +19,8 @@ var _stun_timer: float  = 0.0
 var _base_move_speed: float = 0.0  # Stored after scaling, used for safe speed restoration
 var _active_speed_debuffs: Dictionary = {}  # Track speed debuffs by id -> multiplier
 var _is_burning := false
+var _is_poisoned := false
+var _poison_ticks_remaining := 0
 var _burn_ticks_remaining := 0
 var _has_directional_sprites: bool = false
 var _current_facing: String = "south"  # "south", "east", "west"
@@ -220,11 +222,13 @@ func _apply_stage_scaling() -> void:
 		if dmg_scale > 1.0:
 			damage = int(damage * dmg_scale)
 
-	# Per-wave scaling — enemies get progressively harder
+	# Per-wave scaling — quadratic curve: gentle early, steep late
+	# Matches player's multiplicative power growth across 84 waves
 	var wave = maxi(GameState.current_wave, 1)
-	var wave_hp_mult    = 1.0 + (wave - 1) * 0.05   # +5% HP per wave
-	var wave_dmg_mult   = 1.0 + (wave - 1) * 0.03   # +3% damage per wave
-	var wave_speed_mult = minf(1.8, 1.0 + (wave - 1) * 0.03)   # +3% speed per wave, capped at 1.8x
+	var t = float(wave - 1) / 83.0  # normalize to 0.0–1.0 over 84 waves
+	var wave_hp_mult    = 1.0 + t * 1.5 + t * t * 3.0   # ~1.4x at wave 14, ~3.0x at wave 42, ~5.5x at wave 84
+	var wave_dmg_mult   = 1.0 + t * 1.0 + t * t * 2.0   # ~1.2x at wave 14, ~2.0x at wave 42, ~4.0x at wave 84
+	var wave_speed_mult = minf(1.8, 1.0 + t * 0.8)       # gradual speed increase, same 1.8x cap
 	max_health = int(max_health * wave_hp_mult)
 	damage = maxi(damage, ceili(damage * wave_dmg_mult))
 	move_speed = move_speed * wave_speed_mult
@@ -1254,6 +1258,7 @@ func apply_status(status: String, duration: float) -> void:
 		"burning": _apply_burning(duration)
 		"shocked": _apply_shocked(duration)
 		"slowed":  _apply_slowed(duration)
+		"poisoned": _apply_poisoned(duration)
 
 func _apply_burning(duration: float) -> void:
 	var ticks := int(duration / 0.5)
@@ -1274,6 +1279,32 @@ func _apply_burning(duration: float) -> void:
 		take_damage(5)
 		_burn_ticks_remaining -= 1
 	_is_burning = false
+
+func _apply_poisoned(duration: float) -> void:
+	var ticks := int(duration / 0.5)
+	if _is_poisoned:
+		_poison_ticks_remaining = ticks
+		return
+	_is_poisoned = true
+	_poison_ticks_remaining = ticks
+	while _poison_ticks_remaining > 0:
+		if not is_inside_tree() or not is_instance_valid(self):
+			_is_poisoned = false
+			return
+		await get_tree().create_timer(0.5).timeout
+		if is_dead or not is_inside_tree() or not is_instance_valid(self):
+			_is_poisoned = false
+			return
+		# Poison deals 2% of max HP per tick — scales naturally with enemy growth
+		var poison_dmg = maxi(2, int(max_health * 0.02))
+		take_damage(poison_dmg)
+		_poison_ticks_remaining -= 1
+		# Visual: greenish tint while poisoned
+		if is_instance_valid(self):
+			modulate = Color(0.6, 1.0, 0.5)
+	_is_poisoned = false
+	if is_instance_valid(self):
+		modulate = Color.WHITE
 
 func _recompute_speed() -> void:
 	var mult := 1.0

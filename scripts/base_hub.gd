@@ -874,23 +874,43 @@ func _build_card_collection_tab() -> void:
 				deck_cards.append(c)
 				deck_color = c.get("deck_color", CLR_SILVER)
 
-		var deck_header = HBoxContainer.new()
-		deck_header.add_theme_constant_override("separation", 8)
+		var deck_header = VBoxContainer.new()
+		deck_header.add_theme_constant_override("separation", 2)
 		main_vbox.add_child(deck_header)
+
+		var title_row = HBoxContainer.new()
+		title_row.add_theme_constant_override("separation", 8)
+		deck_header.add_child(title_row)
 
 		var deck_lbl = Label.new()
 		deck_lbl.text = "%s  (%d/%d)" % [deck_name, dp.owned, dp.total]
 		deck_lbl.add_theme_font_size_override("font_size", 13)
 		deck_lbl.add_theme_color_override("font_color", CLR_GREEN if is_complete else deck_color)
 		deck_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		deck_header.add_child(deck_lbl)
+		title_row.add_child(deck_lbl)
 
 		if is_complete:
 			var bonus_lbl = Label.new()
 			bonus_lbl.text = "COMPLETE!"
 			bonus_lbl.add_theme_font_size_override("font_size", 11)
 			bonus_lbl.add_theme_color_override("font_color", CLR_GREEN)
-			deck_header.add_child(bonus_lbl)
+			title_row.add_child(bonus_lbl)
+
+		# Show deck completion reward
+		var reward_texts = {
+			"Scrap": "Reward: +25 Max HP",
+			"Lost": "Reward: +10 Bite Damage",
+			"Critter": "Reward: Unlocks Bug Swarm perk",
+			"Overgrowth": "Reward: Unlocks Vine Snare perk",
+		}
+		var reward_lbl = Label.new()
+		reward_lbl.text = reward_texts.get(deck_name, "")
+		reward_lbl.add_theme_font_size_override("font_size", 10)
+		if is_complete:
+			reward_lbl.add_theme_color_override("font_color", CLR_GREEN)
+		else:
+			reward_lbl.add_theme_color_override("font_color", CLR_DIM)
+		deck_header.add_child(reward_lbl)
 
 		var grid = GridContainer.new()
 		grid.columns = 5
@@ -902,7 +922,7 @@ func _build_card_collection_tab() -> void:
 			var card_id = card_def.id
 			var owned = card_db.collected.has(card_id)
 			var card_panel = PanelContainer.new()
-			card_panel.custom_minimum_size = Vector2(95, 40)
+			card_panel.custom_minimum_size = Vector2(95, 120)
 			var csb = StyleBoxFlat.new()
 			csb.bg_color = Color(0.10, 0.10, 0.12, 0.85) if owned else Color(0.06, 0.06, 0.08, 0.7)
 			csb.border_color = deck_color * Color(1, 1, 1, 0.5) if owned else Color(0.2, 0.2, 0.2, 0.3)
@@ -911,14 +931,36 @@ func _build_card_collection_tab() -> void:
 			csb.set_content_margin_all(4)
 			card_panel.add_theme_stylebox_override("panel", csb)
 			var cv = VBoxContainer.new()
-			cv.add_theme_constant_override("separation", 1)
+			cv.add_theme_constant_override("separation", 2)
+			cv.alignment = BoxContainer.ALIGNMENT_CENTER
 			card_panel.add_child(cv)
-			var name_lbl = Label.new()
-			name_lbl.text = card_def.name if owned else "???"
-			name_lbl.add_theme_font_size_override("font_size", 10)
-			name_lbl.add_theme_color_override("font_color", deck_color if owned else CLR_DIM)
-			name_lbl.clip_text = true
-			cv.add_child(name_lbl)
+			if owned:
+				var tex_path = card_def.get("texture_path", "")
+				if tex_path != "" and ResourceLoader.exists(tex_path):
+					var card_tex = load(tex_path)
+					var card_img = TextureRect.new()
+					card_img.texture = card_tex
+					card_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+					card_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					card_img.custom_minimum_size = Vector2(85, 85)
+					card_img.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+					cv.add_child(card_img)
+				var name_lbl = Label.new()
+				name_lbl.text = card_def.name
+				name_lbl.add_theme_font_size_override("font_size", 9)
+				name_lbl.add_theme_color_override("font_color", deck_color)
+				name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				name_lbl.clip_text = true
+				cv.add_child(name_lbl)
+			else:
+				var q_lbl = Label.new()
+				q_lbl.text = "???"
+				q_lbl.add_theme_font_size_override("font_size", 14)
+				q_lbl.add_theme_color_override("font_color", CLR_DIM)
+				q_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				q_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				q_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
+				cv.add_child(q_lbl)
 			grid.add_child(card_panel)
 
 		var sep_line = HSeparator.new()

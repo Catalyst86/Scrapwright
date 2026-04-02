@@ -13,7 +13,7 @@ func _fire(target: Node) -> void:
 	target.take_damage(weapon_damage, global_position)
 
 	# Chain to nearby enemies
-	var chain_count = OrbitalDB.get_chain_count("chain_link", level)
+	var chain_count = mini(6, OrbitalDB.get_chain_count("chain_link", level))  # Cap at 6 targets
 	var hit_enemies: Array = [target]
 	var last_pos = target.global_position
 
