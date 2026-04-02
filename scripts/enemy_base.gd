@@ -851,7 +851,8 @@ func _die() -> void:
 	set_collision_layer_value(2, false)
 	set_collision_mask_value(1, false)
 	emit_signal("died", xp_value)
-	GameState.gain_xp(xp_value)
+	# Drop XP orb instead of instant XP — player must collect it
+	_drop_xp_orb()
 	if _sfx_death:
 		_sfx_death.pitch_scale = randf_range(0.85, 1.15)
 		_sfx_death.play()
@@ -918,6 +919,24 @@ func _die() -> void:
 		await tw.finished
 		if not is_inside_tree(): return
 	queue_free()
+
+func _drop_xp_orb() -> void:
+	if xp_value <= 0:
+		return
+	var xp_scene = load("res://scenes/xp_pickup.tscn")
+	if not xp_scene:
+		# Fallback: grant XP directly if scene is missing
+		GameState.gain_xp(xp_value)
+		return
+	var xp_orb = xp_scene.instantiate()
+	xp_orb.xp_amount = xp_value
+	xp_orb.global_position = global_position
+	var container = get_tree().get_first_node_in_group("pickups_container")
+	if container:
+		container.call_deferred("add_child", xp_orb)
+	else:
+		# Fallback if no container found
+		GameState.gain_xp(xp_value)
 
 func _drop_key() -> void:
 	# Boss enemies don't drop keys
