@@ -197,13 +197,8 @@ func _start_combat() -> void:
 		hud.update_prep_timer(0, false)
 	GameState.set_phase(GameState.Phase.ARENA_COMBAT)
 	GameState.snapshot_wave_start()
-	# Boss waves (stage_wave 7 and 14) get heavy music
-	var wave_for_music = GameState.current_wave + 1  # The wave about to start
-	var sw_for_music = ((wave_for_music - 1) % 14) + 1
-	if sw_for_music in [7, 14]:
-		AudioManager.play_music("boss_battle")
-	else:
-		AudioManager.play_music("arena_combat")
+	# Same combat music for all waves (including bosses)
+	AudioManager.play_music("arena_combat")
 	GameState.reset_dig_charges()
 	WaveManager.start_wave(GameState.current_wave + 1)
 	# Mutation: Feral Howl — stun all enemies for 2s on wave start
@@ -1008,7 +1003,7 @@ func _spawn_orbital_card_reveal(loot_node: Control, item: Dictionary, item_idx: 
 func _on_all_waves_complete() -> void:
 	arena_phase = ArenaPhase.TRANSITION
 	GameState.permanent.runs_completed += 1
-	GameState.end_run()
+	GameState.end_run(true)  # keep_materials = true — player earned them!
 	# Track run completion achievements
 	var ach = get_node_or_null("/root/Achievements")
 	if ach:

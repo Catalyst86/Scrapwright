@@ -61,19 +61,16 @@ func _process(delta: float) -> void:
 		scatter_vel = scatter_vel.move_toward(Vector2.ZERO, 90.0 * delta)
 		global_position += scatter_vel * delta
 
-	# Magnet attraction (same logic as material_pickup.gd)
+	# XP orbs always have a base attraction range — Fetch! upgrade extends it
 	if _player_ref and is_instance_valid(_player_ref):
 		var magnet_level = GameState.permanent.get("pickup_magnet_level", 0)
-		var has_magnet = GameState.permanent.get("bag_level", 0) >= 5 or magnet_level > 0
-		if not has_magnet and _player_ref.has_meta("has_magnet"):
-			has_magnet = true
-		if has_magnet:
-			var base_range = 80.0
-			var magnet_range = base_range * (1.0 + magnet_level * 0.15)
-			var dist = global_position.distance_to(_player_ref.global_position)
-			if dist < magnet_range:
-				var dir = (_player_ref.global_position - global_position).normalized()
-				global_position += dir * 130.0 * delta
+		var base_range = 20.0  # XP always attracts within 20px
+		var magnet_range = base_range + magnet_level * 12.0  # Fetch adds +12px per level
+		var dist = global_position.distance_to(_player_ref.global_position)
+		if dist < magnet_range:
+			var pull_speed = 150.0 + magnet_level * 20.0  # Fetch also makes pull faster
+			var dir = (_player_ref.global_position - global_position).normalized()
+			global_position += dir * pull_speed * delta
 
 	# Lifetime countdown
 	lifetime -= delta

@@ -345,6 +345,9 @@ func _build_choice_pool() -> Array:
 	# Build stat perk pool
 	var stat_pool: Array = []
 	for p in ALL_PERKS:
+		# Regen is one-time only — don't offer if already active
+		if p.id == "regen" and GameState.perk_regen_active:
+			continue
 		stat_pool.append(p.duplicate())
 	# Add card deck perks if unlocked and not already chosen
 	var card_db = get_node_or_null("/root/CardDB")

@@ -428,7 +428,7 @@ func reapply_permanent_bonuses() -> void:
 	player_health = mini(player_health, player_max_health)
 	# Dog House regen is handled by arena.gd _restore_regen_perk() on scene load
 
-func end_run() -> void:
+func end_run(keep_materials: bool = false) -> void:
 	run_in_progress = false
 	# Reset run state
 	current_wave = 0
@@ -441,12 +441,14 @@ func end_run() -> void:
 	player_level = 1
 	xp_to_next_level = 100
 	# Restore materials to what you had BEFORE the run started
-	# You keep your base stockpile but lose what you found this run
-	# EXCEPT in junkyard mode — you keep everything you scavenged
-	var jy = get_node_or_null("/root/JunkyardState")
-	var in_junkyard = jy and jy.is_active
-	if not in_junkyard and not _materials_at_run_start.is_empty():
-		materials = _materials_at_run_start.duplicate()
+	# On death: lose what you found this run
+	# On victory: keep everything (keep_materials = true)
+	# In junkyard: always keep
+	if not keep_materials:
+		var jy = get_node_or_null("/root/JunkyardState")
+		var in_junkyard = jy and jy.is_active
+		if not in_junkyard and not _materials_at_run_start.is_empty():
+			materials = _materials_at_run_start.duplicate()
 	# Keys are always lost (earned and spent during the run)
 	keys = {"bronze": 0, "silver": 0, "gold": 0, "secret": 0}
 	is_player_sneaking = false
