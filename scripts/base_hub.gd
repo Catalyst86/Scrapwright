@@ -218,10 +218,10 @@ func _exit_tree() -> void:
 # ===================================================================
 
 const TAB_RECT_TEXTURES = {
-	"den_upgrades": "res://assets/sprites/hub_ui/steel_rect_1.jpg",
-	"card_collection": "res://assets/sprites/hub_ui/steel_rect_2.jpg",
-	"achievements": "res://assets/sprites/hub_ui/steel_rect_3.jpg",
-	"archive": "res://assets/sprites/hub_ui/steel_rect_4.jpg",
+	"den_upgrades": "res://assets/sprites/hub_ui/steel_rect_1.png",
+	"card_collection": "res://assets/sprites/hub_ui/steel_rect_2.png",
+	"achievements": "res://assets/sprites/hub_ui/steel_rect_3.png",
+	"archive": "res://assets/sprites/hub_ui/steel_rect_4.png",
 }
 
 func _setup_tab_buttons() -> void:
@@ -1252,7 +1252,7 @@ func _setup_bottom_bar() -> void:
 		_style_button_accent(_junkyard_btn, Color(0.75, 0.55, 0.25))
 
 	# Wardrobe — use steel rect or fallback
-	var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_4.jpg")
+	var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_4.png")
 	if wardrobe_tex:
 		_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
 	else:
