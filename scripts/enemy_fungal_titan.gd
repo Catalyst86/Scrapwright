@@ -30,6 +30,7 @@ var _laser_sweep_cooldown_timer: float = 0.0
 var _laser_nodes: Array = []  # All Line2D + Area2D nodes for cleanup
 var _pre_laser_position: Vector2 = Vector2.ZERO
 var _laser_hit_this_sweep: bool = false  # Only damage player once per sweep
+var _laser_fixed_center: Vector2 = Vector2.ZERO  # Fixed arena center captured at sweep start
 
 const LASER_SWEEP_DURATION = 6.0  # Full sweep cycle
 const LASER_SWEEP_COOLDOWN = 18.0
@@ -289,6 +290,7 @@ func _start_laser_sweep() -> void:
 
 	_pre_laser_position = global_position
 	var arena_center = _get_arena_center()
+	_laser_fixed_center = arena_center  # Lock position so beams don't follow player
 	global_position = arena_center  # Boss moves to center during laser
 
 	if sprite:
@@ -357,7 +359,7 @@ func _build_laser_beam(parent: Node, center: Vector2, is_horizontal: bool) -> vo
 func _process_laser_sweep(delta: float) -> void:
 	_laser_sweep_elapsed += delta
 
-	var arena_center = _get_arena_center()
+	var arena_center = _laser_fixed_center  # Use fixed position, not camera
 	# Horizontal beam sweeps north-south, vertical beam sweeps east-west
 	# Both move at constant speed, straight lines, back and forth
 	var sweep_range = 180.0
