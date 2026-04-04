@@ -205,7 +205,10 @@ func save_game() -> void:
 		return
 	var path = get_save_path()
 	var config = ConfigFile.new()
-	config.load(path)  # Load existing file so achievements aren't overwritten
+	var load_err = config.load(path)  # Load existing file so achievements aren't overwritten
+	if load_err != OK and load_err != ERR_FILE_NOT_FOUND:
+		push_warning("SaveManager: existing save may be corrupted, starting fresh")
+		config = ConfigFile.new()
 	config.set_value("meta", "version", SAVE_VERSION)
 
 	# Permanent upgrades
@@ -234,6 +237,7 @@ func save_game() -> void:
 		config.set_value("run", "active_perks", GameState.active_perks)
 		config.set_value("run", "orbital_weapons", GameState.orbital_weapons)
 		config.set_value("run", "revival_used", GameState._revival_used)
+		config.set_value("run", "extra_lives", GameState.extra_lives)
 		config.set_value("run", "chimera_buff", GameState.chimera_buff)
 		config.set_value("perks", "speed_multiplier", GameState.perk_speed_multiplier)
 		config.set_value("perks", "damage_bonus", GameState.perk_damage_bonus)
@@ -331,6 +335,7 @@ func load_game() -> void:
 		GameState.active_perks = config.get_value("run", "active_perks", [])
 		GameState.orbital_weapons = config.get_value("run", "orbital_weapons", [])
 		GameState._revival_used = config.get_value("run", "revival_used", false)
+		GameState.extra_lives = config.get_value("run", "extra_lives", 0)
 		GameState.chimera_buff = config.get_value("run", "chimera_buff", {})
 		GameState.perk_speed_multiplier = config.get_value("perks", "speed_multiplier", 1.0)
 		GameState.perk_damage_bonus = config.get_value("perks", "damage_bonus", 0)

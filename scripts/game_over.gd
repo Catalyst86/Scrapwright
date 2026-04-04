@@ -178,6 +178,51 @@ func _build_ui() -> void:
 		_stats_nodes.append(mat_lbl)
 		stats_y += 28; delay += 0.15
 
+	# Retry button (only if player has extra lives from Bad Dog)
+	var has_lives = GameState.extra_lives > 0 and GameState.run_in_progress
+	if has_lives:
+		stats_y += 8
+		var lives_lbl = _make_stat_label("Lives: %d" % GameState.extra_lives, 14, Color(0.3, 1.0, 0.5), stats_y, delay)
+		_stats_nodes.append(lives_lbl)
+		stats_y += 24; delay += 0.1
+
+		var retry_btn = Button.new()
+		retry_btn.text = "RETRY"
+		retry_btn.custom_minimum_size = Vector2(220, 44)
+		retry_btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		retry_btn.offset_left = -110; retry_btn.offset_top = stats_y
+		retry_btn.offset_right = 110; retry_btn.offset_bottom = stats_y + 44
+		retry_btn.add_theme_font_size_override("font_size", 18)
+
+		var retry_sb = StyleBoxFlat.new()
+		retry_sb.bg_color = Color(0.1, 0.18, 0.08)
+		retry_sb.border_color = Color(0.3, 0.9, 0.4)
+		retry_sb.set_border_width_all(2); retry_sb.set_corner_radius_all(2); retry_sb.set_content_margin_all(10)
+		retry_btn.add_theme_stylebox_override("normal", retry_sb)
+		var retry_sb_h = retry_sb.duplicate()
+		retry_sb_h.bg_color = Color(0.15, 0.25, 0.1); retry_sb_h.border_color = Color(0.4, 1.0, 0.5)
+		retry_btn.add_theme_stylebox_override("hover", retry_sb_h)
+		retry_btn.add_theme_stylebox_override("pressed", retry_sb_h)
+
+		retry_btn.add_theme_color_override("font_color", Color(0.3, 1.0, 0.5))
+		retry_btn.add_theme_color_override("font_hover_color", Color(0.5, 1.0, 0.6))
+		retry_btn.pressed.connect(_retry_run)
+
+		retry_btn.modulate.a = 0.0
+		add_child(retry_btn)
+		var rtw = create_tween()
+		rtw.tween_property(retry_btn, "modulate:a", 1.0, 0.4).set_delay(delay).set_ease(Tween.EASE_OUT)
+
+		retry_btn.mouse_entered.connect(func():
+			var htw2 = retry_btn.create_tween()
+			htw2.tween_property(retry_btn, "scale", Vector2(1.05, 1.05), 0.1).set_trans(Tween.TRANS_BACK)
+		)
+		retry_btn.mouse_exited.connect(func():
+			var htw2 = retry_btn.create_tween()
+			htw2.tween_property(retry_btn, "scale", Vector2(1.0, 1.0), 0.1)
+		)
+		stats_y += 52; delay += 0.15
+
 	# Return button with sprite-based style
 	stats_y += 8
 	var return_btn = Button.new()
@@ -276,7 +321,7 @@ func _process(delta: float) -> void:
 	if fog:
 		fog.color.a = 0.08 + 0.07 * sin(_time * 1.5)
 
-	if randf() < 0.2:
+	if randf() < 0.2 and _particles.size() < 40:
 		_spawn_ember()
 	_update_embers(delta)
 
@@ -331,8 +376,22 @@ func _update_embers(delta: float) -> void:
 		_particles.remove_at(i)
 
 
+func _retry_run() -> void:
+	# Use one extra life, restore wave-start snapshot, reload arena
+	GameState.extra_lives -= 1
+	GameState.restore_wave_start()
+	GameState.set_phase(GameState.Phase.ARENA_COMBAT)
+	SaveManager.save_game()
+	var tw = create_tween()
+	tw.tween_property(self, "modulate:a", 0.0, 0.3).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		get_tree().change_scene_to_file("res://scenes/arena.tscn")
+	)
+
 func _return_to_base() -> void:
-	# end_run() already called by arena.gd before loading this scene
+	# If run is still active (player had lives but chose to quit), end it
+	if GameState.run_in_progress:
+		GameState.end_run()
 	var jy = get_node_or_null("/root/JunkyardState")
 	if jy and jy.is_active:
 		jy.exit_junkyard()

@@ -278,14 +278,16 @@ const UPGRADES = {
 		],
 	},
 	"feral_howl": {
-		"name": "Feral Howl",
-		"desc": "Stun all enemies for 2s on wave start",
-		"flavor": "AWOOOO! Everything freezes.",
+		"name": "Bad Dog",
+		"desc": "You will not be going to heaven... yet",
+		"flavor": "Every good boy gets another chance.",
 		"key": "mutation_feral_howl",
-		"max_level": 1,
+		"max_level": 3,
 		"icon": "res://assets/sprites/hub_icons/feral_howl.png",
 		"costs": [
 			{"iron_scrap": 20, "fuel": 15, "stone": 15, "blueprint": 3},
+			{"iron_scrap": 35, "fuel": 25, "stone": 20, "blueprint": 5},
+			{"iron_scrap": 50, "fuel": 35, "stone": 30, "blueprint": 8},
 		],
 	},
 	"junkyard_chimera": {
@@ -423,7 +425,8 @@ func get_effect_text(upgrade_id: String) -> String:
 		"revival":
 			return "Revive once per run" if level > 0 else "Not unlocked"
 		"feral_howl":
-			return "Stun on wave start" if level > 0 else "Not unlocked"
+			if level == 0: return "Not unlocked"
+			return "+%d extra %s per run" % [level, "life" if level == 1 else "lives"]
 		"junkyard_chimera":
 			return "Random buff each run" if level > 0 else "Not unlocked"
 	return ""

@@ -8,7 +8,7 @@ signal phase_changed(new_phase)
 signal materials_changed
 signal health_changed(current, max_hp)
 signal keys_changed
-signal abilities_changed
+signal abilities_changed  # NOTE: Currently unconnected — HUD polls dig_charges directly
 enum Phase {
 	MAIN_MENU,
 	BASE_HUB,
@@ -82,6 +82,8 @@ var permanent: Dictionary = {
 
 # Revival tracking (reset each run)
 var _revival_used: bool = false
+# Extra lives from "Bad Dog" upgrade (reset each run)
+var extra_lives: int = 0
 # Chimera buff for this run (empty if none)
 var chimera_buff: Dictionary = {}
 
@@ -142,6 +144,18 @@ func snapshot_wave_start() -> void:
 		"perk_attack_speed": perk_attack_speed_multiplier,
 		"perk_regen": perk_regen_active,
 		"perk_xp": perk_xp_multiplier,
+		"perk_damage_reduction": perk_damage_reduction,
+		"perk_crit_bonus": perk_crit_bonus,
+		"perk_dodge_cooldown_mult": perk_dodge_cooldown_mult,
+		"perk_magnet_bonus": perk_magnet_bonus,
+		"perk_second_wind": perk_second_wind,
+		"perk_second_wind_used": perk_second_wind_used,
+		"perk_lifesteal": perk_lifesteal,
+		"perk_bite_aoe_bonus": perk_bite_aoe_bonus,
+		"perk_sneak_duration_bonus": perk_sneak_duration_bonus,
+		"perk_sneak_cooldown_mult": perk_sneak_cooldown_mult,
+		"perk_thorns_damage": perk_thorns_damage,
+		"perk_chest_upgrade_chance": perk_chest_upgrade_chance,
 		"dig_charges": dig_charges,
 		"permanent": permanent.duplicate(),
 	}
@@ -163,6 +177,18 @@ func restore_wave_start() -> void:
 	perk_attack_speed_multiplier = _wave_start_snapshot.perk_attack_speed
 	perk_regen_active = _wave_start_snapshot.perk_regen
 	perk_xp_multiplier = _wave_start_snapshot.perk_xp
+	perk_damage_reduction = _wave_start_snapshot.perk_damage_reduction
+	perk_crit_bonus = _wave_start_snapshot.perk_crit_bonus
+	perk_dodge_cooldown_mult = _wave_start_snapshot.perk_dodge_cooldown_mult
+	perk_magnet_bonus = _wave_start_snapshot.perk_magnet_bonus
+	perk_second_wind = _wave_start_snapshot.perk_second_wind
+	perk_second_wind_used = _wave_start_snapshot.perk_second_wind_used
+	perk_lifesteal = _wave_start_snapshot.perk_lifesteal
+	perk_bite_aoe_bonus = _wave_start_snapshot.perk_bite_aoe_bonus
+	perk_sneak_duration_bonus = _wave_start_snapshot.perk_sneak_duration_bonus
+	perk_sneak_cooldown_mult = _wave_start_snapshot.perk_sneak_cooldown_mult
+	perk_thorns_damage = _wave_start_snapshot.perk_thorns_damage
+	perk_chest_upgrade_chance = _wave_start_snapshot.perk_chest_upgrade_chance
 	dig_charges = _wave_start_snapshot.dig_charges
 	# Revert permanent upgrades too (prevents gold chest exploit)
 	if _wave_start_snapshot.has("permanent"):
@@ -211,11 +237,14 @@ func spend_recipe(cost: Dictionary) -> bool:
 func take_damage(amount: int) -> void:
 	# Apply damage reduction from Tough Coat upgrade
 	var dr_pct = permanent.get("damage_reduction_level", 0) * 3  # 3% per level, max 15%
+	# Thick Skin perk — was previously ignored! (perk_damage_reduction is 0-35%)
+	dr_pct += int(perk_damage_reduction * 100.0)
 	# Shield Drone passive DR — 5% while equipped
 	for ow in orbital_weapons:
 		if ow.get("id", "") == "shield_drone":
 			dr_pct += 5
 			break
+	dr_pct = mini(dr_pct, 75)  # Hard cap at 75% to prevent near-immunity
 	var reduced = amount
 	if dr_pct > 0:
 		reduced = maxi(1, int(amount * (1.0 - dr_pct / 100.0)))
@@ -237,6 +266,8 @@ func heal(amount: int) -> void:
 func gain_xp(amount: int) -> void:
 	var boosted = int(amount * perk_xp_multiplier)
 	player_xp += boosted
+	if xp_to_next_level <= 0:
+		xp_to_next_level = 1  # Safety: prevent infinite loop from corrupted save
 	while player_xp >= xp_to_next_level:
 		player_xp -= xp_to_next_level
 		player_level += 1
@@ -338,6 +369,7 @@ func start_new_run() -> void:
 	perk_chest_upgrade_chance = 0.0
 	orbital_weapons.clear()
 	_revival_used = false
+	extra_lives = permanent.get("mutation_feral_howl", 0)  # Bad Dog: 1 life per tier
 	chimera_buff = {}
 	# Reset per-run achievement stats
 	var ach = get_node_or_null("/root/Achievements")
@@ -551,6 +583,7 @@ func end_run(keep_materials: bool = false) -> void:
 	perk_thorns_damage = 0
 	perk_chest_upgrade_chance = 0.0
 	orbital_weapons.clear()
+	extra_lives = 0
 
 # --- Stage helpers ---
 func get_current_stage() -> int:

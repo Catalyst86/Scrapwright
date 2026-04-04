@@ -38,6 +38,7 @@ const SECRET_DOOR_DURATION = 10.0
 
 var _pause_menu: CanvasLayer = null
 var _card_popup: CanvasLayer = null
+var _wave_complete_pending: bool = false  # Re-entrancy guard for async _on_wave_complete
 
 func _ready() -> void:
 	# Sync level tracker with actual player level to prevent false level-up popups
@@ -201,9 +202,6 @@ func _start_combat() -> void:
 	AudioManager.play_music("arena_combat")
 	GameState.reset_dig_charges()
 	WaveManager.start_wave(GameState.current_wave + 1)
-	# Mutation: Feral Howl — stun all enemies for 2s on wave start
-	if GameState.permanent.get("mutation_feral_howl", 0) > 0:
-		call_deferred("_apply_feral_howl")
 	_update_wave_label()
 	# Use the actual wave being played for display
 	var actual_wave = WaveManager.current_wave
@@ -220,6 +218,9 @@ func _start_combat() -> void:
 	# Controls are now in the pause menu — no tutorial popup
 
 func _on_wave_complete(wave_num: int) -> void:
+	if _wave_complete_pending:
+		return
+	_wave_complete_pending = true
 	GameState.current_wave = wave_num
 	SaveManager.save_game()
 	_show_banner("WAVE CLEAR!", Color(0.4, 1.0, 0.4), 1.2)
@@ -267,12 +268,16 @@ func _on_wave_complete(wave_num: int) -> void:
 		if not is_inside_tree(): return
 		await get_tree().create_timer(1.5).timeout
 		if not is_inside_tree(): return
+		_wave_complete_pending = false
 		get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
 	else:
 		# Normal: 1 pair of chests
 		_start_chest_phase(2, false)
 		await _wait_for_chest_phase()
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
+		_wave_complete_pending = false
 		_start_combat()
 
 func _vacuum_xp_orbs() -> void:
@@ -282,7 +287,7 @@ func _vacuum_xp_orbs() -> void:
 	if not p or not is_instance_valid(p):
 		return
 	for child in pickups_container.get_children():
-		if child.has_method("_collect") and not child.get("collected"):
+		if child.has_method("_collect") and child.get("collected") == false:
 			# Tween the orb to the player then collect
 			var orb = child
 			orb.set_process(false)  # Stop lifetime countdown
@@ -354,6 +359,8 @@ var _chest_opened_count: int = 0
 var _chest_total_count: int = 0
 var _combine_panel: PanelContainer = null
 var _chest_sheet: Texture2D = null
+var _chest_frame_textures: Array = []
+var _collect_btn: Button = null
 
 func _build_chest_event_ui(count: int) -> void:
 	_chest_sprites.clear()
@@ -362,6 +369,12 @@ func _build_chest_event_ui(count: int) -> void:
 
 	if ResourceLoader.exists(CHEST_SHEET_PATH):
 		_chest_sheet = load(CHEST_SHEET_PATH)
+	_chest_frame_textures.clear()
+	for i in CHEST_FRAME_COUNT:
+		var atlas = AtlasTexture.new()
+		atlas.atlas = _chest_sheet
+		atlas.region = Rect2(i * CHEST_FRAME_W, 0, CHEST_FRAME_W, CHEST_FRAME_H)
+		_chest_frame_textures.append(atlas)
 
 	_chest_event_ui = CanvasLayer.new()
 	_chest_event_ui.layer = 12
@@ -471,6 +484,7 @@ func _build_chest_event_ui(count: int) -> void:
 
 	# Collect button — dismisses the overlay (hidden until all chests opened)
 	var collect_btn = Button.new()
+	_collect_btn = collect_btn
 	collect_btn.name = "CollectBtn"
 	collect_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	collect_btn.text = "Collect"
@@ -673,6 +687,9 @@ func _refresh_chest_event_ui() -> void:
 				cvbox.add_child(btn)
 
 func _get_chest_frame_tex(idx: int) -> AtlasTexture:
+	if idx >= 0 and idx < _chest_frame_textures.size():
+		return _chest_frame_textures[idx]
+	# Fallback: generate on demand
 	var atlas = AtlasTexture.new()
 	atlas.atlas = _chest_sheet
 	atlas.region = Rect2(idx * CHEST_FRAME_W, 0, CHEST_FRAME_W, CHEST_FRAME_H)
@@ -790,12 +807,7 @@ func _process_chest_phase(delta: float) -> void:
 	var should_show_button = all_opened or (not can_open_more and not still_animating)
 
 	if should_show_button:
-		var collect_btn = null
-		for child in _chest_event_ui.get_children():
-			if child.has_method("find_child"):
-				collect_btn = child.find_child("CollectBtn", true, false)
-				if collect_btn:
-					break
+		var collect_btn = _collect_btn if is_instance_valid(_collect_btn) else null
 		if collect_btn and not collect_btn.visible:
 			collect_btn.text = "Collect" if all_opened else "Skip"
 			collect_btn.visible = true
@@ -1037,7 +1049,7 @@ func _spawn_orbital_card_reveal(loot_node: Control, item: Dictionary, item_idx: 
 
 func _on_all_waves_complete() -> void:
 	arena_phase = ArenaPhase.TRANSITION
-	GameState.permanent.runs_completed += 1
+	GameState.permanent["runs_completed"] = GameState.permanent.get("runs_completed", 0) + 1
 	GameState.end_run(true)  # keep_materials = true — player earned them!
 	# Track run completion achievements
 	var ach = get_node_or_null("/root/Achievements")
@@ -1067,15 +1079,23 @@ func _on_player_died() -> void:
 	if arena_phase == ArenaPhase.TRANSITION:
 		return
 	arena_phase = ArenaPhase.TRANSITION
+	# CRITICAL: Always unpause the tree — chest phase or level-up may have paused it
+	get_tree().paused = false
+	process_mode = Node.PROCESS_MODE_INHERIT
 	GameState.set_phase(GameState.Phase.GAME_OVER)
-	# death_sting sound disabled — needs replacement
 	_show_banner("YOU DIED", Color(1, 0.15, 0.15), 0)
 	# Save death stats BEFORE end_run wipes them
 	GameState.last_death_wave = GameState.current_wave
 	GameState.last_death_level = GameState.player_level
-	# End run BEFORE saving so save file doesn't have run_in_progress=true with 0 HP
-	GameState.end_run()
-	SaveManager.save_game()
+	# Check for extra lives — if available, DON'T end the run
+	var can_retry = GameState.extra_lives > 0
+	if not can_retry:
+		# No lives left — end the run for real
+		GameState.end_run()
+		SaveManager.save_game()
+	else:
+		# Lives remain — save but keep run active for retry
+		SaveManager.save_game()
 	if not is_inside_tree(): return
 	await get_tree().create_timer(2.8).timeout
 	if not is_inside_tree(): return
@@ -1281,21 +1301,6 @@ func _on_card_dropped(card: Dictionary) -> void:
 func _update_hud() -> void:
 	_on_health_changed(GameState.player_health, GameState.player_max_health)
 	_update_wave_label()
-
-func _apply_feral_howl() -> void:
-	# Stun all enemies for 2 seconds
-	for enemy in enemies_container.get_children():
-		if enemy.has_method("apply_stun"):
-			enemy.apply_stun(2.0)
-		elif enemy.get("_stunned") != null:
-			enemy._stunned = true
-			var timer = get_tree().create_timer(2.0)
-			var e = enemy
-			timer.timeout.connect(func():
-				if is_instance_valid(e):
-					e._stunned = false
-			)
-	_show_banner("AWOOOO!", Color(0.72, 0.35, 0.90), 1.0)
 
 # ──── DEBUG: God mode (F1) — REMEMBER TO REMOVE BEFORE RELEASE! ────
 var _god_mode: bool = false
