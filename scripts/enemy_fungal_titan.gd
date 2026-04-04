@@ -369,20 +369,20 @@ func _process_laser_sweep(delta: float) -> void:
 	var offset = lerp(-sweep_range, sweep_range, t)
 
 	for entry in _laser_nodes:
-		if not is_instance_valid(entry.node): continue
-		if entry.horizontal:
+		if not is_instance_valid(entry["node"]): continue
+		if entry["horizontal"]:
 			# Horizontal beam moves up/down (y offset)
-			entry.node.global_position = Vector2(arena_center.x, arena_center.y + offset)
+			entry["node"].global_position = Vector2(arena_center.x, arena_center.y + offset)
 		else:
 			# Vertical beam moves left/right (x offset)
-			entry.node.global_position = Vector2(arena_center.x + offset, arena_center.y)
+			entry["node"].global_position = Vector2(arena_center.x + offset, arena_center.y)
 
 	# Check damage (only once per sweep to avoid instant kill spam)
 	if not _laser_hit_this_sweep:
 		for entry in _laser_nodes:
-			if entry.type != "area": continue
-			if not is_instance_valid(entry.node): continue
-			var bodies = entry.node.get_overlapping_bodies()
+			if entry["type"] != "area": continue
+			if not is_instance_valid(entry["node"]): continue
+			var bodies = entry["node"].get_overlapping_bodies()
 			for body in bodies:
 				if body.is_in_group("player") and body.has_method("take_damage"):
 					_laser_hit_this_sweep = true
@@ -400,8 +400,8 @@ func _process_laser_sweep(delta: float) -> void:
 
 func _cleanup_laser() -> void:
 	for entry in _laser_nodes:
-		if is_instance_valid(entry.node):
-			entry.node.queue_free()
+		if is_instance_valid(entry["node"]):
+			entry["node"].queue_free()
 	_laser_nodes.clear()
 		if sprite:
 			sprite.modulate = Color(0.3, 2.0, 0.3)
