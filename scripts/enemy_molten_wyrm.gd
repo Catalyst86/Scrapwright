@@ -227,10 +227,10 @@ func _spawn_burrow_dust(pos: Vector2) -> void:
 	dust.global_position = pos
 	dust.z_index = 5
 
-	# Use animated dust spritesheet
-	var sheet_path = "res://assets/sprites/boss_fx/burrow_dust_anim_sheet.png"
+	# Use animated eruption spritesheet with perspective
+	var sheet_path = "res://assets/sprites/boss_fx/burrow_eruption_v2_sheet.png"
 	if ResourceLoader.exists(sheet_path):
-		var anim_spr = _make_anim_from_sheet(sheet_path, 32, 5, 10.0)
+		var anim_spr = _make_anim_from_sheet(sheet_path, 48, 7, 12.0)
 		anim_spr.scale = Vector2(2.0, 2.0)
 		dust.add_child(anim_spr)
 	else:
@@ -303,11 +303,12 @@ func _create_geyser(pos: Vector2) -> Area2D:
 	col.shape = shape
 	geyser.add_child(col)
 
-	# Visual — use animated lava geyser spritesheet
-	var sheet_path = "res://assets/sprites/boss_fx/lava_geyser_anim_sheet.png"
+	# Visual — animated lava geyser with vertical perspective
+	var sheet_path = "res://assets/sprites/boss_fx/lava_geyser_v2_sheet.png"
 	if ResourceLoader.exists(sheet_path):
-		var anim_spr = _make_anim_from_sheet(sheet_path, 32, 5, 8.0)
-		anim_spr.scale = Vector2(2.0, 2.0)
+		var anim_spr = _make_anim_from_sheet_rect(sheet_path, 32, 48, 7, 8.0)
+		anim_spr.scale = Vector2(1.8, 1.8)
+		anim_spr.offset.y = -12  # Offset upward so it looks like it's erupting from ground
 		geyser.add_child(anim_spr)
 	else:
 		var base_vis = _make_circle_poly(GEYSER_RADIUS, 12)
@@ -493,6 +494,23 @@ func _get_arena_center() -> Vector2:
 		var cam = player_ref.get_node_or_null("Camera2D")
 		if cam: return cam.global_position
 	return Vector2(480, 270)
+
+func _make_anim_from_sheet_rect(sheet_path: String, frame_w: int, frame_h: int, frame_count: int, fps: float) -> AnimatedSprite2D:
+	var tex = load(sheet_path)
+	var spr = AnimatedSprite2D.new()
+	var anim_frames = SpriteFrames.new()
+	anim_frames.add_animation("default")
+	anim_frames.set_animation_speed("default", fps)
+	anim_frames.set_animation_loop("default", true)
+	for i in frame_count:
+		var atlas = AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = Rect2(i * frame_w, 0, frame_w, frame_h)
+		anim_frames.add_frame("default", atlas)
+	spr.sprite_frames = anim_frames
+	spr.play("default")
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	return spr
 
 func _make_anim_from_sheet(sheet_path: String, frame_size: int, frame_count: int, fps: float) -> AnimatedSprite2D:
 	var tex = load(sheet_path)
