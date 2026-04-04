@@ -112,15 +112,17 @@ func _do_throw_scrap() -> void:
 	if is_dead or not player_ref or not is_instance_valid(player_ref): return
 	var proj_scene = _proj_scene
 	if not proj_scene: return
-	var dir_to_player = (player_ref.global_position - global_position).normalized()
+	var parent = get_parent()
+	if not parent: return
+	var spawn_pos = global_position
+	var dir_to_player = (player_ref.global_position - spawn_pos).normalized()
 	for i in SCRAP_COUNT:
-		var spread = (i - SCRAP_COUNT / 2.0) * 0.3
+		var spread_angle = (i - SCRAP_COUNT / 2.0) * 0.3
 		var proj = proj_scene.instantiate()
-		proj.global_position = global_position
-		proj.setup(dir_to_player.rotated(spread) * 90.0, 10)
-		var parent = get_parent()
-		if parent:
-			parent.add_child(proj)
+		proj.projectile_type = "saw"
+		parent.add_child(proj)
+		proj.global_position = spawn_pos
+		proj.setup(dir_to_player.rotated(spread_angle) * 120.0, 10)
 
 func _activate_shield() -> void:
 	_is_shielded = true

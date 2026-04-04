@@ -851,6 +851,9 @@ func _die() -> void:
 	set_collision_layer_value(2, false)
 	set_collision_mask_value(1, false)
 	emit_signal("died", xp_value)
+	# Bloodlust — heal player on kill
+	if GameState.perk_lifesteal > 0:
+		GameState.heal(GameState.perk_lifesteal)
 	# Drop XP orb instead of instant XP — player must collect it
 	_drop_xp_orb()
 	if _sfx_death:

@@ -21,25 +21,139 @@ const PERK_ICONS = {
 	"hp_up": "icon_perk_hp.png", "speed_up": "icon_perk_speed.png",
 	"damage_up": "icon_perk_damage.png", "attack_speed": "icon_perk_damage.png",
 	"regen": "icon_perk_hp.png", "xp_boost": "icon_levelup.png",
+	"thick_skin": "icon_shield.png", "iron_jaws": "icon_perk_damage.png",
+	"quick_paws": "icon_perk_speed.png", "scavenger_nose": "icon_bag.png",
+	"second_wind": "icon_heart.png", "bloodlust": "icon_skull.png",
+	"bark_blast": "icon_perk_damage.png", "shadow_step": "icon_clock.png",
+	"thorns": "icon_shield.png", "lucky_find": "icon_bag.png",
 }
 const PERK_ICON_FALLBACK = {
 	"hp_up": "+", "speed_up": ">>", "damage_up": "!!", "attack_speed": "~~",
 	"regen": "%%", "xp_boost": "&&",
+	"thick_skin": "[]", "iron_jaws": "XX", "quick_paws": "<>", "scavenger_nose": "??",
+	"second_wind": "<3", "bloodlust": "##", "bark_blast": "((", "shadow_step": "..",
+	"thorns": "/\\", "lucky_find": "$$",
 }
 const PERK_COLORS = {
 	"hp_up": Color(0.9, 0.3, 0.3), "speed_up": Color(0.3, 0.8, 0.9),
 	"damage_up": Color(1.0, 0.5, 0.2), "attack_speed": Color(0.9, 0.9, 0.3),
 	"regen": Color(0.3, 0.9, 0.4), "xp_boost": Color(0.8, 0.6, 1.0),
+	"thick_skin": Color(0.5, 0.65, 0.85), "iron_jaws": Color(1.0, 0.35, 0.2),
+	"quick_paws": Color(0.4, 0.75, 1.0), "scavenger_nose": Color(0.85, 0.65, 0.3),
+	"second_wind": Color(0.3, 1.0, 0.5), "bloodlust": Color(0.9, 0.15, 0.2),
+	"bark_blast": Color(1.0, 0.75, 0.2), "shadow_step": Color(0.55, 0.3, 0.85),
+	"thorns": Color(0.4, 0.75, 0.3), "lucky_find": Color(1.0, 0.84, 0.0),
 }
 
 const ALL_PERKS = [
-	{"id":"hp_up",        "name":"+25 Max HP",       "desc":"Increase max health by 25"},
-	{"id":"speed_up",     "name":"+15% Speed",        "desc":"Move faster through the arena"},
-	{"id":"damage_up",    "name":"+5 Attack Dmg",     "desc":"Auto-attacks hit harder"},
-	{"id":"attack_speed", "name":"Faster Attacks",    "desc":"-15% attack cooldown"},
-	{"id":"regen",        "name":"Slow Regen",        "desc":"Regenerate 1% max HP every 5 seconds"},
-	{"id":"xp_boost",     "name":"+25% XP",           "desc":"Gain more XP from kills"},
+	{"id":"hp_up",          "name":"+25 Max HP",        "desc":"Increase max health by 25",                    "base_val": 25.0},
+	{"id":"speed_up",       "name":"+15% Speed",        "desc":"Move faster through the arena",                "base_val": 15.0},
+	{"id":"damage_up",      "name":"+5 Attack Dmg",     "desc":"Auto-attacks hit harder",                      "base_val": 5.0},
+	{"id":"attack_speed",   "name":"Faster Attacks",    "desc":"-15% attack cooldown",                         "base_val": 15.0},
+	{"id":"regen",          "name":"Slow Regen",        "desc":"Regenerate 1% max HP every 5 seconds",         "base_val": 0.0},
+	{"id":"xp_boost",       "name":"+25% XP",           "desc":"Gain more XP from kills",                      "base_val": 25.0},
+	{"id":"thick_skin",     "name":"+8% Armor",         "desc":"Reduce all damage taken by 8%",                "base_val": 8.0},
+	{"id":"iron_jaws",      "name":"+5% Crit",          "desc":"Bite attacks have a higher chance to crit",    "base_val": 5.0},
+	{"id":"quick_paws",     "name":"Quick Paws",        "desc":"-20% dodge cooldown",                          "base_val": 20.0},
+	{"id":"scavenger_nose", "name":"Scavenger",         "desc":"+30% pickup magnet range",                     "base_val": 30.0},
+	{"id":"second_wind",    "name":"Second Wind",       "desc":"Heal 30% HP when health drops below 20% (once per run)", "base_val": 0.0},
+	{"id":"bloodlust",      "name":"Bloodlust",         "desc":"Heal 2 HP on each kill",                       "base_val": 2.0},
+	{"id":"bark_blast",     "name":"Bark Blast",        "desc":"+25% bite AoE radius — hit nearby enemies too", "base_val": 25.0},
+	{"id":"shadow_step",    "name":"Shadow Step",       "desc":"+1s sneak duration and -20% sneak cooldown",   "base_val": 1.0},
+	{"id":"thorns",         "name":"Thorns",            "desc":"Enemies take 5 damage when they hit you",      "base_val": 5.0},
+	{"id":"lucky_find",     "name":"Lucky Find",        "desc":"+15% chance for chests to upgrade tier",       "base_val": 15.0},
 ]
+
+# Diminishing returns: each repeat gives 70% of previous bonus
+const DIMINISH_FACTOR = 0.7
+# Hard floors per perk type
+const DIMINISH_FLOORS = {
+	"hp_up": 1.0, "speed_up": 3.0, "damage_up": 1.0,
+	"attack_speed": 3.0, "xp_boost": 5.0,
+	"thick_skin": 2.0, "iron_jaws": 1.0, "quick_paws": 3.0,
+	"scavenger_nose": 5.0, "bloodlust": 1.0, "bark_blast": 5.0,
+	"shadow_step": 0.3, "thorns": 1.0, "lucky_find": 3.0,
+}
+
+func _get_perk_pick_count(perk_id: String) -> int:
+	var count = 0
+	for p in GameState.active_perks:
+		if p == perk_id:
+			count += 1
+	return count
+
+func _get_diminished_value(perk_id: String, base_val: float) -> float:
+	var picks = _get_perk_pick_count(perk_id)
+	var val = base_val * pow(DIMINISH_FACTOR, picks)
+	var floor_val = DIMINISH_FLOORS.get(perk_id, 1.0)
+	return maxf(val, floor_val)
+
+func _get_diminished_perk(perk: Dictionary) -> Dictionary:
+	var p = perk.duplicate()
+	# One-time perks don't diminish
+	if p.id in ["regen", "second_wind"]:
+		return p
+	var base = p.get("base_val", 0.0)
+	var diminished = _get_diminished_value(p.id, base)
+	var picks = _get_perk_pick_count(p.id)
+	if picks > 0:
+		match p.id:
+			"hp_up":
+				var val = int(diminished)
+				p.name = "+%d Max HP" % val
+				p.desc = "Increase max health by %d" % val
+			"speed_up":
+				var val = int(diminished)
+				p.name = "+%d%% Speed" % val
+				p.desc = "Move faster through the arena"
+			"damage_up":
+				var val = int(maxf(diminished, 1.0))
+				p.name = "+%d Attack Dmg" % val
+				p.desc = "Auto-attacks hit harder"
+			"attack_speed":
+				var val = int(diminished)
+				p.name = "-%d%% Cooldown" % val
+				p.desc = "Attack faster"
+			"xp_boost":
+				var val = int(diminished)
+				p.name = "+%d%% XP" % val
+				p.desc = "Gain more XP from kills"
+			"thick_skin":
+				var val = int(diminished)
+				p.name = "+%d%% Armor" % val
+				p.desc = "Reduce all damage taken by %d%%" % val
+			"iron_jaws":
+				var val = int(maxf(diminished, 1.0))
+				p.name = "+%d%% Crit" % val
+				p.desc = "Bite attacks have a higher chance to crit"
+			"quick_paws":
+				var val = int(diminished)
+				p.name = "-%d%% Dodge CD" % val
+				p.desc = "Dodge cooldown reduced by %d%%" % val
+			"scavenger_nose":
+				var val = int(diminished)
+				p.name = "+%d%% Magnet" % val
+				p.desc = "Pickup range increased by %d%%" % val
+			"bloodlust":
+				var val = int(maxf(diminished, 1.0))
+				p.name = "Bloodlust +%d" % val
+				p.desc = "Heal %d HP on each kill" % val
+			"bark_blast":
+				var val = int(diminished)
+				p.name = "+%d%% Bite AoE" % val
+				p.desc = "Bite hits enemies in a wider area"
+			"shadow_step":
+				p.name = "Shadow Step"
+				p.desc = "+%.1fs sneak duration, shorter cooldown" % diminished
+			"thorns":
+				var val = int(maxf(diminished, 1.0))
+				p.name = "Thorns +%d" % val
+				p.desc = "Enemies take %d damage when they hit you" % val
+			"lucky_find":
+				var val = int(diminished)
+				p.name = "+%d%% Luck" % val
+				p.desc = "%d%% chance for chests to upgrade tier" % val
+	return p
 
 # Card deck completion perks (only available when full deck is collected)
 const CARD_PERKS = [
@@ -342,13 +456,15 @@ func _get_num_choices() -> int:
 
 func _build_choice_pool() -> Array:
 	var num_choices = _get_num_choices()
-	# Build stat perk pool
+	# Build stat perk pool with diminishing returns applied to names/descriptions
 	var stat_pool: Array = []
 	for p in ALL_PERKS:
-		# Regen is one-time only — don't offer if already active
+		# One-time perks — don't offer if already active
 		if p.id == "regen" and GameState.perk_regen_active:
 			continue
-		stat_pool.append(p.duplicate())
+		if p.id == "second_wind" and GameState.perk_second_wind:
+			continue
+		stat_pool.append(_get_diminished_perk(p))
 	# Add card deck perks if unlocked and not already chosen
 	var card_db = get_node_or_null("/root/CardDB")
 	if card_db:
@@ -366,14 +482,18 @@ func _build_choice_pool() -> Array:
 	var owned_ids: Array = []
 	for ow in GameState.orbital_weapons:
 		owned_ids.append(ow.id)
+	var slots_full = GameState.orbital_weapons.size() >= OrbitalDB.MAX_ORBITALS
 	for wid in OrbitalDB.get_weapon_ids():
 		var data = OrbitalDB.get_weapon_data(wid)
-		# Check if already at max level
 		var current_lvl = 0
 		for ow in GameState.orbital_weapons:
 			if ow.id == wid:
 				current_lvl = ow.level
+		# Skip weapons at max level
 		if current_lvl >= OrbitalDB.MAX_LEVEL:
+			continue
+		# Skip unowned weapons if all 6 slots are full
+		if slots_full and current_lvl == 0:
 			continue
 		var next_lvl = current_lvl + 1
 		var is_milestone = OrbitalDB.is_visual_upgrade_level(next_lvl)
@@ -388,10 +508,9 @@ func _build_choice_pool() -> Array:
 		weapon_pool.append(wp)
 	weapon_pool.shuffle()
 
-	# Ensure at least 1 weapon if player has <6 orbitals and weapons available
+	# Guarantee at least 1 weapon choice if available
 	var choices: Array = []
-	var can_add_weapon = GameState.orbital_weapons.size() < OrbitalDB.MAX_ORBITALS or not weapon_pool.is_empty()
-	if can_add_weapon and not weapon_pool.is_empty():
+	if not weapon_pool.is_empty():
 		choices.append(weapon_pool.pop_front())
 
 	# Fill remaining slots from mixed pool
@@ -462,20 +581,31 @@ func _apply_orbital(wid: String) -> void:
 
 func _apply(id: String) -> void:
 	var player = get_tree().get_first_node_in_group("player")
+	# Diminished value is calculated BEFORE this pick is added to active_perks
+	# (active_perks.append happens in _on_chosen before _apply, so subtract 1)
+	var picks_before = _get_perk_pick_count(id) - 1  # -1 because already appended
 	match id:
 		"hp_up":
-			GameState.player_max_health += 25
-			GameState.heal(25)
+			var base = 25.0
+			var val = int(maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("hp_up", 1.0)))
+			GameState.player_max_health += val
+			GameState.heal(val)
 		"speed_up":
-			GameState.perk_speed_multiplier *= 1.15
+			var base = 15.0
+			var pct = maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("speed_up", 3.0))
+			GameState.perk_speed_multiplier *= (1.0 + pct / 100.0)
 			if player and "SPEED" in player:
 				player.SPEED = 90.0 * GameState.perk_speed_multiplier
 		"damage_up":
-			GameState.perk_damage_bonus += 5
+			var base = 5.0
+			var val = int(maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("damage_up", 1.0)))
+			GameState.perk_damage_bonus += val
 			if player and "AUTO_ATTACK_DAMAGE" in player:
 				player.AUTO_ATTACK_DAMAGE = 8 + GameState.perk_damage_bonus
 		"attack_speed":
-			GameState.perk_attack_speed_multiplier *= 0.85
+			var base = 15.0
+			var pct = maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("attack_speed", 3.0))
+			GameState.perk_attack_speed_multiplier *= (1.0 - pct / 100.0)
 			var t = player.get_node_or_null("AttackTimer") as Timer if player else null
 			if t:
 				t.wait_time = maxf(0.18, 0.6 * GameState.perk_attack_speed_multiplier)
@@ -499,7 +629,43 @@ func _apply(id: String) -> void:
 						regen_timer.timeout.connect(func(): GameState.heal(2))
 						arena.add_child(regen_timer)
 		"xp_boost":
-			GameState.perk_xp_multiplier *= 1.25
+			var base_xp = 25.0
+			var pct_xp = maxf(base_xp * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("xp_boost", 5.0))
+			GameState.perk_xp_multiplier *= (1.0 + pct_xp / 100.0)
+		"thick_skin":
+			var pct_ts = maxf(8.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("thick_skin", 2.0))
+			GameState.perk_damage_reduction = minf(0.4, GameState.perk_damage_reduction + pct_ts / 100.0)
+		"iron_jaws":
+			var val_ij = int(maxf(5.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("iron_jaws", 1.0)))
+			GameState.perk_crit_bonus += val_ij
+		"quick_paws":
+			var pct_qp = maxf(20.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("quick_paws", 3.0))
+			GameState.perk_dodge_cooldown_mult *= (1.0 - pct_qp / 100.0)
+			if player and "LEAP_COOLDOWN" in player:
+				player.LEAP_COOLDOWN = 1.5 * GameState.perk_dodge_cooldown_mult
+		"scavenger_nose":
+			var pct_sn = maxf(30.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("scavenger_nose", 5.0))
+			GameState.perk_magnet_bonus += pct_sn / 100.0
+		"second_wind":
+			GameState.perk_second_wind = true
+		"bloodlust":
+			var val_bl = int(maxf(2.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bloodlust", 1.0)))
+			GameState.perk_lifesteal += val_bl
+		"bark_blast":
+			var pct_bb = maxf(25.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bark_blast", 5.0))
+			GameState.perk_bite_aoe_bonus += pct_bb / 100.0
+		"shadow_step":
+			var dur_ss = maxf(1.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("shadow_step", 0.3))
+			GameState.perk_sneak_duration_bonus += dur_ss
+			GameState.perk_sneak_cooldown_mult *= 0.8
+			if player and "SNEAK_MAX_DURATION" in player:
+				player.SNEAK_MAX_DURATION = 3.0 + GameState.perk_sneak_duration_bonus
+		"thorns":
+			var val_th = int(maxf(5.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("thorns", 1.0)))
+			GameState.perk_thorns_damage += val_th
+		"lucky_find":
+			var pct_lf = maxf(15.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("lucky_find", 3.0))
+			GameState.perk_chest_upgrade_chance += pct_lf / 100.0
 		"bug_swarm":
 			# Critter deck bonus: summon bugs that deal 3 damage/sec to nearby enemies
 			var arena = get_tree().current_scene

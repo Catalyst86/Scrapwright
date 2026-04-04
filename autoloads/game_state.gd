@@ -94,6 +94,18 @@ var perk_damage_bonus: int = 0
 var perk_attack_speed_multiplier: float = 1.0
 var perk_regen_active: bool = false
 var perk_xp_multiplier: float = 1.0
+var perk_damage_reduction: float = 0.0       # Thick Skin — % damage reduced (0.0–0.4)
+var perk_crit_bonus: int = 0                  # Iron Jaws — extra crit % on bite
+var perk_dodge_cooldown_mult: float = 1.0     # Quick Paws — dodge cooldown multiplier
+var perk_magnet_bonus: float = 0.0            # Scavenger's Nose — pickup range bonus %
+var perk_second_wind: bool = false             # Second Wind — heal at low HP (once per run)
+var perk_second_wind_used: bool = false        # Whether Second Wind has triggered this run
+var perk_lifesteal: int = 0                   # Bloodlust — HP healed per kill
+var perk_bite_aoe_bonus: float = 0.0          # Bark Blast — extra bite AoE radius %
+var perk_sneak_duration_bonus: float = 0.0    # Shadow Step — extra sneak seconds
+var perk_sneak_cooldown_mult: float = 1.0     # Shadow Step — sneak cooldown multiplier
+var perk_thorns_damage: int = 0               # Thorns — damage reflected to attackers
+var perk_chest_upgrade_chance: float = 0.0    # Lucky Find — chest tier upgrade chance
 
 # --- Puppy ability state (read by enemies, HUD) ---
 var is_player_sneaking: bool = false
@@ -311,6 +323,18 @@ func start_new_run() -> void:
 	perk_attack_speed_multiplier = 1.0
 	perk_regen_active = false
 	perk_xp_multiplier = 1.0
+	perk_damage_reduction = 0.0
+	perk_crit_bonus = 0
+	perk_dodge_cooldown_mult = 1.0
+	perk_magnet_bonus = 0.0
+	perk_second_wind = false
+	perk_second_wind_used = false
+	perk_lifesteal = 0
+	perk_bite_aoe_bonus = 0.0
+	perk_sneak_duration_bonus = 0.0
+	perk_sneak_cooldown_mult = 1.0
+	perk_thorns_damage = 0
+	perk_chest_upgrade_chance = 0.0
 	orbital_weapons.clear()
 	_revival_used = false
 	chimera_buff = {}
@@ -379,27 +403,79 @@ func reapply_permanent_bonuses() -> void:
 	perk_attack_speed_multiplier = 1.0
 	perk_regen_active = false
 	perk_xp_multiplier = 1.0
+	perk_damage_reduction = 0.0
+	perk_crit_bonus = 0
+	perk_dodge_cooldown_mult = 1.0
+	perk_magnet_bonus = 0.0
+	perk_second_wind = false
+	# NOTE: perk_second_wind_used is NOT reset here — it persists within the run
+	perk_lifesteal = 0
+	perk_bite_aoe_bonus = 0.0
+	perk_sneak_duration_bonus = 0.0
+	perk_sneak_cooldown_mult = 1.0
+	perk_thorns_damage = 0
+	perk_chest_upgrade_chance = 0.0
 	var hp_bonus_r = permanent.get("max_hp_level", 0) * 10
 	if hp_bonus_r == 0:
 		hp_bonus_r = permanent.get("max_health_bonus", 0)
 	player_max_health = 100 + hp_bonus_r
 
-	# 2. Re-apply level-up perk bonuses from active_perks
-	# NOTE: Must match level_up.gd:_apply() exactly — same IDs, same math
+	# 2. Re-apply level-up perk bonuses from active_perks with diminishing returns
+	# Diminishing formula: base * 0.7^pick_index (matching level_up.gd)
+	const DIMINISH = 0.7
+	const FLOORS = {"hp_up": 1.0, "speed_up": 3.0, "damage_up": 1.0, "attack_speed": 3.0, "xp_boost": 5.0, "thick_skin": 2.0, "iron_jaws": 1.0, "quick_paws": 3.0, "scavenger_nose": 5.0, "bloodlust": 1.0, "bark_blast": 5.0, "shadow_step": 0.3, "thorns": 1.0, "lucky_find": 3.0}
+	var perk_counts := {}  # Track how many times each perk has been applied
 	for perk_id in active_perks:
+		var pick_idx = perk_counts.get(perk_id, 0)
+		perk_counts[perk_id] = pick_idx + 1
 		match perk_id:
 			"damage_up":
-				perk_damage_bonus += 5
+				var val = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("damage_up", 1.0)))
+				perk_damage_bonus += val
 			"speed_up":
-				perk_speed_multiplier = minf(2.0, perk_speed_multiplier * 1.15)  # Cap at 2x base speed
+				var pct = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("speed_up", 3.0))
+				perk_speed_multiplier *= (1.0 + pct / 100.0)
 			"attack_speed":
-				perk_attack_speed_multiplier *= 0.85  # Faster = lower cooldown
+				var pct = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("attack_speed", 3.0))
+				perk_attack_speed_multiplier *= (1.0 - pct / 100.0)
 			"hp_up":
-				player_max_health += 25
+				var val = int(maxf(25.0 * pow(DIMINISH, pick_idx), FLOORS.get("hp_up", 1.0)))
+				player_max_health += val
 			"regen":
 				perk_regen_active = true
 			"xp_boost":
-				perk_xp_multiplier *= 1.25
+				var pct = maxf(25.0 * pow(DIMINISH, pick_idx), FLOORS.get("xp_boost", 5.0))
+				perk_xp_multiplier *= (1.0 + pct / 100.0)
+			"thick_skin":
+				var pct_ts = maxf(8.0 * pow(DIMINISH, pick_idx), FLOORS.get("thick_skin", 2.0))
+				perk_damage_reduction = minf(0.4, perk_damage_reduction + pct_ts / 100.0)
+			"iron_jaws":
+				var val_ij = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("iron_jaws", 1.0)))
+				perk_crit_bonus += val_ij
+			"quick_paws":
+				var pct_qp = maxf(20.0 * pow(DIMINISH, pick_idx), FLOORS.get("quick_paws", 3.0))
+				perk_dodge_cooldown_mult *= (1.0 - pct_qp / 100.0)
+			"scavenger_nose":
+				var pct_sn = maxf(30.0 * pow(DIMINISH, pick_idx), FLOORS.get("scavenger_nose", 5.0))
+				perk_magnet_bonus += pct_sn / 100.0
+			"second_wind":
+				perk_second_wind = true
+			"bloodlust":
+				var val_bl = int(maxf(2.0 * pow(DIMINISH, pick_idx), FLOORS.get("bloodlust", 1.0)))
+				perk_lifesteal += val_bl
+			"bark_blast":
+				var pct_bb = maxf(25.0 * pow(DIMINISH, pick_idx), FLOORS.get("bark_blast", 5.0))
+				perk_bite_aoe_bonus += pct_bb / 100.0
+			"shadow_step":
+				var dur_ss = maxf(1.0 * pow(DIMINISH, pick_idx), FLOORS.get("shadow_step", 0.3))
+				perk_sneak_duration_bonus += dur_ss
+				perk_sneak_cooldown_mult *= 0.8
+			"thorns":
+				var val_th = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("thorns", 1.0)))
+				perk_thorns_damage += val_th
+			"lucky_find":
+				var pct_lf = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("lucky_find", 3.0))
+				perk_chest_upgrade_chance += pct_lf / 100.0
 
 	# 3. Apply permanent upgrade bonuses (new system with legacy fallback)
 	var bite_lvl = permanent.get("bite_damage_level", 0)
@@ -458,6 +534,18 @@ func end_run(keep_materials: bool = false) -> void:
 	perk_attack_speed_multiplier = 1.0
 	perk_regen_active = false
 	perk_xp_multiplier = 1.0
+	perk_damage_reduction = 0.0
+	perk_crit_bonus = 0
+	perk_dodge_cooldown_mult = 1.0
+	perk_magnet_bonus = 0.0
+	perk_second_wind = false
+	perk_second_wind_used = false
+	perk_lifesteal = 0
+	perk_bite_aoe_bonus = 0.0
+	perk_sneak_duration_bonus = 0.0
+	perk_sneak_cooldown_mult = 1.0
+	perk_thorns_damage = 0
+	perk_chest_upgrade_chance = 0.0
 	orbital_weapons.clear()
 
 # --- Stage helpers ---

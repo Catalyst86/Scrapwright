@@ -17,7 +17,10 @@ const TYPE_COLORS = {
 	"ice":   Color(0.5, 0.85, 1.0),
 	"steam": Color(0.85, 0.85, 0.9),
 	"void":  Color(0.6, 0.2, 0.9),
+	"saw":   Color(0.7, 0.7, 0.75),
 }
+
+var _spin_speed: float = 0.0
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -35,14 +38,47 @@ func _ready() -> void:
 	if ResourceLoader.exists(tex_path):
 		var spr = Sprite2D.new()
 		spr.texture = load(tex_path)
-		spr.scale = Vector2(0.35, 0.35)  # Scale down 32x32 sprites to ~11px
+		spr.scale = Vector2(1.25, 1.25)
+		if projectile_type == "saw":
+			_spin_speed = 12.0
 		add_child(spr)
+	elif projectile_type == "saw":
+		# Fallback: code-drawn saw blade
+		_spin_speed = 12.0
+		_build_saw_visual()
 	else:
 		# Fallback: visible colored triangle (sized to match sprites)
 		_poly = Polygon2D.new()
 		_poly.color = TYPE_COLORS.get(projectile_type, Color(1.0, 0.55, 0.1))
-		_poly.polygon = PackedVector2Array([Vector2(-10, -5), Vector2(10, 0), Vector2(-10, 5)])
+		_poly.polygon = PackedVector2Array([Vector2(-14, -7), Vector2(14, 0), Vector2(-14, 7)])
 		add_child(_poly)
+
+func _build_saw_visual() -> void:
+	# Draw a gear/saw blade shape with 8 teeth
+	var points := PackedVector2Array()
+	var teeth := 8
+	var outer_r := 14.0
+	var inner_r := 8.0
+	for i in teeth * 2:
+		var angle = (i / float(teeth * 2)) * TAU
+		var r = outer_r if i % 2 == 0 else inner_r
+		points.append(Vector2(cos(angle) * r, sin(angle) * r))
+
+	# Outer saw body
+	_poly = Polygon2D.new()
+	_poly.polygon = points
+	_poly.color = Color(0.65, 0.65, 0.7)
+	add_child(_poly)
+
+	# Inner circle (axle hole)
+	var center_points := PackedVector2Array()
+	for i in 12:
+		var angle = (i / 12.0) * TAU
+		center_points.append(Vector2(cos(angle) * 3.0, sin(angle) * 3.0))
+	var center = Polygon2D.new()
+	center.polygon = center_points
+	center.color = Color(0.3, 0.3, 0.35)
+	add_child(center)
 
 func setup(velocity: Vector2, damage: int) -> void:
 	vel      = velocity
@@ -51,6 +87,8 @@ func setup(velocity: Vector2, damage: int) -> void:
 
 func _physics_process(delta: float) -> void:
 	position += vel * delta
+	if _spin_speed > 0.0:
+		rotation += _spin_speed * delta
 	lifetime -= delta
 	if lifetime <= 0:
 		queue_free()

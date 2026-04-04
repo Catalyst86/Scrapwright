@@ -71,10 +71,11 @@ func _process(delta: float) -> void:
 	if _fallback:
 		_fallback.offset.y = bob_offset
 
-	# Magnet: float toward player when within range
+	# Magnet: float toward player when within range (enhanced by Scavenger's Nose)
 	if player_ref and is_instance_valid(player_ref):
+		var effective_magnet = MAGNET_RANGE * (1.0 + GameState.perk_magnet_bonus)
 		var dist = global_position.distance_to(player_ref.global_position)
-		if dist < MAGNET_RANGE:
+		if dist < effective_magnet:
 			var dir = (player_ref.global_position - global_position).normalized()
 			global_position += dir * 140.0 * delta
 

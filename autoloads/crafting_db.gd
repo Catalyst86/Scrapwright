@@ -14,6 +14,7 @@ func _init_destructible_yields() -> void:
 	# { prop_type: { material: [min, max] } }
 	destructible_yields = {
 		"crate": {"timber": [1, 2], "organic": [0, 1]},
+		"barrel": {"iron_scrap": [0, 2]},
 		"barrel_empty": {"iron_scrap": [1, 2]},
 		"barrel_full": {"iron_scrap": [1, 2], "fuel": [1, 2]},
 		"rubble": {"stone": [1, 3]},

@@ -26,7 +26,7 @@ var _is_leaping: bool       = false
 var _leap_timer: float      = 0.0
 var _leap_cooldown: float   = 0.0
 const LEAP_DURATION         = 0.3
-const LEAP_COOLDOWN         = 1.5
+var LEAP_COOLDOWN: float    = 1.5  # Modified by Quick Paws perk
 const LEAP_SPEED            = 280.0
 
 # --- Sneak Mode ---
@@ -36,7 +36,7 @@ var _sneak_duration: float  = 0.0
 var _sneak_cooldown: float  = 0.0
 var _sneak_time_used: float = 0.0
 const SNEAK_SPEED_MULT      = 0.5
-const SNEAK_MAX_DURATION    = 3.0
+var SNEAK_MAX_DURATION: float = 3.0  # Modified by Shadow Step perk
 const SNEAK_MAX_COOLDOWN    = 8.0
 const SNEAK_MIN_COOLDOWN    = 3.0
 
@@ -119,6 +119,8 @@ func _apply_saved_perks() -> void:
 	SPEED = 90.0 * GameState.perk_speed_multiplier
 	AUTO_ATTACK_DAMAGE = 8 + GameState.perk_damage_bonus
 	attack_timer.wait_time = maxf(0.18, AUTO_ATTACK_COOLDOWN * GameState.perk_attack_speed_multiplier)
+	LEAP_COOLDOWN = 1.5 * GameState.perk_dodge_cooldown_mult
+	SNEAK_MAX_DURATION = 3.0 + GameState.perk_sneak_duration_bonus
 	_spawn_orbital_weapons()
 
 func _setup_audio() -> void:
@@ -601,9 +603,10 @@ func _auto_attack() -> void:
 			if _sfx_crit_hit:
 				_sfx_crit_hit.pitch_scale = randf_range(0.9, 1.1)
 				_sfx_crit_hit.play()
-		# Crit chance from Sharp Fangs upgrade + Chimera buff
+		# Crit chance from Sharp Fangs upgrade + Chimera buff + Iron Jaws perk
 		var is_crit := false
 		var crit_pct = GameState.permanent.get("crit_chance_level", 0) * 3
+		crit_pct += GameState.perk_crit_bonus
 		if GameState.chimera_buff.get("effect", "") == "crit":
 			crit_pct += int(GameState.chimera_buff.value)
 		if crit_pct > 0 and randf() * 100.0 < crit_pct:
@@ -614,6 +617,16 @@ func _auto_attack() -> void:
 				_sfx_crit_hit.play()
 		if current_target.has_method("take_damage"):
 			current_target.take_damage(actual_damage, global_position)
+		# Bark Blast — AoE splash damage to nearby enemies
+		if GameState.perk_bite_aoe_bonus > 0.0:
+			var aoe_range = AUTO_ATTACK_RANGE * GameState.perk_bite_aoe_bonus
+			var splash_dmg = int(maxf(1, actual_damage * 0.5))
+			for enemy in get_tree().get_nodes_in_group("enemies"):
+				if enemy == current_target: continue
+				if not is_instance_valid(enemy) or enemy.is_dead: continue
+				if current_target.global_position.distance_to(enemy.global_position) < aoe_range:
+					if enemy.has_method("take_damage"):
+						enemy.take_damage(splash_dmg, global_position)
 		facing_dir = (current_target.global_position - global_position).normalized()
 		if _sfx_bark_attack:
 			_sfx_bark_attack.pitch_scale = randf_range(0.9, 1.1)
@@ -813,7 +826,7 @@ func _animate_sprite(delta: float) -> void:
 	sprite.rotation = 0.0
 
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, from_enemy: Node = null) -> void:
 	if is_dead: return
 	if _is_leaping: return  # Invincible during dodge leap
 	# Debug god mode — gated behind arena.DEBUG_ENABLED
@@ -829,7 +842,21 @@ func take_damage(amount: int) -> void:
 		_collect_timer = 0.0
 	if _is_sneaking: _end_sneak()
 	_sneak_ambush_ready = false
-	GameState.take_damage(amount)
+	# Thick Skin — damage reduction
+	var reduced = amount
+	if GameState.perk_damage_reduction > 0.0:
+		reduced = int(maxf(1.0, amount * (1.0 - GameState.perk_damage_reduction)))
+	GameState.take_damage(reduced)
+	# Thorns — reflect damage back to attacker
+	if GameState.perk_thorns_damage > 0 and from_enemy and is_instance_valid(from_enemy):
+		if from_enemy.has_method("take_damage"):
+			from_enemy.take_damage(GameState.perk_thorns_damage, global_position)
+	# Second Wind — emergency heal at low HP
+	if GameState.perk_second_wind and not GameState.perk_second_wind_used:
+		if GameState.player_health > 0 and GameState.player_health < GameState.player_max_health * 0.2:
+			GameState.perk_second_wind_used = true
+			var heal_amount = int(GameState.player_max_health * 0.3)
+			GameState.heal(heal_amount)
 	var lethal = GameState.player_health <= 0
 	if _sfx_hurt and not lethal:
 		_sfx_hurt.pitch_scale = randf_range(0.9, 1.1)

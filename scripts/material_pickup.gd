@@ -65,9 +65,12 @@ func _process(delta: float) -> void:
 		var has_magnet = GameState.permanent.get("bag_level", 0) >= 5 or magnet_level > 0
 		if not has_magnet and player_ref.has_meta("has_magnet"):
 			has_magnet = true
+		# Scavenger's Nose perk also enables magnet
+		if GameState.perk_magnet_bonus > 0.0:
+			has_magnet = true
 		if has_magnet:
 			var base_range = 80.0
-			var magnet_range = base_range * (1.0 + magnet_level * 0.15)
+			var magnet_range = base_range * (1.0 + magnet_level * 0.15 + GameState.perk_magnet_bonus)
 			var dist = global_position.distance_to(player_ref.global_position)
 			if dist < magnet_range:
 				var dir = (player_ref.global_position - global_position).normalized()

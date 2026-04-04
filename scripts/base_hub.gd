@@ -108,6 +108,7 @@ var _category_nodes: Dictionary = {}
 var _tab_containers: Dictionary = {}
 var _tab_buttons: Dictionary = {}
 var _udb: Node = null
+var _wave_indicator: Label = null
 
 # ===================================================================
 # LIFECYCLE
@@ -1244,6 +1245,18 @@ func _setup_bottom_bar() -> void:
 		_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
 	_enter_dungeon_btn.add_theme_font_size_override("font_size", 16)
 
+	# Wave indicator above Enter Dungeon button
+	_wave_indicator = Label.new()
+	_wave_indicator.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wave_indicator.add_theme_font_size_override("font_size", 11)
+	_wave_indicator.add_theme_color_override("font_color", Color(0.9, 0.8, 0.5))
+	_wave_indicator.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	_wave_indicator.add_theme_constant_override("shadow_offset_x", 1)
+	_wave_indicator.add_theme_constant_override("shadow_offset_y", 1)
+	_wave_indicator.z_index = 51
+	add_child(_wave_indicator)
+	_update_wave_indicator()
+
 	# Junkyard — use dedicated button asset
 	var junkyard_tex = _load_tex("res://assets/sprites/hub_ui/junkyard_btn.png")
 	if junkyard_tex:
@@ -1260,6 +1273,20 @@ func _setup_bottom_bar() -> void:
 	_enter_dungeon_btn.pressed.connect(_start_run)
 	_junkyard_btn.pressed.connect(_enter_junkyard)
 	_wardrobe_btn.pressed.connect(_open_armor_popup)
+
+func _update_wave_indicator() -> void:
+	if not _wave_indicator:
+		return
+	var wave = GameState.current_wave
+	var total = GameState.total_waves
+	if wave <= 0:
+		_wave_indicator.text = "Wave 1 / %d" % total
+	else:
+		_wave_indicator.text = "Wave %d / %d" % [wave, total]
+	# Position centered above the Enter Dungeon button
+	var btn_center_x = _enter_dungeon_btn.position.x + _enter_dungeon_btn.size.x * 0.5
+	_wave_indicator.position = Vector2(btn_center_x - 60, _enter_dungeon_btn.position.y - 20)
+	_wave_indicator.size = Vector2(120, 20)
 
 # ===================================================================
 # ARMOR POPUP

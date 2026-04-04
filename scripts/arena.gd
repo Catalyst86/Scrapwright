@@ -4,7 +4,7 @@ extends Node2D
 # Arena — Main combat scene
 # ============================================================
 
-const DEBUG_ENABLED := false  # Set to true during development only
+const DEBUG_ENABLED := true  # Set to true during development only
 
 enum ArenaPhase { PREP, COMBAT, CHEST_PHASE, TRANSITION }
 
@@ -684,7 +684,13 @@ func _on_chest_key_chosen(chest_idx: int, tier: String) -> void:
 		return
 
 	_chest_states[chest_idx].opened = true
-	_chest_states[chest_idx].chosen_tier = tier
+	# Lucky Find — chance to upgrade chest tier
+	var lucky_tier = tier
+	if GameState.perk_chest_upgrade_chance > 0.0 and randf() < GameState.perk_chest_upgrade_chance:
+		match tier:
+			"bronze": lucky_tier = "silver"
+			"silver": lucky_tier = "gold"
+	_chest_states[chest_idx].chosen_tier = lucky_tier
 	_chest_states[chest_idx].playing_open = true
 	_chest_states[chest_idx].open_frame_idx = 0
 	_chest_states[chest_idx].anim_timer = 0.0
