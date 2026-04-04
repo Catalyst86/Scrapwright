@@ -25,7 +25,7 @@ func enter_junkyard() -> void:
 		"_materials_at_run_start": GameState._materials_at_run_start.duplicate(),
 		"keys": GameState.keys.duplicate(),
 		"active_perks": GameState.active_perks.duplicate(),
-		"orbital_weapons": GameState.orbital_weapons.duplicate(),
+		"orbital_weapons": GameState.orbital_weapons.duplicate(true),
 		"perk_speed_multiplier": GameState.perk_speed_multiplier,
 		"perk_damage_bonus": GameState.perk_damage_bonus,
 		"perk_attack_speed_multiplier": GameState.perk_attack_speed_multiplier,
@@ -46,7 +46,11 @@ func enter_junkyard() -> void:
 	# Apply permanent upgrades fresh (like start_new_run but isolated)
 	GameState.run_in_progress = false
 	GameState.current_wave = 0
-	GameState.player_max_health = 100 + GameState.permanent.get("max_health_bonus", 0)
+	# Base HP + new upgrade system (with legacy fallback)
+	var hp_bonus = GameState.permanent.get("max_hp_level", 0) * 10
+	if hp_bonus == 0:
+		hp_bonus = GameState.permanent.get("max_health_bonus", 0)
+	GameState.player_max_health = 100 + hp_bonus
 	GameState.player_health = GameState.player_max_health
 	GameState.player_xp = 0
 	GameState.player_level = 1
@@ -64,11 +68,42 @@ func enter_junkyard() -> void:
 	GameState.perk_attack_speed_multiplier = 1.0
 	GameState.perk_regen_active = false
 	GameState.perk_xp_multiplier = 1.0
+	GameState.perk_damage_reduction = 0.0
+	GameState.perk_crit_bonus = 0
+	GameState.perk_dodge_cooldown_mult = 1.0
+	GameState.perk_magnet_bonus = 0.0
+	GameState.perk_second_wind = false
+	GameState.perk_second_wind_used = false
+	GameState.perk_lifesteal = 0
+	GameState.perk_bite_aoe_bonus = 0.0
+	GameState.perk_sneak_duration_bonus = 0.0
+	GameState.perk_sneak_cooldown_mult = 1.0
+	GameState.perk_thorns_damage = 0
+	GameState.perk_chest_upgrade_chance = 0.0
+	GameState.extra_lives = GameState.permanent.get("mutation_feral_howl", 0)
 	GameState.is_player_sneaking = false
 	GameState.reset_dig_charges()
+	# Apply ALL permanent upgrade bonuses (new system with legacy fallback)
+	var bite_lvl = GameState.permanent.get("bite_damage_level", 0)
+	if bite_lvl > 0:
+		GameState.perk_damage_bonus += bite_lvl
+	else:
+		GameState.perk_damage_bonus += GameState.permanent.get("forge_level", 0) * 3
+	var aspd_lvl = GameState.permanent.get("attack_speed_level", 0)
+	if aspd_lvl > 0:
+		GameState.perk_attack_speed_multiplier *= pow(0.95, aspd_lvl)
+	var xp_lvl = GameState.permanent.get("xp_gain_level", 0)
+	if xp_lvl > 0:
+		GameState.perk_xp_multiplier *= (1.0 + xp_lvl * 0.05)
+	# Card deck bonuses
+	var card_db = get_node_or_null("/root/CardDB")
+	if card_db and card_db.has_method("get_stat_bonuses"):
+		var bonuses = card_db.get_stat_bonuses()
+		GameState.player_max_health += bonuses.get("max_hp", 0)
+		GameState.perk_damage_bonus += bonuses.get("damage", 0)
+	GameState.player_health = GameState.player_max_health
+	# Armor stats
 	GameState.apply_armor_stats()
-	# Chew Toy bonus from forge
-	GameState.perk_damage_bonus += GameState.permanent.get("forge_level", 0) * 3
 	GameState.set_phase(GameState.Phase.ARENA_COMBAT)
 
 func exit_junkyard() -> void:
@@ -104,7 +139,7 @@ func exit_junkyard() -> void:
 	GameState._materials_at_run_start = pre_junkyard_mats.duplicate()
 	GameState.keys = _snapshot.get("keys", {}).duplicate()
 	GameState.active_perks = _snapshot.get("active_perks", []).duplicate()
-	GameState.orbital_weapons = _snapshot.get("orbital_weapons", []).duplicate()
+	GameState.orbital_weapons = _snapshot.get("orbital_weapons", []).duplicate(true)
 	GameState.perk_speed_multiplier = _snapshot.get("perk_speed_multiplier", 1.0)
 	GameState.perk_damage_bonus = _snapshot.get("perk_damage_bonus", 0)
 	GameState.perk_attack_speed_multiplier = _snapshot.get("perk_attack_speed_multiplier", 1.0)
