@@ -25,6 +25,12 @@ var _burn_ticks_remaining := 0
 var _has_directional_sprites: bool = false
 var _current_facing: String = "south"  # "south", "east", "west"
 
+# --- Boss Phase System ---
+var _boss_phase: int = 1                      # Current phase (1, 2, or 3)
+var _phase_transitioning: bool = false        # True during phase transition animation
+var _phase_2_threshold: float = 0.66          # HP % to enter phase 2
+var _phase_3_threshold: float = 0.33          # HP % to enter phase 3
+
 # --- Audio ---
 var _sfx_spawn: AudioStreamPlayer2D = null
 var _sfx_melee: AudioStreamPlayer2D = null
@@ -811,6 +817,15 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 		_hit_retreat_timer = HIT_RETREAT_DURATION
 		_hit_retreat_dir = -velocity.normalized()
 	_show_damage_number(amount)
+	# Boss phase transitions
+	if not _phase_transitioning:
+		var hp_pct = float(health) / float(max_health)
+		if _boss_phase == 1 and hp_pct <= _phase_2_threshold:
+			_boss_phase = 2
+			_on_phase_change(2)
+		elif _boss_phase == 2 and hp_pct <= _phase_3_threshold:
+			_boss_phase = 3
+			_on_phase_change(3)
 	if health <= 0:
 		# Skip damage flash on killing blow — go straight to death
 		if sprite: sprite.modulate = Color.WHITE
@@ -844,6 +859,65 @@ func _show_damage_number(amount: int) -> void:
 	tw3.tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.25)
 	tw3.set_parallel(false)
 	tw3.tween_callback(lbl.queue_free)
+
+# --- Boss Phase System (override in boss subclasses) ---
+func _on_phase_change(new_phase: int) -> void:
+	# Override in boss scripts to handle phase transitions
+	# Flash white to signal phase change
+	if sprite:
+		var tw = create_tween()
+		tw.tween_property(sprite, "modulate", Color(2.5, 2.5, 2.5), 0.15)
+		tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
+
+func _show_boss_warning(text: String) -> void:
+	# Show a warning banner via the arena's HUD
+	var arena = get_tree().current_scene
+	if arena and arena.has_method("_show_banner"):
+		arena._show_banner(text, Color(1.0, 0.3, 0.3), 2.0)
+
+func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10) -> Node2D:
+	# Spawn a destructible cover obstacle at the given position
+	var obstacle = StaticBody2D.new()
+	obstacle.collision_layer = 1  # Wall layer — blocks projectiles and movement
+	obstacle.collision_mask = 0
+	obstacle.global_position = pos
+	obstacle.add_to_group("boss_obstacles")
+
+	var col = CollisionShape2D.new()
+	var shape = CircleShape2D.new()
+	shape.radius = 14.0
+	col.shape = shape
+	obstacle.add_child(col)
+
+	var tex_path = "res://assets/sprites/boss_fx/%s.png" % sprite_name
+	if ResourceLoader.exists(tex_path):
+		var spr = Sprite2D.new()
+		spr.texture = load(tex_path)
+		obstacle.add_child(spr)
+	else:
+		# Fallback colored circle
+		var fallback = Polygon2D.new()
+		var pts = PackedVector2Array()
+		for i in 12:
+			var angle = TAU * i / 12.0
+			pts.append(Vector2(cos(angle) * 12, sin(angle) * 12))
+		fallback.polygon = pts
+		fallback.color = Color(0.5, 0.4, 0.3, 0.8)
+		obstacle.add_child(fallback)
+
+	# Make it destructible — store HP as metadata
+	obstacle.set_meta("hp", hp)
+	obstacle.set_meta("max_hp", hp)
+
+	var parent = get_parent()
+	if parent:
+		parent.add_child(obstacle)
+	return obstacle
+
+func _clear_boss_obstacles() -> void:
+	for obs in get_tree().get_nodes_in_group("boss_obstacles"):
+		if is_instance_valid(obs):
+			obs.queue_free()
 
 func _die() -> void:
 	if is_dead: return
