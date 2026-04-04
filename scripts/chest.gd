@@ -286,6 +286,8 @@ func _exit_tree() -> void:
 
 func _on_tier_chosen(tier: String) -> void:
 	_close_key_choice()
+	if opened:
+		return
 	if GameState.use_key(tier):
 		_chosen_tier = tier
 		_open_chest()

@@ -595,7 +595,7 @@ func _apply(id: String) -> void:
 			var pct = maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("speed_up", 3.0))
 			GameState.perk_speed_multiplier *= (1.0 + pct / 100.0)
 			if player and "SPEED" in player:
-				player.SPEED = 90.0 * GameState.perk_speed_multiplier
+				player.SPEED = maxf(10.0, 90.0 * GameState.perk_speed_multiplier)
 		"damage_up":
 			var base = 5.0
 			var val = int(maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("damage_up", 1.0)))
@@ -626,6 +626,7 @@ func _apply(id: String) -> void:
 						regen_timer.name = "PerkRegenTimer"
 						regen_timer.wait_time = 5.0
 						regen_timer.autostart = true
+						regen_timer.process_mode = Node.PROCESS_MODE_INHERIT
 						regen_timer.timeout.connect(func(): GameState.heal(2))
 						arena.add_child(regen_timer)
 		"xp_boost":
@@ -642,7 +643,7 @@ func _apply(id: String) -> void:
 			var pct_qp = maxf(20.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("quick_paws", 3.0))
 			GameState.perk_dodge_cooldown_mult *= (1.0 - pct_qp / 100.0)
 			if player and "LEAP_COOLDOWN" in player:
-				player.LEAP_COOLDOWN = 1.5 * GameState.perk_dodge_cooldown_mult
+				player.LEAP_COOLDOWN = maxf(0.8, 1.5 * GameState.perk_dodge_cooldown_mult)
 		"scavenger_nose":
 			var pct_sn = maxf(30.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("scavenger_nose", 5.0))
 			GameState.perk_magnet_bonus += pct_sn / 100.0

@@ -116,10 +116,10 @@ func _exit_tree() -> void:
 
 func _apply_saved_perks() -> void:
 	# Re-apply perk stat bonuses from GameState (survives scene changes)
-	SPEED = 90.0 * GameState.perk_speed_multiplier
+	SPEED = maxf(10.0, 90.0 * GameState.perk_speed_multiplier)
 	AUTO_ATTACK_DAMAGE = 8 + GameState.perk_damage_bonus
-	attack_timer.wait_time = maxf(0.18, AUTO_ATTACK_COOLDOWN * GameState.perk_attack_speed_multiplier)
-	LEAP_COOLDOWN = 1.5 * GameState.perk_dodge_cooldown_mult
+	attack_timer.wait_time = maxf(0.18, AUTO_ATTACK_COOLDOWN * maxf(0.1, GameState.perk_attack_speed_multiplier))
+	LEAP_COOLDOWN = maxf(0.8, 1.5 * GameState.perk_dodge_cooldown_mult)
 	SNEAK_MAX_DURATION = 3.0 + GameState.perk_sneak_duration_bonus
 	_spawn_orbital_weapons()
 

@@ -501,7 +501,10 @@ func reapply_permanent_bonuses() -> void:
 	# 5. Apply armor stats (on top of everything)
 	apply_armor_stats()
 
-	# 6. Clamp health to new max
+	# 6. Clamp all stat multipliers to safe ranges
+	perk_speed_multiplier = maxf(0.1, perk_speed_multiplier)
+	perk_attack_speed_multiplier = maxf(0.1, perk_attack_speed_multiplier)
+	perk_dodge_cooldown_mult = maxf(0.5, perk_dodge_cooldown_mult)
 	player_health = mini(player_health, player_max_health)
 	# Dog House regen is handled by arena.gd _restore_regen_perk() on scene load
 

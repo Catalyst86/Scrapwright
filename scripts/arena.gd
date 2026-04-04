@@ -522,11 +522,13 @@ func _make_tier_btn_sb(tier_color: Color, state: String) -> StyleBoxFlat:
 
 func _refresh_chest_event_ui() -> void:
 	for i in _chest_key_panels.size():
+		if i >= _chest_states.size():
+			break
 		var panel = _chest_key_panels[i]
 		for child in panel.get_children():
 			child.queue_free()
 
-		if _chest_states[i].opened:
+		if _chest_states[i].get("opened", false):
 			continue
 
 		# Prompt text
@@ -1143,6 +1145,7 @@ func _restore_card_perks() -> void:
 		bug_timer.name = "BugSwarmTimer"
 		bug_timer.wait_time = 1.0
 		bug_timer.autostart = true
+		bug_timer.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
 		bug_timer.timeout.connect(func():
 			if not p or not is_instance_valid(p): return
 			for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -1176,6 +1179,7 @@ func _restore_card_perks() -> void:
 		vine_timer.name = "VineSnareTimer"
 		vine_timer.wait_time = 0.5
 		vine_timer.autostart = true
+		vine_timer.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
 		vine_timer.timeout.connect(func():
 			if not p2 or not is_instance_valid(p2): return
 			for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -1197,6 +1201,7 @@ func _restore_regen_perk() -> void:
 			regen_t.name = "PerkRegenTimer"
 			regen_t.wait_time = 5.0
 			regen_t.autostart = true
+			regen_t.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
 			regen_t.timeout.connect(func(): GameState.heal(2))
 			add_child(regen_t)
 	# Health regen: new system (health_regen_level) with fallback to legacy (armory_level)

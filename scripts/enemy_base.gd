@@ -405,6 +405,8 @@ func _physics_process(delta: float) -> void:
 func _move_toward_player(delta: float) -> void:
 	if not player_ref or not is_instance_valid(player_ref):
 		player_ref = get_tree().get_first_node_in_group("player")
+		if not player_ref:
+			return
 		return
 
 	# Sneak detection: if player is sneaking and far enough, lose track
