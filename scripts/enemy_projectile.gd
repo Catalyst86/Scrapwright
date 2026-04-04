@@ -47,10 +47,14 @@ func _ready() -> void:
 		_spin_speed = 12.0
 		_build_saw_visual()
 	else:
-		# Fallback: visible colored triangle (sized to match sprites)
+		# Fallback: visible colored triangle
 		_poly = Polygon2D.new()
 		_poly.color = TYPE_COLORS.get(projectile_type, Color(1.0, 0.55, 0.1))
-		_poly.polygon = PackedVector2Array([Vector2(-14, -7), Vector2(14, 0), Vector2(-14, 7)])
+		# Ice projectiles are smaller (ice archer is a small enemy)
+		if projectile_type == "ice":
+			_poly.polygon = PackedVector2Array([Vector2(-8, -4), Vector2(8, 0), Vector2(-8, 4)])
+		else:
+			_poly.polygon = PackedVector2Array([Vector2(-14, -7), Vector2(14, 0), Vector2(-14, 7)])
 		add_child(_poly)
 
 func _build_saw_visual() -> void:
