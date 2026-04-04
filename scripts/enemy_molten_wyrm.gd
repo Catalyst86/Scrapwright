@@ -173,7 +173,7 @@ func _do_burrow_strikes(strikes_left: int) -> void:
 	global_position = target_pos
 
 	# Spawn dust visual
-	_spawn_burrow_dust(target_pos, parent)
+	_spawn_burrow_dust(target_pos)
 
 	# Spawn eruption impact
 	_spawn_eruption_impact(target_pos, parent)
@@ -202,56 +202,50 @@ func _create_burrow_warning(pos: Vector2, parent: Node) -> Node2D:
 	warning.global_position = pos
 	warning.z_index = -1
 
-	# Try to use warning_circle.png, fallback to procedural
-	var tex_path = "res://assets/sprites/boss_fx/warning_circle.png"
-	if ResourceLoader.exists(tex_path):
-		var spr = Sprite2D.new()
-		spr.texture = load(tex_path)
-		spr.scale = Vector2(1.5, 1.5)
-		spr.modulate = Color(1.0, 0.4, 0.0, 0.6)
-		warning.add_child(spr)
+	# Use animated warning circle spritesheet
+	var sheet_path = "res://assets/sprites/boss_fx/warning_circle_anim_sheet.png"
+	if ResourceLoader.exists(sheet_path):
+		var anim_spr = _make_anim_from_sheet(sheet_path, 48, 7, 6.0)
+		anim_spr.scale = Vector2(1.5, 1.5)
+		anim_spr.modulate = Color(1.0, 0.4, 0.0, 0.8)
+		warning.add_child(anim_spr)
 	else:
 		var circle = _make_circle_poly(BURROW_STRIKE_RADIUS, 16)
 		circle.color = Color(1.0, 0.4, 0.0, 0.35)
 		warning.add_child(circle)
-		var inner = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.5, 12)
-		inner.color = Color(1.0, 0.6, 0.1, 0.5)
-		warning.add_child(inner)
 
 	parent.add_child(warning)
 
-	# Pulse animation
 	var pulse = warning.create_tween().set_loops(4)
 	pulse.tween_property(warning, "modulate:a", 1.0, 0.25)
 	pulse.tween_property(warning, "modulate:a", 0.3, 0.25)
 
 	return warning
 
-func _spawn_burrow_dust(pos: Vector2, parent: Node) -> void:
+func _spawn_burrow_dust(pos: Vector2) -> void:
 	var dust = Node2D.new()
 	dust.global_position = pos
 	dust.z_index = 5
 
-	# Try to use burrow_dust.png, fallback to procedural dust puffs
-	var tex_path = "res://assets/sprites/boss_fx/burrow_dust.png"
-	if ResourceLoader.exists(tex_path):
-		var spr = Sprite2D.new()
-		spr.texture = load(tex_path)
-		spr.scale = Vector2(1.5, 1.5)
-		dust.add_child(spr)
+	# Use animated dust spritesheet
+	var sheet_path = "res://assets/sprites/boss_fx/burrow_dust_anim_sheet.png"
+	if ResourceLoader.exists(sheet_path):
+		var anim_spr = _make_anim_from_sheet(sheet_path, 32, 5, 10.0)
+		anim_spr.scale = Vector2(2.0, 2.0)
+		dust.add_child(anim_spr)
 	else:
-		# Procedural dust — several fading circles
 		for i in 6:
 			var puff = _make_circle_poly(randf_range(6, 14), 8)
 			puff.color = Color(0.7, 0.5, 0.3, 0.6)
 			puff.position = Vector2(randf_range(-15, 15), randf_range(-15, 15))
 			dust.add_child(puff)
 
-	parent.add_child(dust)
+	var container = get_parent() if get_parent() else self
+	container.add_child(dust)
 
 	var tw = dust.create_tween()
-	tw.tween_property(dust, "scale", Vector2(1.5, 1.5), 0.3)
-	tw.tween_property(dust, "modulate:a", 0.0, 0.4)
+	tw.tween_property(dust, "scale", Vector2(2.5, 2.5), 0.4)
+	tw.tween_property(dust, "modulate:a", 0.0, 0.5)
 	tw.tween_callback(dust.queue_free)
 
 func _spawn_eruption_impact(pos: Vector2, parent: Node) -> void:
@@ -309,19 +303,16 @@ func _create_geyser(pos: Vector2) -> Area2D:
 	col.shape = shape
 	geyser.add_child(col)
 
-	# Visual — try lava_geyser.png, fallback procedural
-	var tex_path = "res://assets/sprites/boss_fx/lava_geyser.png"
-	if ResourceLoader.exists(tex_path):
-		var spr = Sprite2D.new()
-		spr.texture = load(tex_path)
-		spr.scale = Vector2(1.5, 1.5)
-		geyser.add_child(spr)
+	# Visual — use animated lava geyser spritesheet
+	var sheet_path = "res://assets/sprites/boss_fx/lava_geyser_anim_sheet.png"
+	if ResourceLoader.exists(sheet_path):
+		var anim_spr = _make_anim_from_sheet(sheet_path, 32, 5, 8.0)
+		anim_spr.scale = Vector2(2.0, 2.0)
+		geyser.add_child(anim_spr)
 	else:
-		# Procedural geyser — glowing lava column base
 		var base_vis = _make_circle_poly(GEYSER_RADIUS, 12)
 		base_vis.color = Color(1.0, 0.3, 0.0, 0.5)
 		geyser.add_child(base_vis)
-
 		var core_vis = _make_circle_poly(GEYSER_RADIUS * 0.5, 8)
 		core_vis.color = Color(1.0, 0.7, 0.2, 0.7)
 		geyser.add_child(core_vis)
@@ -482,13 +473,40 @@ func _lava_spread() -> void:
 		var angle = base_angle + offset
 		var dir = Vector2(cos(angle), sin(angle))
 		var proj = proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.global_position = global_position + dir * 12.0
 		proj.projectile_type = "lava"
 		proj.setup(dir * LAVA_PROJ_SPEED, damage)
 		parent.add_child(proj)
 
+func _die() -> void:
+	for g in _geyser_nodes:
+		if is_instance_valid(g): g.queue_free()
+	_geyser_nodes.clear()
+	_burrow_active = false
+	if sprite: sprite.modulate.a = 1.0
+	if _dot and is_instance_valid(_dot): _dot.modulate.a = 1.0
+	super._die()
+
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
+
+func _make_anim_from_sheet(sheet_path: String, frame_size: int, frame_count: int, fps: float) -> AnimatedSprite2D:
+	var tex = load(sheet_path)
+	var spr = AnimatedSprite2D.new()
+	var frames = SpriteFrames.new()
+	frames.add_animation("default")
+	frames.set_animation_speed("default", fps)
+	frames.set_animation_loop("default", true)
+	for i in frame_count:
+		var atlas = AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = Rect2(i * frame_size, 0, frame_size, frame_size)
+		frames.add_frame("default", atlas)
+	spr.sprite_frames = frames
+	spr.play("default")
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	return spr
