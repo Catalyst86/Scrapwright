@@ -311,32 +311,74 @@ func _start_laser_sweep() -> void:
 	_build_laser_beam(parent, arena_center, false)
 
 func _build_laser_beam(parent: Node, center: Vector2, is_horizontal: bool) -> void:
-	# Create segmented laser with gaps
-	# Horizontal beam: segments go left-to-right, beam sweeps north-south
-	# Vertical beam: segments go top-to-bottom, beam sweeps east-west
 	var total_length = 900.0
 	var start_offset = -total_length / 2.0
 	var pos_along = start_offset
+
+	# Load laser sprites
+	var seg_tex = load("res://assets/sprites/boss_fx/laser_segment.png") if ResourceLoader.exists("res://assets/sprites/boss_fx/laser_segment.png") else null
+	var cap_l_tex = load("res://assets/sprites/boss_fx/laser_cap_left.png") if ResourceLoader.exists("res://assets/sprites/boss_fx/laser_cap_left.png") else null
+	var cap_r_tex = load("res://assets/sprites/boss_fx/laser_cap_right.png") if ResourceLoader.exists("res://assets/sprites/boss_fx/laser_cap_right.png") else null
 
 	while pos_along < total_length / 2.0:
 		var seg_len = minf(LASER_SEGMENT_LEN, total_length / 2.0 - pos_along)
 		if seg_len <= 0: break
 
-		# Line2D visual
-		var line = Line2D.new()
-		line.width = LASER_WIDTH
-		line.default_color = Color(0.2, 1.0, 0.2, 0.9)
-		line.z_index = 10
-		if is_horizontal:
-			line.add_point(Vector2(pos_along, 0))
-			line.add_point(Vector2(pos_along + seg_len, 0))
+		# Visual: tile laser_segment sprites across the segment length
+		var vis_container = Node2D.new()
+		vis_container.z_index = 10
+		if seg_tex:
+			var tile_w = seg_tex.get_width()
+			var num_tiles = ceili(seg_len / tile_w)
+			for t in num_tiles:
+				var spr = Sprite2D.new()
+				spr.texture = seg_tex
+				spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				if is_horizontal:
+					spr.position = Vector2(pos_along + t * tile_w + tile_w / 2.0, 0)
+				else:
+					spr.position = Vector2(0, pos_along + t * tile_w + tile_w / 2.0)
+					spr.rotation = TAU / 4.0  # Rotate 90 degrees for vertical
+				vis_container.add_child(spr)
+			# End caps
+			if cap_l_tex:
+				var cap_l = Sprite2D.new()
+				cap_l.texture = cap_l_tex
+				cap_l.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				cap_l.scale = Vector2(0.5, 0.5)
+				if is_horizontal:
+					cap_l.position = Vector2(pos_along - 4, 0)
+				else:
+					cap_l.position = Vector2(0, pos_along - 4)
+					cap_l.rotation = TAU / 4.0
+				vis_container.add_child(cap_l)
+			if cap_r_tex:
+				var cap_r = Sprite2D.new()
+				cap_r.texture = cap_r_tex
+				cap_r.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				cap_r.scale = Vector2(0.5, 0.5)
+				if is_horizontal:
+					cap_r.position = Vector2(pos_along + seg_len + 4, 0)
+				else:
+					cap_r.position = Vector2(0, pos_along + seg_len + 4)
+					cap_r.rotation = TAU / 4.0
+				vis_container.add_child(cap_r)
 		else:
-			line.add_point(Vector2(0, pos_along))
-			line.add_point(Vector2(0, pos_along + seg_len))
-		parent.add_child(line)
-		_laser_nodes.append({"node": line, "horizontal": is_horizontal, "type": "line"})
+			# Fallback Line2D if sprites missing
+			var line = Line2D.new()
+			line.width = LASER_WIDTH
+			line.default_color = Color(0.2, 1.0, 0.2, 0.9)
+			if is_horizontal:
+				line.add_point(Vector2(pos_along, 0))
+				line.add_point(Vector2(pos_along + seg_len, 0))
+			else:
+				line.add_point(Vector2(0, pos_along))
+				line.add_point(Vector2(0, pos_along + seg_len))
+			vis_container.add_child(line)
+		parent.add_child(vis_container)
+		_laser_nodes.append({"node": vis_container, "horizontal": is_horizontal, "type": "visual"})
 
-		# Damage Area2D
+		# Damage Area2D (separate from visual so collision works independently)
 		var area = Area2D.new()
 		area.collision_layer = 0
 		area.collision_mask = 1
@@ -344,10 +386,10 @@ func _build_laser_beam(parent: Node, center: Vector2, is_horizontal: bool) -> vo
 		var col = CollisionShape2D.new()
 		var shape = RectangleShape2D.new()
 		if is_horizontal:
-			shape.size = Vector2(seg_len, LASER_WIDTH)
+			shape.size = Vector2(seg_len, 16.0)
 			col.position = Vector2(pos_along + seg_len / 2.0, 0)
 		else:
-			shape.size = Vector2(LASER_WIDTH, seg_len)
+			shape.size = Vector2(16.0, seg_len)
 			col.position = Vector2(0, pos_along + seg_len / 2.0)
 		col.shape = shape
 		area.add_child(col)
