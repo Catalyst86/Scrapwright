@@ -3,7 +3,7 @@ extends EnemyBase
 # Fungal Titan — Stage 2 Boss
 # Phase 1: Poison trail (1.5s), spore burst (6s, 6 projectiles), self-heal (10s, 20 HP).
 # Phase 2 "LASER SWEEP": Teleports to left arena edge, fires a bright green laser beam
-#   (Line2D, width 8) that sweeps top to bottom over 3s. 40 damage on contact.
+#   that sweeps top to bottom over 5s. Brings player to 10% HP on contact.
 #   Banner: "DASH!" Teleports back after.
 # Phase 3 "FUNGAL ERUPTION": Poison pools erupt at player's last 5 positions (delayed 1.5s
 #   each). Self-heal increased to 30 HP. Laser sweep repeats every 18s.
@@ -31,11 +31,10 @@ var _laser_line: Line2D = null
 var _laser_area: Area2D = null
 var _pre_laser_position: Vector2 = Vector2.ZERO
 
-const LASER_SWEEP_DURATION = 3.0
+const LASER_SWEEP_DURATION = 5.0  # Slower sweep (was 3s)
 const LASER_SWEEP_COOLDOWN = 18.0
-const LASER_DAMAGE = 40
-const LASER_WIDTH = 8.0
-const LASER_LENGTH = 500.0
+const LASER_WIDTH = 10.0
+const LASER_LENGTH = 900.0  # Covers full arena width
 
 # Fungal eruption state (Phase 3)
 var _eruption_active: bool = false
@@ -234,6 +233,7 @@ func _do_spore_burst() -> void:
 		var angle = (TAU / SPORE_COUNT) * i
 		var dir = Vector2(cos(angle), sin(angle))
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "spore"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 12.0
@@ -350,7 +350,10 @@ func _process_laser_sweep(delta: float) -> void:
 		var bodies = _laser_area.get_overlapping_bodies()
 		for body in bodies:
 			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(LASER_DAMAGE, self)
+				# Bring player to 10% HP instead of flat damage
+				var target_hp = maxi(1, int(GameState.player_max_health * 0.1))
+				var laser_dmg = maxi(1, GameState.player_health - target_hp)
+				body.take_damage(laser_dmg, self)
 
 	# End laser sweep
 	if _laser_sweep_elapsed >= LASER_SWEEP_DURATION:
@@ -493,10 +496,18 @@ func _run_eruption_ticks(pool: Area2D, vis: Node2D, ticks_left: int) -> void:
 		vis.modulate.a = float(ticks_left) / (ERUPTION_POOL_DURATION / 0.5)
 	_run_eruption_ticks(pool, vis, ticks_left - 1)
 
+func _die() -> void:
+	_laser_sweep_active = false
+	if is_instance_valid(_laser_line): _laser_line.queue_free()
+	if is_instance_valid(_laser_area): _laser_area.queue_free()
+	_laser_line = null
+	_laser_area = null
+	super._die()
+
 # --- Arena Center ---
 
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
