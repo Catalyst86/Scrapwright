@@ -19,7 +19,7 @@ const HEAL_AMOUNT = 15
 
 func _ready() -> void:
 	enemy_type       = "spore_mother"
-	max_health       = 450
+	max_health       = 900
 	move_speed       = 22.0
 	damage           = 15
 	xp_value         = 90

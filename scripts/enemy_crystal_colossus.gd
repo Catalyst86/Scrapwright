@@ -18,7 +18,7 @@ var _proj_scene: PackedScene = null
 
 func _ready() -> void:
 	enemy_type       = "crystal_colossus"
-	max_health       = 900
+	max_health       = 1800
 	move_speed       = 22.0
 	damage           = 30
 	xp_value         = 300

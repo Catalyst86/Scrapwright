@@ -15,7 +15,7 @@ const ICE_BLAST_DAMAGE = 15
 
 func _ready() -> void:
 	enemy_type       = "frost_warden"
-	max_health       = 600
+	max_health       = 1200
 	move_speed       = 30.0
 	damage           = 20
 	xp_value         = 200

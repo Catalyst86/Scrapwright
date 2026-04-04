@@ -27,7 +27,7 @@ var _proj_scene: PackedScene = null
 
 func _ready() -> void:
 	enemy_type       = "molten_wyrm"
-	max_health       = 800
+	max_health       = 1600
 	move_speed       = 35.0
 	damage           = 30
 	xp_value         = 150

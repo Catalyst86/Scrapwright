@@ -7,7 +7,7 @@ extends Node
 const MAX_ORBITALS = 6
 const MAX_LEVEL = 20
 const VISUAL_UPGRADE_LEVELS = [5, 10, 15, 20]
-const DIMINISHING_FACTOR = 0.92
+const DIMINISHING_FACTOR = 0.88
 
 # All orbital weapon definitions
 # Stats arrays: [lv1, lv2, lv3] used as calibration points for the scaling formula
@@ -186,7 +186,7 @@ func get_cooldown(weapon_id: String, level: int) -> float:
 	var lv1 = arr[0]
 	var lv3 = arr[2]
 	var decrement = (lv1 - lv3) / 2.0
-	return _scale_stat_down(lv1, decrement, level, 0.15)
+	return _scale_stat_down(lv1, decrement, level, 0.5)
 
 func get_attack_range(weapon_id: String, level: int) -> float:
 	var data = WEAPONS.get(weapon_id, {})

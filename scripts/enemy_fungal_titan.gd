@@ -21,7 +21,7 @@ var _proj_scene: PackedScene = null
 
 func _ready() -> void:
 	enemy_type       = "fungal_titan"
-	max_health       = 650
+	max_health       = 1300
 	move_speed       = 25.0
 	damage           = 20
 	xp_value         = 120

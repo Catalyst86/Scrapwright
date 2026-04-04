@@ -25,7 +25,7 @@ const FIRE_TRAIL_INTERVAL = 0.15
 
 func _ready() -> void:
 	enemy_type       = "ember_drake"
-	max_health       = 550
+	max_health       = 1100
 	move_speed       = 45.0
 	damage           = 22
 	xp_value         = 100

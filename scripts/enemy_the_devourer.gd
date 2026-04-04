@@ -24,7 +24,7 @@ var _pull_time_left: float = 0.0
 
 func _ready() -> void:
 	enemy_type       = "the_devourer"
-	max_health       = 800
+	max_health       = 1600
 	move_speed       = 28.0
 	damage           = 25
 	xp_value         = 300

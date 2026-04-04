@@ -16,7 +16,7 @@ const MINION_COUNT = 2
 
 func _ready() -> void:
 	enemy_type       = "junkyard_mech"
-	max_health       = 500
+	max_health       = 1000
 	move_speed       = 30.0
 	damage           = 25
 	xp_value         = 100

@@ -26,7 +26,7 @@ const SPAWN_COUNT = 3
 
 func _ready() -> void:
 	enemy_type       = "piston_crusher"
-	max_health       = 700
+	max_health       = 1400
 	move_speed       = 35.0
 	damage           = 25
 	xp_value         = 250

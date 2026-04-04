@@ -21,7 +21,7 @@ var _proj_scene: PackedScene = null
 
 func _ready() -> void:
 	enemy_type       = "the_architect"
-	max_health       = 1000
+	max_health       = 2000
 	move_speed       = 25.0
 	damage           = 20
 	xp_value         = 400
