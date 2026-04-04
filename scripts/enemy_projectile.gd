@@ -6,6 +6,7 @@ var vel: Vector2 = Vector2.ZERO
 var dmg: int = 12
 var lifetime: float = 3.0
 var projectile_type: String = "bone"
+var source_enemy: Node = null
 
 var _poly: Polygon2D = null
 var _sfx_hit: AudioStreamPlayer2D = null
@@ -38,9 +39,14 @@ func _ready() -> void:
 	if ResourceLoader.exists(tex_path):
 		var spr = Sprite2D.new()
 		spr.texture = load(tex_path)
-		spr.scale = Vector2(1.25, 1.25)
-		if projectile_type == "saw":
+		# Ice projectiles are smaller to match the tiny ice archer
+		if projectile_type == "ice":
+			spr.scale = Vector2(0.5, 0.5)
+		elif projectile_type == "saw":
+			spr.scale = Vector2(1.25, 1.25)
 			_spin_speed = 12.0
+		else:
+			spr.scale = Vector2(1.25, 1.25)
 		add_child(spr)
 	elif projectile_type == "saw":
 		# Fallback: code-drawn saw blade
@@ -114,19 +120,11 @@ func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
 		if body.has_method("take_damage"):
 			body.take_damage(dmg)
-		# Thorns — reflect damage back (projectiles don't have a parent enemy ref,
-		# so we find the nearest enemy to apply thorns to)
-		if GameState.perk_thorns_damage > 0:
-			var nearest: Node = null
-			var nearest_dist := 9999.0
-			for enemy in body.get_tree().get_nodes_in_group("enemies"):
-				if not is_instance_valid(enemy) or enemy.get("is_dead"): continue
-				var d = global_position.distance_to(enemy.global_position)
-				if d < nearest_dist:
-					nearest_dist = d
-					nearest = enemy
-			if nearest and nearest.has_method("take_damage"):
-				nearest.take_damage(GameState.perk_thorns_damage, global_position)
+		# Thorns — reflect damage back to the enemy that fired this projectile
+		var thorns_dmg = GameState.perk_thorns_damage
+		if thorns_dmg > 0 and source_enemy and is_instance_valid(source_enemy) and not source_enemy.get("is_dead"):
+			if source_enemy.has_method("take_damage"):
+				source_enemy.take_damage(thorns_dmg, global_position)
 		_play_hit_and_free()
 	elif body.is_in_group("wall") or body.is_in_group("boss_obstacles") or body is TileMapLayer:
 		_play_hit_and_free()
