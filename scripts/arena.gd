@@ -319,8 +319,9 @@ func _end_chest_phase() -> void:
 		if not is_inside_tree(): return
 		await get_tree().create_timer(0.35).timeout
 		if not is_inside_tree(): return
-		_chest_event_ui.queue_free()
-		_chest_event_ui = null
+		if is_instance_valid(_chest_event_ui):
+			_chest_event_ui.queue_free()
+			_chest_event_ui = null
 	if GameState.keys_changed.is_connected(_refresh_chest_event_ui):
 		GameState.keys_changed.disconnect(_refresh_chest_event_ui)
 	process_mode = Node.PROCESS_MODE_INHERIT
