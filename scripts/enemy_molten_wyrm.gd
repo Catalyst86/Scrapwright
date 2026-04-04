@@ -202,33 +202,17 @@ func _create_burrow_warning(pos: Vector2, parent: Node) -> Node2D:
 	warning.global_position = pos
 	warning.z_index = -1
 
-	# Warning circle — glowing rings with particle sparks
-	var outer = _make_circle_poly(BURROW_STRIKE_RADIUS, 16)
-	outer.color = Color(1.0, 0.3, 0.0, 0.3)
-	warning.add_child(outer)
-	var inner = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.6, 12)
-	inner.color = Color(1.0, 0.5, 0.1, 0.5)
-	warning.add_child(inner)
-	var center_dot = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.2, 8)
-	center_dot.color = Color(1.0, 0.8, 0.3, 0.7)
-	warning.add_child(center_dot)
-
-	# Warning sparks around the edge
-	var sparks = CPUParticles2D.new()
-	sparks.emitting = true
-	sparks.amount = 8
-	sparks.lifetime = 0.4
-	sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	sparks.emission_sphere_radius = BURROW_STRIKE_RADIUS * 0.8
-	sparks.direction = Vector2(0, -1)
-	sparks.spread = 180.0
-	sparks.gravity = Vector2(0, 0)
-	sparks.initial_velocity_min = 5.0
-	sparks.initial_velocity_max = 15.0
-	sparks.scale_amount_min = 1.5
-	sparks.scale_amount_max = 3.0
-	sparks.color = Color(1.0, 0.5, 0.0, 0.8)
-	warning.add_child(sparks)
+	# PixelLab animated ground crack as warning
+	var crack_sheet = "res://assets/sprites/boss_fx/ground_crack_sheet.png"
+	if ResourceLoader.exists(crack_sheet):
+		var crack_spr = _make_anim_from_sheet(crack_sheet, 48, 5, 6.0)
+		crack_spr.scale = Vector2(1.8, 1.8)
+		crack_spr.modulate = Color(1.0, 0.5, 0.2, 0.8)
+		warning.add_child(crack_spr)
+	else:
+		var outer = _make_circle_poly(BURROW_STRIKE_RADIUS, 16)
+		outer.color = Color(1.0, 0.3, 0.0, 0.35)
+		warning.add_child(outer)
 
 	parent.add_child(warning)
 
@@ -243,46 +227,18 @@ func _spawn_burrow_dust(pos: Vector2) -> void:
 	dust.global_position = pos
 	dust.z_index = 5
 
-	# Particle-based eruption burst
-	var burst = CPUParticles2D.new()
-	burst.emitting = true
-	burst.one_shot = true
-	burst.explosiveness = 1.0
-	burst.amount = 20
-	burst.lifetime = 0.5
-	burst.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	burst.emission_sphere_radius = 5.0
-	burst.direction = Vector2(0, -1)
-	burst.spread = 180.0
-	burst.gravity = Vector2(0, 80)
-	burst.initial_velocity_min = 60.0
-	burst.initial_velocity_max = 120.0
-	burst.scale_amount_min = 2.0
-	burst.scale_amount_max = 5.0
-	burst.color = Color(0.8, 0.5, 0.2, 0.9)
-	var grad = Gradient.new()
-	grad.set_color(0, Color(1.0, 0.7, 0.2, 1.0))
-	grad.set_color(1, Color(0.5, 0.3, 0.1, 0.0))
-	burst.color_ramp = grad
-	dust.add_child(burst)
-
-	# Rock debris particles
-	var rocks = CPUParticles2D.new()
-	rocks.emitting = true
-	rocks.one_shot = true
-	rocks.explosiveness = 0.9
-	rocks.amount = 8
-	rocks.lifetime = 0.7
-	rocks.emission_shape = CPUParticles2D.EMISSION_SHAPE_POINT
-	rocks.direction = Vector2(0, -1)
-	rocks.spread = 60.0
-	rocks.gravity = Vector2(0, 200)
-	rocks.initial_velocity_min = 80.0
-	rocks.initial_velocity_max = 150.0
-	rocks.scale_amount_min = 3.0
-	rocks.scale_amount_max = 6.0
-	rocks.color = Color(0.5, 0.35, 0.2, 0.8)
-	dust.add_child(rocks)
+	# PixelLab animated eruption blast
+	var blast_sheet = "res://assets/sprites/boss_fx/eruption_blast_sheet.png"
+	if ResourceLoader.exists(blast_sheet):
+		var blast_spr = _make_anim_from_sheet(blast_sheet, 48, 7, 12.0)
+		blast_spr.scale = Vector2(2.0, 2.0)
+		dust.add_child(blast_spr)
+	else:
+		for i in 6:
+			var puff = _make_circle_poly(randf_range(6, 14), 8)
+			puff.color = Color(0.7, 0.5, 0.3, 0.6)
+			puff.position = Vector2(randf_range(-15, 15), randf_range(-15, 15))
+			dust.add_child(puff)
 
 	var container = get_parent() if get_parent() else self
 	container.add_child(dust)
@@ -297,49 +253,22 @@ func _spawn_eruption_impact(pos: Vector2, parent: Node) -> void:
 	impact.global_position = pos
 	impact.z_index = 4
 
-	# Expanding shockwave ring
-	var ring = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.3, 16)
-	ring.color = Color(1.0, 0.5, 0.0, 0.8)
-	impact.add_child(ring)
-
-	# Hot core flash
-	var core = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.15, 10)
-	core.color = Color(1.0, 0.9, 0.4, 1.0)
-	impact.add_child(core)
-
-	# Fire particle burst from impact point
-	var fire_burst = CPUParticles2D.new()
-	fire_burst.emitting = true
-	fire_burst.one_shot = true
-	fire_burst.explosiveness = 1.0
-	fire_burst.amount = 15
-	fire_burst.lifetime = 0.4
-	fire_burst.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	fire_burst.emission_sphere_radius = 4.0
-	fire_burst.direction = Vector2(0, -1)
-	fire_burst.spread = 180.0
-	fire_burst.gravity = Vector2(0, 50)
-	fire_burst.initial_velocity_min = 50.0
-	fire_burst.initial_velocity_max = 100.0
-	fire_burst.scale_amount_min = 2.0
-	fire_burst.scale_amount_max = 4.0
-	var grad = Gradient.new()
-	grad.set_color(0, Color(1.0, 0.8, 0.2, 1.0))
-	grad.set_color(1, Color(1.0, 0.2, 0.0, 0.0))
-	fire_burst.color_ramp = grad
-	impact.add_child(fire_burst)
+	# PixelLab animated eruption blast at impact point
+	var blast_sheet = "res://assets/sprites/boss_fx/eruption_blast_sheet.png"
+	if ResourceLoader.exists(blast_sheet):
+		var blast_spr = _make_anim_from_sheet(blast_sheet, 48, 7, 14.0)
+		blast_spr.scale = Vector2(2.5, 2.5)
+		impact.add_child(blast_spr)
+	else:
+		var flash = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.8, 14)
+		flash.color = Color(1.0, 0.5, 0.0, 0.7)
+		impact.add_child(flash)
 
 	parent.add_child(impact)
 
-	# Expand the ring outward then fade
 	var tw = impact.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2(3.0, 3.0), 0.3)
-	tw.tween_property(ring, "modulate:a", 0.0, 0.3)
-	tw.tween_property(core, "scale", Vector2(2.0, 2.0), 0.2)
-	tw.tween_property(core, "modulate:a", 0.0, 0.3).set_delay(0.1)
-	tw.set_parallel(false)
-	tw.tween_interval(0.5)
+	tw.tween_property(impact, "scale", Vector2(1.3, 1.3), 0.3)
+	tw.tween_property(impact, "modulate:a", 0.0, 0.5)
 	tw.tween_callback(impact.queue_free)
 
 # --- Lava Geysers (Phase 3) ---
@@ -377,59 +306,28 @@ func _create_geyser(pos: Vector2) -> Area2D:
 	col.shape = shape
 	geyser.add_child(col)
 
-	# Visual — particle-based lava geyser (no sprite, pure VFX)
-	# Glowing base circle
-	var base_glow = _make_circle_poly(GEYSER_RADIUS, 12)
-	base_glow.color = Color(1.0, 0.3, 0.0, 0.4)
-	geyser.add_child(base_glow)
-	var core_glow = _make_circle_poly(GEYSER_RADIUS * 0.5, 8)
-	core_glow.color = Color(1.0, 0.7, 0.2, 0.6)
-	geyser.add_child(core_glow)
+	# Visual — PixelLab animated geyser: ground crack base + fire pillar on top
+	var crack_sheet = "res://assets/sprites/boss_fx/ground_crack_sheet.png"
+	var fire_sheet = "res://assets/sprites/boss_fx/lava_geyser_clean_sheet.png"
 
-	# Lava spark particles shooting upward
-	var particles = CPUParticles2D.new()
-	particles.emitting = true
-	particles.amount = 12
-	particles.lifetime = 0.6
-	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	particles.emission_sphere_radius = 8.0
-	particles.direction = Vector2(0, -1)
-	particles.spread = 25.0
-	particles.gravity = Vector2(0, 40)
-	particles.initial_velocity_min = 40.0
-	particles.initial_velocity_max = 80.0
-	particles.scale_amount_min = 2.0
-	particles.scale_amount_max = 4.0
-	particles.color = Color(1.0, 0.6, 0.1, 0.9)
-	var gradient = Gradient.new()
-	gradient.set_color(0, Color(1.0, 0.8, 0.2, 1.0))
-	gradient.set_color(1, Color(1.0, 0.2, 0.0, 0.0))
-	particles.color_ramp = gradient
-	geyser.add_child(particles)
+	if ResourceLoader.exists(crack_sheet):
+		var crack_spr = _make_anim_from_sheet(crack_sheet, 48, 5, 6.0)
+		crack_spr.scale = Vector2(1.2, 1.2)
+		geyser.add_child(crack_spr)
 
-	# Ember particles floating up slowly
-	var embers = CPUParticles2D.new()
-	embers.emitting = true
-	embers.amount = 6
-	embers.lifetime = 1.0
-	embers.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-	embers.emission_sphere_radius = 12.0
-	embers.direction = Vector2(0, -1)
-	embers.spread = 45.0
-	embers.gravity = Vector2(0, -10)
-	embers.initial_velocity_min = 15.0
-	embers.initial_velocity_max = 35.0
-	embers.scale_amount_min = 1.0
-	embers.scale_amount_max = 2.5
-	embers.color = Color(1.0, 0.4, 0.0, 0.7)
-	geyser.add_child(embers)
+	if ResourceLoader.exists(fire_sheet):
+		var fire_spr = _make_anim_from_sheet_rect(fire_sheet, 32, 48, 7, 10.0)
+		fire_spr.scale = Vector2(1.5, 1.5)
+		fire_spr.position.y = -20  # Offset upward so fire rises from the crack
+		geyser.add_child(fire_spr)
+
+	if not ResourceLoader.exists(crack_sheet) and not ResourceLoader.exists(fire_sheet):
+		# Fallback
+		var base_vis = _make_circle_poly(GEYSER_RADIUS, 12)
+		base_vis.color = Color(1.0, 0.3, 0.0, 0.5)
+		geyser.add_child(base_vis)
 
 	geyser.z_index = 2
-
-	# Pulsing glow on base
-	var pulse = geyser.create_tween().set_loops()
-	pulse.tween_property(base_glow, "modulate:a", 0.8, 0.3).set_trans(Tween.TRANS_SINE)
-	pulse.tween_property(base_glow, "modulate:a", 0.4, 0.3).set_trans(Tween.TRANS_SINE)
 
 	return geyser
 
