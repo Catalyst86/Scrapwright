@@ -2,8 +2,8 @@ extends EnemyBase
 
 # Fungal Titan — Stage 2 Boss
 # Phase 1: Poison trail (1.5s), spore burst (6s, 6 projectiles), self-heal (10s, 20 HP).
-# Phase 2 "LASER SWEEP": Teleports to left arena edge, fires a bright green laser beam
-#   that sweeps top to bottom over 5s. Brings player to 10% HP on contact.
+# Phase 2 "LASER SWEEP": Two crossing laser beams (horizontal + vertical) with gaps.
+#   Horizontal sweeps north/south, vertical sweeps east/west. Brings player to 10% HP.
 #   Banner: "DASH!" Teleports back after.
 # Phase 3 "FUNGAL ERUPTION": Poison pools erupt at player's last 5 positions (delayed 1.5s
 #   each). Self-heal increased to 30 HP. Laser sweep repeats every 18s.
@@ -27,14 +27,15 @@ var _heal_amount: int = 20
 var _laser_sweep_active: bool = false
 var _laser_sweep_elapsed: float = 0.0
 var _laser_sweep_cooldown_timer: float = 0.0
-var _laser_line: Line2D = null
-var _laser_area: Area2D = null
+var _laser_nodes: Array = []  # All Line2D + Area2D nodes for cleanup
 var _pre_laser_position: Vector2 = Vector2.ZERO
+var _laser_hit_this_sweep: bool = false  # Only damage player once per sweep
 
-const LASER_SWEEP_DURATION = 5.0  # Slower sweep (was 3s)
+const LASER_SWEEP_DURATION = 6.0  # Full sweep cycle
 const LASER_SWEEP_COOLDOWN = 18.0
 const LASER_WIDTH = 10.0
-const LASER_LENGTH = 900.0  # Covers full arena width
+const LASER_GAP = 40.0  # Gap size the player can fit through
+const LASER_SEGMENT_LEN = 180.0  # Each segment length before a gap
 
 # Fungal eruption state (Phase 3)
 var _eruption_active: bool = false
@@ -282,93 +283,126 @@ func _start_laser_sweep() -> void:
 	if _laser_sweep_active or is_dead: return
 	_laser_sweep_active = true
 	_laser_sweep_elapsed = 0.0
+	_laser_hit_this_sweep = false
 
 	_show_boss_warning("DASH!")
 
-	# Remember current position to teleport back
 	_pre_laser_position = global_position
-
-	# Teleport to left edge of arena
 	var arena_center = _get_arena_center()
-	var left_edge = arena_center + Vector2(-220, 0)
-	global_position = left_edge
+	global_position = arena_center  # Boss moves to center during laser
 
-	# Flash to indicate teleport
 	if sprite:
 		sprite.modulate = Color(0.3, 2.0, 0.3)
 		var tw = create_tween()
 		tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
 
-	# Create the laser beam (Line2D pointing right from boss position)
 	var parent = get_parent()
 	if not parent: return
 
-	_laser_line = Line2D.new()
-	_laser_line.width = LASER_WIDTH
-	_laser_line.default_color = Color(0.2, 1.0, 0.2, 0.9)
-	_laser_line.z_index = 10
-	# Laser points right from boss, top of arena initially
-	var laser_start_y = arena_center.y - 200.0  # Start from top
-	_laser_line.add_point(Vector2(0, 0))
-	_laser_line.add_point(Vector2(LASER_LENGTH, 0))
-	_laser_line.global_position = Vector2(left_edge.x, laser_start_y)
-	parent.add_child(_laser_line)
+	# Build TWO laser beams: horizontal (east-west) and vertical (north-south)
+	# Each beam has segments with gaps the player can fit through
+	_laser_nodes.clear()
 
-	# Create damage area that follows the laser
-	_laser_area = Area2D.new()
-	_laser_area.collision_layer = 0
-	_laser_area.collision_mask = 1  # player
-	_laser_area.monitoring = true
-	var col = CollisionShape2D.new()
-	var shape = RectangleShape2D.new()
-	shape.size = Vector2(LASER_LENGTH, LASER_WIDTH)
-	col.shape = shape
-	col.position = Vector2(LASER_LENGTH * 0.5, 0)
-	_laser_area.add_child(col)
-	_laser_area.global_position = Vector2(left_edge.x, laser_start_y)
-	parent.add_child(_laser_area)
+	# Horizontal beam — starts at left, sweeps top to bottom
+	_build_laser_beam(parent, arena_center, true)
+	# Vertical beam — starts at top, sweeps left to right
+	_build_laser_beam(parent, arena_center, false)
+
+func _build_laser_beam(parent: Node, center: Vector2, is_horizontal: bool) -> void:
+	# Create segmented laser with gaps
+	# Horizontal beam: segments go left-to-right, beam sweeps north-south
+	# Vertical beam: segments go top-to-bottom, beam sweeps east-west
+	var total_length = 900.0
+	var start_offset = -total_length / 2.0
+	var pos_along = start_offset
+
+	while pos_along < total_length / 2.0:
+		var seg_len = minf(LASER_SEGMENT_LEN, total_length / 2.0 - pos_along)
+		if seg_len <= 0: break
+
+		# Line2D visual
+		var line = Line2D.new()
+		line.width = LASER_WIDTH
+		line.default_color = Color(0.2, 1.0, 0.2, 0.9)
+		line.z_index = 10
+		if is_horizontal:
+			line.add_point(Vector2(pos_along, 0))
+			line.add_point(Vector2(pos_along + seg_len, 0))
+		else:
+			line.add_point(Vector2(0, pos_along))
+			line.add_point(Vector2(0, pos_along + seg_len))
+		parent.add_child(line)
+		_laser_nodes.append({"node": line, "horizontal": is_horizontal, "type": "line"})
+
+		# Damage Area2D
+		var area = Area2D.new()
+		area.collision_layer = 0
+		area.collision_mask = 1
+		area.monitoring = true
+		var col = CollisionShape2D.new()
+		var shape = RectangleShape2D.new()
+		if is_horizontal:
+			shape.size = Vector2(seg_len, LASER_WIDTH)
+			col.position = Vector2(pos_along + seg_len / 2.0, 0)
+		else:
+			shape.size = Vector2(LASER_WIDTH, seg_len)
+			col.position = Vector2(0, pos_along + seg_len / 2.0)
+		col.shape = shape
+		area.add_child(col)
+		parent.add_child(area)
+		_laser_nodes.append({"node": area, "horizontal": is_horizontal, "type": "area"})
+
+		pos_along += seg_len + LASER_GAP  # Skip gap
 
 func _process_laser_sweep(delta: float) -> void:
 	_laser_sweep_elapsed += delta
 
 	var arena_center = _get_arena_center()
-	var top_y = arena_center.y - 200.0
-	var bottom_y = arena_center.y + 200.0
-	var progress = clampf(_laser_sweep_elapsed / LASER_SWEEP_DURATION, 0.0, 1.0)
-	var current_y = lerp(top_y, bottom_y, progress)
+	# Horizontal beam sweeps north-south, vertical beam sweeps east-west
+	# Both move at constant speed, straight lines, back and forth
+	var sweep_range = 180.0
+	var progress = _laser_sweep_elapsed / LASER_SWEEP_DURATION
+	# Ping-pong: go forward then back
+	var t = progress * 2.0  # 0 to 2 over duration
+	if t > 1.0:
+		t = 2.0 - t  # 1.0 back down to 0
+	var offset = lerp(-sweep_range, sweep_range, t)
 
-	# Update laser position
-	if is_instance_valid(_laser_line):
-		_laser_line.global_position.y = current_y
-		# Pulsing glow effect
-		var glow = 0.7 + sin(_laser_sweep_elapsed * 15.0) * 0.3
-		_laser_line.default_color = Color(0.2, glow, 0.2, 0.9)
+	for entry in _laser_nodes:
+		if not is_instance_valid(entry.node): continue
+		if entry.horizontal:
+			# Horizontal beam moves up/down (y offset)
+			entry.node.global_position = Vector2(arena_center.x, arena_center.y + offset)
+		else:
+			# Vertical beam moves left/right (x offset)
+			entry.node.global_position = Vector2(arena_center.x + offset, arena_center.y)
 
-	if is_instance_valid(_laser_area):
-		_laser_area.global_position.y = current_y
-		# Check for player collision
-		var bodies = _laser_area.get_overlapping_bodies()
-		for body in bodies:
-			if body.is_in_group("player") and body.has_method("take_damage"):
-				# Bring player to 10% HP instead of flat damage
-				var target_hp = maxi(1, int(GameState.player_max_health * 0.1))
-				var laser_dmg = maxi(1, GameState.player_health - target_hp)
-				body.take_damage(laser_dmg, self)
+	# Check damage (only once per sweep to avoid instant kill spam)
+	if not _laser_hit_this_sweep:
+		for entry in _laser_nodes:
+			if entry.type != "area": continue
+			if not is_instance_valid(entry.node): continue
+			var bodies = entry.node.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					_laser_hit_this_sweep = true
+					var target_hp = maxi(1, int(GameState.player_max_health * 0.1))
+					var laser_dmg = maxi(1, GameState.player_health - target_hp)
+					body.take_damage(laser_dmg, self)
+					break
+			if _laser_hit_this_sweep: break
 
 	# End laser sweep
 	if _laser_sweep_elapsed >= LASER_SWEEP_DURATION:
 		_laser_sweep_active = false
-
-		# Clean up laser visuals
-		if is_instance_valid(_laser_line):
-			_laser_line.queue_free()
-			_laser_line = null
-		if is_instance_valid(_laser_area):
-			_laser_area.queue_free()
-			_laser_area = null
-
-		# Teleport back to previous position
+		_cleanup_laser()
 		global_position = _pre_laser_position
+
+func _cleanup_laser() -> void:
+	for entry in _laser_nodes:
+		if is_instance_valid(entry.node):
+			entry.node.queue_free()
+	_laser_nodes.clear()
 		if sprite:
 			sprite.modulate = Color(0.3, 2.0, 0.3)
 			var tw = create_tween()
@@ -498,10 +532,7 @@ func _run_eruption_ticks(pool: Area2D, vis: Node2D, ticks_left: int) -> void:
 
 func _die() -> void:
 	_laser_sweep_active = false
-	if is_instance_valid(_laser_line): _laser_line.queue_free()
-	if is_instance_valid(_laser_area): _laser_area.queue_free()
-	_laser_line = null
-	_laser_area = null
+	_cleanup_laser()
 	super._die()
 
 # --- Arena Center ---
