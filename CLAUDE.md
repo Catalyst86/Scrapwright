@@ -40,7 +40,7 @@ C:\Users\danie\Desktop\Scrapwright Safe copy\
 │   ├── destructible_prop.tscn
 │   ├── enemy_projectile.tscn
 │   ├── debug_boot.tscn
-│   └── enemies/            ← 37 enemy scenes across 6 stages + bosses
+│   └── enemies/            ← 35 enemy scenes across 6 stages + bosses
 ├── scripts/
 │   ├── arena.gd            ← Main gameplay, phase management
 │   ├── arena_builder.gd    ← Generates floor/walls/nav at runtime
@@ -49,7 +49,7 @@ C:\Users\danie\Desktop\Scrapwright Safe copy\
 │   ├── enemy_base.gd       ← Base class (class_name EnemyBase extends CharacterBody2D)
 │   ├── orbital_weapon.gd   ← Orbital weapon base (class_name OrbitalWeapon)
 │   ├── orbital_*.gd        ← 12 specific orbital weapon scripts
-│   ├── enemy_*.gd          ← 37 individual enemy scripts
+│   ├── enemy_*.gd          ← 35 individual enemy scripts
 │   ├── hud.gd, level_up.gd, game_over.gd, main_menu.gd
 │   ├── chest.gd, secret_room.gd, secret_door.gd, dig_hole.gd
 │   ├── material_pickup.gd, key_pickup.gd, destructible_prop.gd
@@ -110,18 +110,39 @@ enum ArenaPhase { PREP, COMBAT, CHEST_PHASE, TRANSITION }
 ### Primary Attack — Bite (Auto-Attack)
 - Base damage: 8, range: 80px, cooldown: 0.6s
 - Visual: bark shockwave + "BARK!"/"WOOF!" text
-- Modified by: perk_damage_bonus, perk_attack_speed_multiplier, crit chance, sneak ambush (2x)
+- Modified by: perk_damage_bonus, perk_attack_speed_multiplier, crit chance (Iron Jaws + permanent), sneak ambush (2x), Bark Blast AoE splash
 
-### Orbital Weapons (13 Types)
+### Orbital Weapons (12 Types)
 Orbit the player at 30px radius. Max 6 simultaneous, max level 20 each.
 - spark_coil, flame_wisp, frost_shard, poison_orb, blade_fan, arcane_book
 - thorn_vine, chain_link, shield_drone, magnet_core, holy_lantern, shadow_dagger
 
 ### Player Abilities
-- **Dodge (Space):** Invulnerable leap, 0.3s duration, 1.5s cooldown
-- **Sneak (E):** 50% speed, up to 3s, ambush bonus 2x damage
+- **Dodge (Space):** Invulnerable leap, 0.3s duration, 1.5s cooldown (modified by Quick Paws perk)
+- **Sneak (Ctrl):** 50% speed, up to 3s (modified by Shadow Step perk), ambush bonus 2x damage
 - **Dig (F):** 1.6s channel, creates dig hole, charges from Deep Digger upgrade
 - **Salvage (Shift):** 1.0s channel on destructible props
+
+### Level-Up Perks (16 Types)
+On level up, player chooses from 3–4 perk cards (stat perks, orbital weapons, or card-deck perks).
+All stat perks use **diminishing returns** (0.7x per repeat pick) with hard floors.
+
+**Stat Perks:**
+- hp_up (+25 HP), speed_up (+15%), damage_up (+5 dmg), attack_speed (-15% cooldown)
+- regen (one-time: 2 HP/5s), xp_boost (+25% XP)
+
+**New Perks (with diminishing returns):**
+- thick_skin (+8% DR, cap 35%), iron_jaws (+5% crit), quick_paws (-20% dodge CD)
+- scavenger_nose (+30% magnet range), second_wind (heal 30% HP at <20%, once per run)
+- bloodlust (+2 HP/kill, capped 30% max HP per wave), bark_blast (+35% bite AoE)
+- shadow_step (+1s sneak, -20% sneak CD), thorns (5 dmg reflected, works on projectiles)
+- lucky_find (+15% chest tier upgrade, shows "LUCKY!" popup)
+
+**Card-Deck Perks** (require completed deck):
+- bug_swarm (Critter deck: 3 dps to nearby enemies)
+- vine_snare (Overgrowth deck: 40% slow to nearby enemies)
+
+**Orbital slots:** Max 6. When full, only upgrade cards for owned weapons appear (no new weapons).
 
 ---
 
