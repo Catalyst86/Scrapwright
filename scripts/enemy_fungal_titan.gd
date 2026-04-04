@@ -403,10 +403,6 @@ func _cleanup_laser() -> void:
 		if is_instance_valid(entry["node"]):
 			entry["node"].queue_free()
 	_laser_nodes.clear()
-		if sprite:
-			sprite.modulate = Color(0.3, 2.0, 0.3)
-			var tw = create_tween()
-			tw.tween_property(sprite, "modulate", Color.WHITE, 0.3)
 
 # --- Fungal Eruption (Phase 3) ---
 
