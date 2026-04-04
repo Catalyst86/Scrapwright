@@ -58,7 +58,7 @@ const ALL_PERKS = [
 	{"id":"scavenger_nose", "name":"Scavenger",         "desc":"+30% pickup magnet range",                     "base_val": 30.0},
 	{"id":"second_wind",    "name":"Second Wind",       "desc":"Heal 30% HP when health drops below 20% (once per run)", "base_val": 0.0},
 	{"id":"bloodlust",      "name":"Bloodlust",         "desc":"Heal 2 HP on each kill",                       "base_val": 2.0},
-	{"id":"bark_blast",     "name":"Bark Blast",        "desc":"+25% bite AoE radius — hit nearby enemies too", "base_val": 25.0},
+	{"id":"bark_blast",     "name":"Bark Blast",        "desc":"+35% bite AoE radius — hit nearby enemies too", "base_val": 35.0},
 	{"id":"shadow_step",    "name":"Shadow Step",       "desc":"+1s sneak duration and -20% sneak cooldown",   "base_val": 1.0},
 	{"id":"thorns",         "name":"Thorns",            "desc":"Enemies take 5 damage when they hit you",      "base_val": 5.0},
 	{"id":"lucky_find",     "name":"Lucky Find",        "desc":"+15% chance for chests to upgrade tier",       "base_val": 15.0},
@@ -634,7 +634,7 @@ func _apply(id: String) -> void:
 			GameState.perk_xp_multiplier *= (1.0 + pct_xp / 100.0)
 		"thick_skin":
 			var pct_ts = maxf(8.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("thick_skin", 2.0))
-			GameState.perk_damage_reduction = minf(0.4, GameState.perk_damage_reduction + pct_ts / 100.0)
+			GameState.perk_damage_reduction = minf(0.35, GameState.perk_damage_reduction + pct_ts / 100.0)
 		"iron_jaws":
 			var val_ij = int(maxf(5.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("iron_jaws", 1.0)))
 			GameState.perk_crit_bonus += val_ij
@@ -652,7 +652,7 @@ func _apply(id: String) -> void:
 			var val_bl = int(maxf(2.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bloodlust", 1.0)))
 			GameState.perk_lifesteal += val_bl
 		"bark_blast":
-			var pct_bb = maxf(25.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bark_blast", 5.0))
+			var pct_bb = maxf(35.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bark_blast", 5.0))
 			GameState.perk_bite_aoe_bonus += pct_bb / 100.0
 		"shadow_step":
 			var dur_ss = maxf(1.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("shadow_step", 0.3))

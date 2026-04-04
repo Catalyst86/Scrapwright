@@ -110,6 +110,19 @@ func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
 		if body.has_method("take_damage"):
 			body.take_damage(dmg)
+		# Thorns — reflect damage back (projectiles don't have a parent enemy ref,
+		# so we find the nearest enemy to apply thorns to)
+		if GameState.perk_thorns_damage > 0:
+			var nearest: Node = null
+			var nearest_dist := 9999.0
+			for enemy in body.get_tree().get_nodes_in_group("enemies"):
+				if not is_instance_valid(enemy) or enemy.get("is_dead"): continue
+				var d = global_position.distance_to(enemy.global_position)
+				if d < nearest_dist:
+					nearest_dist = d
+					nearest = enemy
+			if nearest and nearest.has_method("take_damage"):
+				nearest.take_damage(GameState.perk_thorns_damage, body.global_position)
 		_play_hit_and_free()
 	elif body.is_in_group("wall") or body is TileMapLayer:
 		_play_hit_and_free()

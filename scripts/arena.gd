@@ -697,12 +697,38 @@ func _on_chest_key_chosen(chest_idx: int, tier: String) -> void:
 
 	AudioManager.play("chest_open")
 
+	# Lucky Find visual feedback
+	if lucky_tier != tier:
+		var lucky_lbl = Label.new()
+		lucky_lbl.text = "LUCKY!"
+		lucky_lbl.add_theme_font_size_override("font_size", 18)
+		lucky_lbl.add_theme_color_override("font_color", Color(1.0, 0.84, 0.0))
+		lucky_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		lucky_lbl.add_theme_constant_override("shadow_offset_x", 2)
+		lucky_lbl.add_theme_constant_override("shadow_offset_y", 2)
+		lucky_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lucky_lbl.set_anchors_preset(Control.PRESET_CENTER)
+		lucky_lbl.offset_top = -60
+		lucky_lbl.offset_bottom = -40
+		lucky_lbl.offset_left = -50
+		lucky_lbl.offset_right = 50
+		lucky_lbl.process_mode = Node.PROCESS_MODE_ALWAYS
+		var chest_panel = _chest_key_panels[chest_idx]
+		chest_panel.add_child(lucky_lbl)
+		var ltw = lucky_lbl.create_tween()
+		ltw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		ltw.tween_property(lucky_lbl, "offset_top", -90, 1.0)
+		ltw.parallel().tween_property(lucky_lbl, "modulate:a", 0.0, 1.0).set_delay(0.5)
+		ltw.tween_callback(lucky_lbl.queue_free)
+
 	# Clear key buttons for this chest
 	var panel = _chest_key_panels[chest_idx]
 	for child in panel.get_children():
+		if child is Label and child.text == "LUCKY!":
+			continue  # Don't clear the lucky label
 		child.queue_free()
 	var tier_lbl = Label.new()
-	tier_lbl.text = "%s Key Used" % tier.capitalize()
+	tier_lbl.text = "%s Key Used" % lucky_tier.capitalize()
 	tier_lbl.add_theme_font_size_override("font_size", 10)
 	tier_lbl.add_theme_color_override("font_color", TIER_COLORS.get(tier, Color.WHITE))
 	tier_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

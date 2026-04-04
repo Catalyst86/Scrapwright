@@ -94,13 +94,14 @@ var perk_damage_bonus: int = 0
 var perk_attack_speed_multiplier: float = 1.0
 var perk_regen_active: bool = false
 var perk_xp_multiplier: float = 1.0
-var perk_damage_reduction: float = 0.0       # Thick Skin — % damage reduced (0.0–0.4)
+var perk_damage_reduction: float = 0.0       # Thick Skin — % damage reduced (0.0–0.35)
 var perk_crit_bonus: int = 0                  # Iron Jaws — extra crit % on bite
 var perk_dodge_cooldown_mult: float = 1.0     # Quick Paws — dodge cooldown multiplier
 var perk_magnet_bonus: float = 0.0            # Scavenger's Nose — pickup range bonus %
 var perk_second_wind: bool = false             # Second Wind — heal at low HP (once per run)
 var perk_second_wind_used: bool = false        # Whether Second Wind has triggered this run
 var perk_lifesteal: int = 0                   # Bloodlust — HP healed per kill
+var _lifesteal_healed_this_wave: int = 0      # Bloodlust — wave cap tracker
 var perk_bite_aoe_bonus: float = 0.0          # Bark Blast — extra bite AoE radius %
 var perk_sneak_duration_bonus: float = 0.0    # Shadow Step — extra sneak seconds
 var perk_sneak_cooldown_mult: float = 1.0     # Shadow Step — sneak cooldown multiplier
@@ -448,7 +449,7 @@ func reapply_permanent_bonuses() -> void:
 				perk_xp_multiplier *= (1.0 + pct / 100.0)
 			"thick_skin":
 				var pct_ts = maxf(8.0 * pow(DIMINISH, pick_idx), FLOORS.get("thick_skin", 2.0))
-				perk_damage_reduction = minf(0.4, perk_damage_reduction + pct_ts / 100.0)
+				perk_damage_reduction = minf(0.35, perk_damage_reduction + pct_ts / 100.0)
 			"iron_jaws":
 				var val_ij = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("iron_jaws", 1.0)))
 				perk_crit_bonus += val_ij
@@ -464,7 +465,7 @@ func reapply_permanent_bonuses() -> void:
 				var val_bl = int(maxf(2.0 * pow(DIMINISH, pick_idx), FLOORS.get("bloodlust", 1.0)))
 				perk_lifesteal += val_bl
 			"bark_blast":
-				var pct_bb = maxf(25.0 * pow(DIMINISH, pick_idx), FLOORS.get("bark_blast", 5.0))
+				var pct_bb = maxf(35.0 * pow(DIMINISH, pick_idx), FLOORS.get("bark_blast", 5.0))
 				perk_bite_aoe_bonus += pct_bb / 100.0
 			"shadow_step":
 				var dur_ss = maxf(1.0 * pow(DIMINISH, pick_idx), FLOORS.get("shadow_step", 0.3))

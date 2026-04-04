@@ -851,9 +851,13 @@ func _die() -> void:
 	set_collision_layer_value(2, false)
 	set_collision_mask_value(1, false)
 	emit_signal("died", xp_value)
-	# Bloodlust — heal player on kill
+	# Bloodlust — heal player on kill (capped at 30% max HP per wave)
 	if GameState.perk_lifesteal > 0:
-		GameState.heal(GameState.perk_lifesteal)
+		var cap = int(GameState.player_max_health * 0.3)
+		if GameState._lifesteal_healed_this_wave < cap:
+			var heal_amt = mini(GameState.perk_lifesteal, cap - GameState._lifesteal_healed_this_wave)
+			GameState.heal(heal_amt)
+			GameState._lifesteal_healed_this_wave += heal_amt
 	# Drop XP orb instead of instant XP — player must collect it
 	_drop_xp_orb()
 	if _sfx_death:

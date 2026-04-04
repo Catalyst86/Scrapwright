@@ -108,6 +108,7 @@ func clear_spawn_points() -> void:
 func start_wave(wave_num: int) -> void:
 	seed(Time.get_ticks_msec())  # Ensure varied spawn order each run
 	current_wave = wave_num
+	GameState._lifesteal_healed_this_wave = 0  # Reset bloodlust wave cap
 	# Don't set GameState.current_wave here — only set it on wave COMPLETE
 	# so quitting mid-wave doesn't advance the campaign
 	wave_active = true
