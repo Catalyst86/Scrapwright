@@ -143,13 +143,13 @@ func _start_saw_storm() -> void:
 
 	_show_boss_warning("TAKE COVER!")
 
-	# Spawn 3 scrap pile cover objects around the arena
+	# Spawn 3 scrap pile cover objects near the sentinel (close enough to reach)
 	_cover_nodes.clear()
 	var arena_center = _get_arena_center()
 	var cover_positions = [
-		arena_center + Vector2(-120, -80),
-		arena_center + Vector2(120, -60),
-		arena_center + Vector2(0, 100),
+		arena_center + Vector2(-55, -45),
+		arena_center + Vector2(55, -35),
+		arena_center + Vector2(0, 55),
 	]
 	for pos in cover_positions:
 		var obs = _spawn_cover_obstacle(pos, "scrap_pile", 15)
@@ -185,8 +185,11 @@ func _fire_storm_projectiles(tick: int) -> void:
 	var parent = get_parent()
 	if not parent: return
 
-	var num_blades = 8
-	var base_angle = tick * 0.4  # Rotate spiral over time
+	# Fire 4 blades per tick, rotating ~15 degrees each tick for a spiral pattern
+	# This means standing still guarantees getting hit — must hide behind cover
+	var num_blades = 4
+	var rotation_per_tick = deg_to_rad(17.0)  # ~17 degrees rotation per volley
+	var base_angle = tick * rotation_per_tick
 	for i in num_blades:
 		var angle = base_angle + TAU * i / num_blades
 		var dir = Vector2.from_angle(angle)
@@ -194,7 +197,7 @@ func _fire_storm_projectiles(tick: int) -> void:
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 15.0
-		proj.setup(dir * 100.0, 15)
+		proj.setup(dir * 90.0, 15)
 
 func _get_arena_center() -> Vector2:
 	# Approximate arena center
