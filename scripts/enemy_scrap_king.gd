@@ -112,7 +112,7 @@ func _melee_slam() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < MELEE_SLAM_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(MELEE_SLAM_DAMAGE)
+			player_ref.take_damage(MELEE_SLAM_DAMAGE, self)
 
 func _ranged_barrage() -> void:
 	var proj_scene = _proj_scene

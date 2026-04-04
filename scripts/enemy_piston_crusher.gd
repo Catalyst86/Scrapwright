@@ -47,7 +47,7 @@ func _physics_process(delta: float) -> void:
 		if not _charge_hit_player and player_ref and is_instance_valid(player_ref):
 			var dist = global_position.distance_to(player_ref.global_position)
 			if dist < 20.0 and player_ref.has_method("take_damage"):
-				player_ref.take_damage(CHARGE_DAMAGE)
+				player_ref.take_damage(CHARGE_DAMAGE, self)
 				_charge_hit_player = true
 		move_and_slide()
 		_animate_sprite(delta)
@@ -116,7 +116,7 @@ func _ground_pound() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < GROUND_POUND_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(GROUND_POUND_DAMAGE)
+			player_ref.take_damage(GROUND_POUND_DAMAGE, self)
 		if player_ref.has_method("stun"):
 			player_ref.stun(STUN_DURATION)
 

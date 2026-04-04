@@ -107,7 +107,7 @@ func _run_cloud_ticks(cloud: Area2D, visual: Node2D, tick: int, max_ticks: int) 
 		var bodies = cloud.get_overlapping_bodies()
 		for body in bodies:
 			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(TOXIC_CLOUD_DAMAGE)
+				body.take_damage(TOXIC_CLOUD_DAMAGE, self)
 
 	# Next tick
 	if not is_inside_tree(): return

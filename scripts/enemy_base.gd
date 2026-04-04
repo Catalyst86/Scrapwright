@@ -698,7 +698,7 @@ func _check_contact_damage() -> void:
 	if contact_timer > 0: return
 	if dist < 18.0:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(damage)
+			player_ref.take_damage(damage, self)
 		if _sfx_melee:
 			_sfx_melee.pitch_scale = randf_range(0.9, 1.1)
 			_sfx_melee.play()

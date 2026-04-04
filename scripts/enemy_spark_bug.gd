@@ -43,7 +43,7 @@ func _chain_lightning() -> void:
 
 	# Deal chain damage to player
 	if player_ref.has_method("take_damage"):
-		player_ref.take_damage(CHAIN_DAMAGE)
+		player_ref.take_damage(CHAIN_DAMAGE, self)
 
 	# Visual — lightning line to player
 	var line = Line2D.new()

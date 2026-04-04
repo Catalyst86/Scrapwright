@@ -107,7 +107,7 @@ func _darkness_aoe() -> void:
 	if player_ref and is_instance_valid(player_ref):
 		if global_position.distance_to(player_ref.global_position) < DARKNESS_RADIUS:
 			if player_ref.has_method("take_damage"):
-				player_ref.take_damage(DARKNESS_DAMAGE)
+				player_ref.take_damage(DARKNESS_DAMAGE, self)
 
 func _spawn_crawlers() -> void:
 	var crawler_scene = load("res://scenes/enemies/enemy_shadow_crawler.tscn")

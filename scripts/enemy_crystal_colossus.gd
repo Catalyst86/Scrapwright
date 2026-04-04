@@ -73,7 +73,7 @@ func _ground_slam() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < GROUND_SLAM_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(GROUND_SLAM_DAMAGE)
+			player_ref.take_damage(GROUND_SLAM_DAMAGE, self)
 
 func _ice_shard_burst() -> void:
 	_play_attack_anim_then(_do_shard_burst)

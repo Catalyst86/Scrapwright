@@ -171,7 +171,7 @@ func _run_lava_ticks(pool: Area2D, ticks_left: int) -> void:
 	var bodies = pool.get_overlapping_bodies()
 	for body in bodies:
 		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(LAVA_DPS)
+			body.take_damage(LAVA_DPS, self)
 	var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
 	if vis:
 		vis.modulate.a = float(ticks_left) / (LAVA_POOL_DURATION / 0.5)

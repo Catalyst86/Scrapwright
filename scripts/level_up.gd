@@ -687,6 +687,7 @@ func _apply(id: String) -> void:
 					rot_timer.name = "BugSwarmRotate"
 					rot_timer.wait_time = 0.03
 					rot_timer.autostart = true
+					rot_timer.process_mode = Node.PROCESS_MODE_INHERIT
 					rot_timer.timeout.connect(func():
 						if is_instance_valid(swarm_spr):
 							swarm_spr.rotation += 0.06
@@ -697,6 +698,7 @@ func _apply(id: String) -> void:
 				bug_timer.name = "BugSwarmTimer"
 				bug_timer.wait_time = 1.0
 				bug_timer.autostart = true
+				bug_timer.process_mode = Node.PROCESS_MODE_INHERIT
 				bug_timer.timeout.connect(func():
 					if not player or not is_instance_valid(player): return
 					for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -730,6 +732,7 @@ func _apply(id: String) -> void:
 				vine_timer.name = "VineSnareTimer"
 				vine_timer.wait_time = 0.5
 				vine_timer.autostart = true
+				vine_timer.process_mode = Node.PROCESS_MODE_INHERIT
 				vine_timer.timeout.connect(func():
 					if not player or not is_instance_valid(player): return
 					for enemy in get_tree().get_nodes_in_group("enemies"):

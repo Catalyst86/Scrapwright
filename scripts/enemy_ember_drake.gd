@@ -51,7 +51,7 @@ func _physics_process(delta: float) -> void:
 		if not _charge_hit_player and player_ref and is_instance_valid(player_ref):
 			var dist = global_position.distance_to(player_ref.global_position)
 			if dist < 18.0 and player_ref.has_method("take_damage"):
-				player_ref.take_damage(CHARGE_DAMAGE)
+				player_ref.take_damage(CHARGE_DAMAGE, self)
 				_charge_hit_player = true
 		move_and_slide()
 		return
@@ -99,7 +99,7 @@ func _flame_breath() -> void:
 		var angle_diff = abs(angle_difference(angle_to_player, facing_angle))
 		if angle_diff < FLAME_BREATH_ANGLE:
 			if player_ref.has_method("take_damage"):
-				player_ref.take_damage(FLAME_BREATH_DAMAGE)
+				player_ref.take_damage(FLAME_BREATH_DAMAGE, self)
 
 func _start_charge() -> void:
 	if not player_ref or not is_instance_valid(player_ref): return
@@ -166,7 +166,7 @@ func _spawn_fire_dot() -> void:
 
 	dot.body_entered.connect(func(body):
 		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(5)
+			body.take_damage(5, self)
 	)
 
 	var parent = get_parent()

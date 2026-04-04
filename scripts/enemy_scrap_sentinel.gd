@@ -82,7 +82,7 @@ func _blade_spin() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < BLADE_SPIN_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(BLADE_SPIN_DAMAGE)
+			player_ref.take_damage(BLADE_SPIN_DAMAGE, self)
 
 	# Spinning blade visual — expanding arc lines
 	for i in 6:

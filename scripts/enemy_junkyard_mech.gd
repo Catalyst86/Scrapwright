@@ -59,7 +59,7 @@ func _ground_pound() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < GROUND_POUND_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(GROUND_POUND_DAMAGE)
+			player_ref.take_damage(GROUND_POUND_DAMAGE, self)
 
 	# Shockwave: push nearby enemies away
 	var enemies = get_tree().get_nodes_in_group("enemies")

@@ -51,11 +51,12 @@ func _light_fuse() -> void:
 	# Flash red four times then explode
 	for _i in 4:
 		if is_dead or not is_inside_tree(): return
-		if sprite: sprite.modulate = Color(2.2, 0.2, 0.2)
+		if sprite and not is_dead: sprite.modulate = Color(2.2, 0.2, 0.2)
 		await get_tree().create_timer(0.14).timeout
 		if is_dead or not is_inside_tree(): return
-		if sprite: sprite.modulate = Color.WHITE
+		if sprite and not is_dead: sprite.modulate = Color.WHITE
 		await get_tree().create_timer(0.14).timeout
+		if is_dead or not is_inside_tree(): return
 	if not is_dead and is_inside_tree():
 		_explode()
 
@@ -68,7 +69,7 @@ func _explode() -> void:
 	if player_ref and is_instance_valid(player_ref):
 		if global_position.distance_to(player_ref.global_position) < EXPLODE_RANGE:
 			if player_ref.has_method("take_damage"):
-				player_ref.take_damage(EXPLODE_DMG)
+				player_ref.take_damage(EXPLODE_DMG, self)
 
 	# Splash damage to nearby enemies
 	var space = get_world_2d().direct_space_state

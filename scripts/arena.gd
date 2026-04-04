@@ -1222,6 +1222,7 @@ func _restore_regen_perk() -> void:
 		var dh_timer = Timer.new()
 		dh_timer.wait_time = interval
 		dh_timer.autostart = true
+		dh_timer.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
 		dh_timer.timeout.connect(func():
 			# Heal as percentage of max HP — scales naturally with HP upgrades
 			var heal_amt = maxi(1, int(GameState.player_max_health * heal_pct / 100.0))

@@ -90,7 +90,7 @@ func _run_zone_ticks(zone: Area2D, tick: int, max_ticks: int) -> void:
 		var bodies = zone.get_overlapping_bodies()
 		for body in bodies:
 			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(ZONE_DPS)
+				body.take_damage(ZONE_DPS, self)
 	if not is_inside_tree(): return
 	await get_tree().create_timer(ZONE_TICK).timeout
 	_run_zone_ticks(zone, tick + 1, max_ticks)

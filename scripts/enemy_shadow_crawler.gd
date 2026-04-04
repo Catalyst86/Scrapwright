@@ -48,5 +48,5 @@ func _check_contact_damage() -> void:
 			actual_damage = damage * BACKSTAB_MULTIPLIER
 			backstab_ready = false
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(actual_damage)
+			player_ref.take_damage(actual_damage, self)
 		contact_timer = contact_cooldown

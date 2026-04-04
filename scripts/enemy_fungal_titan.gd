@@ -134,7 +134,7 @@ func _run_poison_ticks(pool: Area2D, ticks_left: int) -> void:
 	var bodies = pool.get_overlapping_bodies()
 	for body in bodies:
 		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(POISON_DPS)
+			body.take_damage(POISON_DPS, self)
 	# Fade visual over time
 	var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
 	if vis:

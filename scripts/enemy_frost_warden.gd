@@ -110,6 +110,6 @@ func _ice_blast() -> void:
 	var dist = global_position.distance_to(player_ref.global_position)
 	if dist < ICE_BLAST_RANGE:
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(ICE_BLAST_DAMAGE)
+			player_ref.take_damage(ICE_BLAST_DAMAGE, self)
 		if player_ref.has_method("apply_slow"):
 			player_ref.apply_slow(0.4, 2.0)

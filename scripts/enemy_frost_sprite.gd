@@ -16,7 +16,7 @@ func _check_contact_damage() -> void:
 	if global_position.distance_to(player_ref.global_position) < 18.0:
 		_play_attack_anim()
 		if player_ref.has_method("take_damage"):
-			player_ref.take_damage(damage)
+			player_ref.take_damage(damage, self)
 		# Apply slow to player (30% slow for 2 seconds)
 		if player_ref.has_method("apply_slow"):
 			player_ref.apply_slow(0.3, 2.0)

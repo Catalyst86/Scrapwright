@@ -122,7 +122,7 @@ func _on_body_entered(body: Node) -> void:
 					nearest_dist = d
 					nearest = enemy
 			if nearest and nearest.has_method("take_damage"):
-				nearest.take_damage(GameState.perk_thorns_damage, body.global_position)
+				nearest.take_damage(GameState.perk_thorns_damage, global_position)
 		_play_hit_and_free()
 	elif body.is_in_group("wall") or body is TileMapLayer:
 		_play_hit_and_free()

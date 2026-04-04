@@ -78,7 +78,7 @@ func _spawn_fire_dot() -> void:
 
 	dot.body_entered.connect(func(body: Node):
 		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(5)
+			body.take_damage(5, self)
 	)
 
 	var container = get_parent() if get_parent() else self

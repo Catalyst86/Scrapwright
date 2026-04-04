@@ -154,7 +154,7 @@ func _spawn_fire_puddle(pos: Vector2) -> void:
 		var bodies = puddle.get_overlapping_bodies()
 		for body in bodies:
 			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(4)
+				body.take_damage(4, self)
 	)
 
 	# Also fade out over 3 seconds
