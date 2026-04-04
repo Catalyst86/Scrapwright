@@ -143,16 +143,16 @@ func _start_saw_storm() -> void:
 
 	_show_boss_warning("TAKE COVER!")
 
-	# Spawn 3 scrap pile cover objects near the sentinel (close enough to reach)
+	# Spawn 3 scrap pile cover objects away from boss (player needs room to hide)
 	_cover_nodes.clear()
 	var arena_center = _get_arena_center()
 	var cover_positions = [
-		arena_center + Vector2(-55, -45),
-		arena_center + Vector2(55, -35),
-		arena_center + Vector2(0, 55),
+		arena_center + Vector2(-140, -100),
+		arena_center + Vector2(140, -80),
+		arena_center + Vector2(0, 130),
 	]
 	for pos in cover_positions:
-		var obs = _spawn_cover_obstacle(pos, "scrap_pile", 15)
+		var obs = _spawn_cover_obstacle(pos, "scrap_pile", 15, 2.5)
 		if obs:
 			_cover_nodes.append(obs)
 

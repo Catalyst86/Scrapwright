@@ -875,17 +875,18 @@ func _show_boss_warning(text: String) -> void:
 	if arena and arena.has_method("_show_banner"):
 		arena._show_banner(text, Color(1.0, 0.3, 0.3), 2.0)
 
-func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10) -> Node2D:
+func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10, cover_scale: float = 2.0) -> Node2D:
 	# Spawn a destructible cover obstacle at the given position
 	var obstacle = StaticBody2D.new()
-	obstacle.collision_layer = 1  # Wall layer — blocks projectiles and movement
+	obstacle.collision_layer = 1  # Wall layer — blocks movement
 	obstacle.collision_mask = 0
 	obstacle.global_position = pos
 	obstacle.add_to_group("boss_obstacles")
+	obstacle.add_to_group("wall")  # So projectiles collide with it
 
 	var col = CollisionShape2D.new()
-	var shape = CircleShape2D.new()
-	shape.radius = 14.0
+	var shape = RectangleShape2D.new()
+	shape.size = Vector2(24.0 * cover_scale, 24.0 * cover_scale)
 	col.shape = shape
 	obstacle.add_child(col)
 
@@ -893,15 +894,13 @@ func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10) -> N
 	if ResourceLoader.exists(tex_path):
 		var spr = Sprite2D.new()
 		spr.texture = load(tex_path)
+		spr.scale = Vector2(cover_scale, cover_scale)
 		obstacle.add_child(spr)
 	else:
-		# Fallback colored circle
-		var fallback = Polygon2D.new()
-		var pts = PackedVector2Array()
-		for i in 12:
-			var angle = TAU * i / 12.0
-			pts.append(Vector2(cos(angle) * 12, sin(angle) * 12))
-		fallback.polygon = pts
+		# Fallback colored rectangle
+		var fallback = ColorRect.new()
+		fallback.size = Vector2(24 * cover_scale, 24 * cover_scale)
+		fallback.position = -fallback.size / 2.0
 		fallback.color = Color(0.5, 0.4, 0.3, 0.8)
 		obstacle.add_child(fallback)
 
