@@ -202,17 +202,33 @@ func _create_burrow_warning(pos: Vector2, parent: Node) -> Node2D:
 	warning.global_position = pos
 	warning.z_index = -1
 
-	# Use animated warning circle spritesheet
-	var sheet_path = "res://assets/sprites/boss_fx/warning_circle_anim_sheet.png"
-	if ResourceLoader.exists(sheet_path):
-		var anim_spr = _make_anim_from_sheet(sheet_path, 48, 7, 6.0)
-		anim_spr.scale = Vector2(1.5, 1.5)
-		anim_spr.modulate = Color(1.0, 0.4, 0.0, 0.8)
-		warning.add_child(anim_spr)
-	else:
-		var circle = _make_circle_poly(BURROW_STRIKE_RADIUS, 16)
-		circle.color = Color(1.0, 0.4, 0.0, 0.35)
-		warning.add_child(circle)
+	# Warning circle — glowing rings with particle sparks
+	var outer = _make_circle_poly(BURROW_STRIKE_RADIUS, 16)
+	outer.color = Color(1.0, 0.3, 0.0, 0.3)
+	warning.add_child(outer)
+	var inner = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.6, 12)
+	inner.color = Color(1.0, 0.5, 0.1, 0.5)
+	warning.add_child(inner)
+	var center_dot = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.2, 8)
+	center_dot.color = Color(1.0, 0.8, 0.3, 0.7)
+	warning.add_child(center_dot)
+
+	# Warning sparks around the edge
+	var sparks = CPUParticles2D.new()
+	sparks.emitting = true
+	sparks.amount = 8
+	sparks.lifetime = 0.4
+	sparks.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	sparks.emission_sphere_radius = BURROW_STRIKE_RADIUS * 0.8
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 180.0
+	sparks.gravity = Vector2(0, 0)
+	sparks.initial_velocity_min = 5.0
+	sparks.initial_velocity_max = 15.0
+	sparks.scale_amount_min = 1.5
+	sparks.scale_amount_max = 3.0
+	sparks.color = Color(1.0, 0.5, 0.0, 0.8)
+	warning.add_child(sparks)
 
 	parent.add_child(warning)
 
@@ -227,18 +243,46 @@ func _spawn_burrow_dust(pos: Vector2) -> void:
 	dust.global_position = pos
 	dust.z_index = 5
 
-	# Use animated eruption spritesheet with perspective
-	var sheet_path = "res://assets/sprites/boss_fx/burrow_eruption_v2_sheet.png"
-	if ResourceLoader.exists(sheet_path):
-		var anim_spr = _make_anim_from_sheet(sheet_path, 48, 7, 12.0)
-		anim_spr.scale = Vector2(2.0, 2.0)
-		dust.add_child(anim_spr)
-	else:
-		for i in 6:
-			var puff = _make_circle_poly(randf_range(6, 14), 8)
-			puff.color = Color(0.7, 0.5, 0.3, 0.6)
-			puff.position = Vector2(randf_range(-15, 15), randf_range(-15, 15))
-			dust.add_child(puff)
+	# Particle-based eruption burst
+	var burst = CPUParticles2D.new()
+	burst.emitting = true
+	burst.one_shot = true
+	burst.explosiveness = 1.0
+	burst.amount = 20
+	burst.lifetime = 0.5
+	burst.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	burst.emission_sphere_radius = 5.0
+	burst.direction = Vector2(0, -1)
+	burst.spread = 180.0
+	burst.gravity = Vector2(0, 80)
+	burst.initial_velocity_min = 60.0
+	burst.initial_velocity_max = 120.0
+	burst.scale_amount_min = 2.0
+	burst.scale_amount_max = 5.0
+	burst.color = Color(0.8, 0.5, 0.2, 0.9)
+	var grad = Gradient.new()
+	grad.set_color(0, Color(1.0, 0.7, 0.2, 1.0))
+	grad.set_color(1, Color(0.5, 0.3, 0.1, 0.0))
+	burst.color_ramp = grad
+	dust.add_child(burst)
+
+	# Rock debris particles
+	var rocks = CPUParticles2D.new()
+	rocks.emitting = true
+	rocks.one_shot = true
+	rocks.explosiveness = 0.9
+	rocks.amount = 8
+	rocks.lifetime = 0.7
+	rocks.emission_shape = CPUParticles2D.EMISSION_SHAPE_POINT
+	rocks.direction = Vector2(0, -1)
+	rocks.spread = 60.0
+	rocks.gravity = Vector2(0, 200)
+	rocks.initial_velocity_min = 80.0
+	rocks.initial_velocity_max = 150.0
+	rocks.scale_amount_min = 3.0
+	rocks.scale_amount_max = 6.0
+	rocks.color = Color(0.5, 0.35, 0.2, 0.8)
+	dust.add_child(rocks)
 
 	var container = get_parent() if get_parent() else self
 	container.add_child(dust)
@@ -253,19 +297,49 @@ func _spawn_eruption_impact(pos: Vector2, parent: Node) -> void:
 	impact.global_position = pos
 	impact.z_index = 4
 
-	var flash = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.8, 14)
-	flash.color = Color(1.0, 0.5, 0.0, 0.7)
-	impact.add_child(flash)
+	# Expanding shockwave ring
+	var ring = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.3, 16)
+	ring.color = Color(1.0, 0.5, 0.0, 0.8)
+	impact.add_child(ring)
 
-	var core = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.4, 10)
-	core.color = Color(1.0, 0.85, 0.3, 0.9)
+	# Hot core flash
+	var core = _make_circle_poly(BURROW_STRIKE_RADIUS * 0.15, 10)
+	core.color = Color(1.0, 0.9, 0.4, 1.0)
 	impact.add_child(core)
+
+	# Fire particle burst from impact point
+	var fire_burst = CPUParticles2D.new()
+	fire_burst.emitting = true
+	fire_burst.one_shot = true
+	fire_burst.explosiveness = 1.0
+	fire_burst.amount = 15
+	fire_burst.lifetime = 0.4
+	fire_burst.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	fire_burst.emission_sphere_radius = 4.0
+	fire_burst.direction = Vector2(0, -1)
+	fire_burst.spread = 180.0
+	fire_burst.gravity = Vector2(0, 50)
+	fire_burst.initial_velocity_min = 50.0
+	fire_burst.initial_velocity_max = 100.0
+	fire_burst.scale_amount_min = 2.0
+	fire_burst.scale_amount_max = 4.0
+	var grad = Gradient.new()
+	grad.set_color(0, Color(1.0, 0.8, 0.2, 1.0))
+	grad.set_color(1, Color(1.0, 0.2, 0.0, 0.0))
+	fire_burst.color_ramp = grad
+	impact.add_child(fire_burst)
 
 	parent.add_child(impact)
 
+	# Expand the ring outward then fade
 	var tw = impact.create_tween()
-	tw.tween_property(impact, "scale", Vector2(1.4, 1.4), 0.2)
-	tw.tween_property(impact, "modulate:a", 0.0, 0.4)
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(3.0, 3.0), 0.3)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.3)
+	tw.tween_property(core, "scale", Vector2(2.0, 2.0), 0.2)
+	tw.tween_property(core, "modulate:a", 0.0, 0.3).set_delay(0.1)
+	tw.set_parallel(false)
+	tw.tween_interval(0.5)
 	tw.tween_callback(impact.queue_free)
 
 # --- Lava Geysers (Phase 3) ---
@@ -303,27 +377,59 @@ func _create_geyser(pos: Vector2) -> Area2D:
 	col.shape = shape
 	geyser.add_child(col)
 
-	# Visual — animated lava geyser with vertical perspective
-	var sheet_path = "res://assets/sprites/boss_fx/lava_geyser_v2_sheet.png"
-	if ResourceLoader.exists(sheet_path):
-		var anim_spr = _make_anim_from_sheet_rect(sheet_path, 32, 48, 7, 8.0)
-		anim_spr.scale = Vector2(1.8, 1.8)
-		anim_spr.offset.y = -12  # Offset upward so it looks like it's erupting from ground
-		geyser.add_child(anim_spr)
-	else:
-		var base_vis = _make_circle_poly(GEYSER_RADIUS, 12)
-		base_vis.color = Color(1.0, 0.3, 0.0, 0.5)
-		geyser.add_child(base_vis)
-		var core_vis = _make_circle_poly(GEYSER_RADIUS * 0.5, 8)
-		core_vis.color = Color(1.0, 0.7, 0.2, 0.7)
-		geyser.add_child(core_vis)
+	# Visual — particle-based lava geyser (no sprite, pure VFX)
+	# Glowing base circle
+	var base_glow = _make_circle_poly(GEYSER_RADIUS, 12)
+	base_glow.color = Color(1.0, 0.3, 0.0, 0.4)
+	geyser.add_child(base_glow)
+	var core_glow = _make_circle_poly(GEYSER_RADIUS * 0.5, 8)
+	core_glow.color = Color(1.0, 0.7, 0.2, 0.6)
+	geyser.add_child(core_glow)
 
-	geyser.z_index = -1
+	# Lava spark particles shooting upward
+	var particles = CPUParticles2D.new()
+	particles.emitting = true
+	particles.amount = 12
+	particles.lifetime = 0.6
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	particles.emission_sphere_radius = 8.0
+	particles.direction = Vector2(0, -1)
+	particles.spread = 25.0
+	particles.gravity = Vector2(0, 40)
+	particles.initial_velocity_min = 40.0
+	particles.initial_velocity_max = 80.0
+	particles.scale_amount_min = 2.0
+	particles.scale_amount_max = 4.0
+	particles.color = Color(1.0, 0.6, 0.1, 0.9)
+	var gradient = Gradient.new()
+	gradient.set_color(0, Color(1.0, 0.8, 0.2, 1.0))
+	gradient.set_color(1, Color(1.0, 0.2, 0.0, 0.0))
+	particles.color_ramp = gradient
+	geyser.add_child(particles)
 
-	# Pulsing glow
+	# Ember particles floating up slowly
+	var embers = CPUParticles2D.new()
+	embers.emitting = true
+	embers.amount = 6
+	embers.lifetime = 1.0
+	embers.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	embers.emission_sphere_radius = 12.0
+	embers.direction = Vector2(0, -1)
+	embers.spread = 45.0
+	embers.gravity = Vector2(0, -10)
+	embers.initial_velocity_min = 15.0
+	embers.initial_velocity_max = 35.0
+	embers.scale_amount_min = 1.0
+	embers.scale_amount_max = 2.5
+	embers.color = Color(1.0, 0.4, 0.0, 0.7)
+	geyser.add_child(embers)
+
+	geyser.z_index = 2
+
+	# Pulsing glow on base
 	var pulse = geyser.create_tween().set_loops()
-	pulse.tween_property(geyser, "scale", Vector2(1.15, 1.15), 0.4).set_trans(Tween.TRANS_SINE)
-	pulse.tween_property(geyser, "scale", Vector2(0.9, 0.9), 0.4).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(base_glow, "modulate:a", 0.8, 0.3).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(base_glow, "modulate:a", 0.4, 0.3).set_trans(Tween.TRANS_SINE)
 
 	return geyser
 
