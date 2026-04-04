@@ -503,7 +503,7 @@ func _make_anim_from_sheet_rect(sheet_path: String, frame_w: int, frame_h: int, 
 	var tex = load(sheet_path)
 	var spr = AnimatedSprite2D.new()
 	var anim_frames = SpriteFrames.new()
-	anim_frames.add_animation("default")
+	if not anim_frames.has_animation("default"): anim_frames.add_animation("default")
 	anim_frames.set_animation_speed("default", fps)
 	anim_frames.set_animation_loop("default", true)
 	for i in frame_count:
@@ -520,7 +520,7 @@ func _make_anim_from_sheet(sheet_path: String, frame_size: int, frame_count: int
 	var tex = load(sheet_path)
 	var spr = AnimatedSprite2D.new()
 	var frames = SpriteFrames.new()
-	frames.add_animation("default")
+	if not frames.has_animation("default"): frames.add_animation("default")
 	frames.set_animation_speed("default", fps)
 	frames.set_animation_loop("default", true)
 	for i in frame_count:
