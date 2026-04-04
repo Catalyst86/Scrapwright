@@ -95,13 +95,13 @@ enum ArenaPhase { PREP, COMBAT, CHEST_PHASE, TRANSITION }
 6. Normal waves: next wave starts immediately after chests
 
 ### 84 Waves Across 6 Stages
-- **Stage 1 — Scrapyard** (waves 1–14): rusher, shooter, tank, flyer, exploder
-- **Stage 2 — Fungal Grove** (waves 15–28): spore_walker, mycelium_sniper, fungal_brute
-- **Stage 3 — Magma Core** (waves 29–42): magma_imp, lava_lobber, obsidian_golem
-- **Stage 4 — Frozen Caverns** (waves 43–56): frost_sprite, ice_archer, glacial_hulk, crystal_bat
-- **Stage 5 — Clockwork Factory** (waves 57–70): gear_drone, steam_turret, brass_enforcer, spark_bug
-- **Stage 6 — The Abyss** (waves 71–84): shadow_crawler, void_weaver, abyssal_knight, phantom
-- **Bosses** appear on waves 7 & 14 of each stage (junkyard_mech, fungal_titan, molten_wyrm, etc.)
+- **Stage 1 — The Scrapyard** (waves 1–14): rusher, shooter, tank, flyer, exploder | Mid-boss: scrap_sentinel | Boss: junkyard_mech
+- **Stage 2 — Fungal Depths** (waves 15–28): spore_walker, mycelium_sniper, fungal_brute | Mid-boss: spore_mother | Boss: fungal_titan
+- **Stage 3 — Molten Core** (waves 29–42): magma_imp, lava_lobber, obsidian_golem | Mid-boss: ember_drake | Boss: molten_wyrm
+- **Stage 4 — Frozen Caverns** (waves 43–56): frost_sprite, ice_archer, glacial_hulk, crystal_bat | Mid-boss: frost_warden | Boss: crystal_colossus
+- **Stage 5 — Clockwork Factory** (waves 57–70): gear_drone, steam_turret, brass_enforcer, spark_bug | Mid-boss: piston_crusher | Boss: the_architect
+- **Stage 6 — The Abyss** (waves 71–84): shadow_crawler, void_weaver, abyssal_knight, phantom | Mid-boss: the_devourer | Boss: scrap_king
+- **Mid-bosses** on wave 7 of each stage, **Final bosses** on wave 14
 
 ---
 
