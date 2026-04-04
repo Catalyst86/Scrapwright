@@ -35,7 +35,7 @@ var _laser_fixed_center: Vector2 = Vector2.ZERO  # Fixed arena center captured a
 const LASER_SWEEP_DURATION = 6.0  # Full sweep cycle
 const LASER_SWEEP_COOLDOWN = 18.0
 const LASER_WIDTH = 10.0
-const LASER_GAP = 40.0  # Gap size the player can fit through
+const LASER_GAP = 55.0  # Gap size the player can fit through
 const LASER_SEGMENT_LEN = 180.0  # Each segment length before a gap
 
 # Fungal eruption state (Phase 3)
