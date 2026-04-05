@@ -18,6 +18,7 @@ func _ready() -> void:
 	damage           = 15
 	xp_value         = 25
 	contact_cooldown = 99.0
+	can_burrow_flank = false  # Stationary — never burrow
 	_proj_scene = load("res://scenes/enemy_projectile.tscn")
 	super._ready()
 
@@ -43,6 +44,7 @@ func _do_fire_steam() -> void:
 		var angle = rotation_angle + (TAU * i / PROJECTILE_COUNT)
 		var dir = Vector2(cos(angle), sin(angle))
 		var proj = proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.global_position = global_position + dir * 10.0
 		proj.projectile_type = "steam"
 		proj.setup(dir * PROJECTILE_SPEED, damage)

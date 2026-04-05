@@ -387,8 +387,8 @@ func _physics_process(delta: float) -> void:
 		if _burrow_check_timer >= BURROW_CHECK_INTERVAL:
 			_burrow_check_timer = 0.0
 			_check_burrow_flank()
-	# Stuck detection — ALL enemy types, including flyers and exploders
-	if not _is_burrowed and not is_stunned:
+	# Stuck detection — ALL enemy types EXCEPT stationary ones (move_speed == 0)
+	if not _is_burrowed and not is_stunned and move_speed > 0:
 		if global_position.distance_to(_stuck_last_pos) < STUCK_MOVE_MIN:
 			_stuck_timer += delta
 			if _stuck_timer >= STUCK_THRESHOLD:

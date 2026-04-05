@@ -141,6 +141,7 @@ func _do_shoot() -> void:
 			var spread = (i - 1) * 0.2
 			var shot_dir = dir.rotated(spread)
 			var proj = _proj_scene.instantiate()
+			proj.source_enemy = self
 			proj.projectile_type = "steam"
 			parent.add_child(proj)
 			proj.global_position = global_position + shot_dir * 12.0
@@ -151,12 +152,14 @@ func _do_shoot() -> void:
 			var spread = (i - 0.5) * 0.15
 			var shot_dir = dir.rotated(spread)
 			var proj = _proj_scene.instantiate()
+			proj.source_enemy = self
 			proj.projectile_type = "steam"
 			parent.add_child(proj)
 			proj.global_position = global_position + shot_dir * 12.0
 			proj.setup(shot_dir * PROJECTILE_SPEED * 1.1, damage)
 	else:
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "steam"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 12.0
@@ -183,22 +186,40 @@ func _start_blueprint() -> void:
 	var tile_size = BLUEPRINT_TILE_SIZE
 	var grid_origin = center - Vector2(grid_cols * tile_size * 0.5, grid_rows * tile_size * 0.5)
 
+	# Load floor tile sprites
+	var danger_tex = load("res://assets/sprites/boss_fx/electric_floor_danger.png") if ResourceLoader.exists("res://assets/sprites/boss_fx/electric_floor_danger.png") else null
+	var safe_tex = load("res://assets/sprites/boss_fx/electric_floor_safe.png") if ResourceLoader.exists("res://assets/sprites/boss_fx/electric_floor_safe.png") else null
+
 	var tile_index = 0
 	for row in grid_rows:
 		for col in grid_cols:
 			var is_electric = (row + col) % 2 == 0
-			var tile = ColorRect.new()
-			tile.size = Vector2(tile_size, tile_size)
-			tile.position = grid_origin + Vector2(col * tile_size, row * tile_size)
-			tile.z_index = -1
+			var tile_pos = grid_origin + Vector2(col * tile_size + tile_size * 0.5, row * tile_size + tile_size * 0.5)
+
+			# Use sprite if available, fallback to ColorRect
+			var tile_node: Node2D
+			var tex = danger_tex if is_electric else safe_tex
+			if tex:
+				var spr = Sprite2D.new()
+				spr.texture = tex
+				spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				spr.scale = Vector2(tile_size / 32.0, tile_size / 32.0)
+				spr.global_position = tile_pos
+				spr.z_index = -1
+				spr.modulate.a = 0.4 if is_electric else 0.6
+				tile_node = spr
+			else:
+				var rect = ColorRect.new()
+				rect.size = Vector2(tile_size, tile_size)
+				rect.position = grid_origin + Vector2(col * tile_size, row * tile_size)
+				rect.z_index = -1
+				rect.color = Color(1.0, 0.2, 0.1, 0.3) if is_electric else Color(0.1, 0.9, 0.2, 0.3)
+				tile_node = rect
 
 			if is_electric:
-				tile.color = Color(1.0, 0.2, 0.1, 0.3)  # Red-ish, starts dim
-				_electric_tiles.append(tile)
-			else:
-				tile.color = Color(0.1, 0.9, 0.2, 0.3)   # Green = safe
-			_blueprint_tiles.append(tile)
-			parent.add_child(tile)
+				_electric_tiles.append(tile_node)
+			_blueprint_tiles.append(tile_node)
+			parent.add_child(tile_node)
 			tile_index += 1
 
 	# Phase 3: Also spawn turrets and enforcer during blueprint
@@ -213,10 +234,10 @@ func _process_blueprint(delta: float) -> void:
 	var pulse = clampf(_blueprint_elapsed / BLUEPRINT_DELAY, 0.0, 1.0)
 	for tile in _electric_tiles:
 		if is_instance_valid(tile):
-			tile.color.a = 0.3 + pulse * 0.5
+			tile.modulate.a = 0.4 + pulse * 0.5
 			if _blueprint_elapsed >= BLUEPRINT_DELAY * 0.8:
 				# Flash warning
-				tile.color = Color(1.0, 0.1, 0.0, 0.5 + 0.3 * sin(_blueprint_elapsed * 12.0))
+				tile.modulate = Color(1.5, 0.5, 0.5, 0.5 + 0.3 * sin(_blueprint_elapsed * 12.0))
 
 	# At delay threshold, deal damage if player on electric tile
 	if _blueprint_elapsed >= BLUEPRINT_DELAY and not _blueprint_damage_dealt:
@@ -248,7 +269,7 @@ func _zap_electric_tiles() -> void:
 	var player_pos = player_ref.global_position
 	for tile in _electric_tiles:
 		if not is_instance_valid(tile): continue
-		var tile_rect = Rect2(tile.position, tile.size)
+		var tile_rect = Rect2(tile.global_position, tile.size)
 		if tile_rect.has_point(player_pos):
 			if player_ref.has_method("take_damage"):
 				player_ref.take_damage(BLUEPRINT_DAMAGE, self)
@@ -311,5 +332,5 @@ func _phase_change_visual(color: Color) -> void:
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
