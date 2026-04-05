@@ -52,6 +52,7 @@ func _ready() -> void:
 	damage           = 22
 	xp_value         = 100
 	contact_cooldown = 1.0
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true
@@ -388,8 +389,13 @@ func _spawn_fire_dot() -> void:
 	tw.tween_property(dot, "modulate:a", 0.0, 0.5)
 	tw.tween_callback(dot.queue_free)
 
+func _die() -> void:
+	if is_instance_valid(_fire_aura): _fire_aura.queue_free()
+	_fire_aura = null
+	super._die()
+
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)

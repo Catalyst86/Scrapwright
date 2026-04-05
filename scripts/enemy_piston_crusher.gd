@@ -46,6 +46,7 @@ func _ready() -> void:
 	damage           = 25
 	xp_value         = 250
 	contact_cooldown = 1.5
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true
@@ -207,7 +208,7 @@ func _process_assembly(delta: float) -> void:
 	# Push player leftward each frame
 	if player_ref and is_instance_valid(player_ref):
 		if "velocity" in player_ref:
-			player_ref.velocity += ASSEMBLY_PUSH * delta * 60.0
+			player_ref.velocity += ASSEMBLY_PUSH * delta
 
 		# Visual — conveyor pulse on arrows
 		for arrow in _assembly_arrows:
@@ -260,5 +261,5 @@ func _spawn_conveyor_arrows() -> void:
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)

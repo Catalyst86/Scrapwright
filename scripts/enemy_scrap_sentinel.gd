@@ -39,6 +39,7 @@ func _ready() -> void:
 	xp_value         = 80
 	contact_cooldown = 1.2
 	_proj_scene = load("res://scenes/enemy_projectile.tscn")
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true
@@ -194,18 +195,18 @@ func _fire_storm_projectiles(tick: int) -> void:
 		var angle = base_angle + TAU * i / num_blades
 		var dir = Vector2.from_angle(angle)
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 15.0
 		proj.setup(dir * 90.0, 15)
 
 func _get_arena_center() -> Vector2:
-	# Approximate arena center
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
 		if cam:
-			return cam.get_screen_center_position()
-	return Vector2(640, 360)
+			return cam.global_position
+	return Vector2(480, 270)
 
 func _blade_spin() -> void:
 	if not player_ref or not is_instance_valid(player_ref): return
@@ -254,6 +255,7 @@ func _do_throw_scrap() -> void:
 	for i in SCRAP_COUNT:
 		var spread_angle = (i - SCRAP_COUNT / 2.0) * 0.3
 		var proj = proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = spawn_pos

@@ -53,6 +53,7 @@ func _ready() -> void:
 	xp_value         = 500
 	contact_cooldown = 1.0
 	_proj_scene = load("res://scenes/enemy_projectile.tscn")
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true
@@ -209,6 +210,7 @@ func _do_barrage() -> void:
 		var spread = (float(i) - BARRAGE_COUNT * 0.5) * 0.15
 		var dir = base_dir.rotated(spread)
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "bone"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 14.0
@@ -293,6 +295,7 @@ func _fire_decree_blades(tick: int) -> void:
 		var angle = base_angle + TAU * i / DECREE_BLADE_COUNT
 		var dir = Vector2.from_angle(angle)
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 15.0
@@ -352,5 +355,5 @@ func _phase_change_visual(color: Color) -> void:
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)

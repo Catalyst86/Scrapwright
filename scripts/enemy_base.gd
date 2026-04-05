@@ -26,6 +26,7 @@ var _has_directional_sprites: bool = false
 var _current_facing: String = "south"  # "south", "east", "west"
 
 # --- Boss Phase System ---
+var _is_boss: bool = false                    # Set to true in boss subclass _ready()
 var _boss_phase: int = 1                      # Current phase (1, 2, or 3)
 var _phase_transitioning: bool = false        # True during phase transition animation
 var _phase_2_threshold: float = 0.66          # HP % to enter phase 2
@@ -765,7 +766,7 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 	_show_damage_number(amount)
 	# Boss phase transitions — use sequential ifs (not elif) so burst damage
 	# that skips past both thresholds triggers both phases in order.
-	if not _phase_transitioning:
+	if _is_boss and not _phase_transitioning:
 		var hp_pct = float(health) / float(max_health)
 		if _boss_phase < 2 and hp_pct <= _phase_2_threshold:
 			_boss_phase = 2
@@ -865,21 +866,16 @@ func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10, cove
 	return obstacle
 
 func _clear_boss_obstacles() -> void:
-	var count = 0
 	for obs in get_tree().get_nodes_in_group("boss_obstacles"):
 		if is_instance_valid(obs):
 			obs.queue_free()
-			count += 1
-	if count > 0:
-		print("[BOSS] _clear_boss_obstacles called by %s — freed %d obstacles" % [enemy_type, count])
 
 func _die() -> void:
 	if is_dead: return
 	_attack_anim_playing = false
 	_phase_transitioning = false
-	# Only clean up boss obstacles when a BOSS dies (not regular enemies)
-	if _boss_phase > 1:
-		print("[BOSS] %s dying at phase %d — clearing obstacles" % [enemy_type, _boss_phase])
+	# Only clean up boss obstacles when a BOSS dies
+	if _is_boss:
 		_clear_boss_obstacles()
 	is_dead = true
 	set_physics_process(false)

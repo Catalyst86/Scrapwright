@@ -48,6 +48,7 @@ func _ready() -> void:
 	damage           = 15
 	xp_value         = 90
 	contact_cooldown = 1.5
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true

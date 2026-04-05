@@ -57,6 +57,7 @@ func _ready() -> void:
 	contact_cooldown = 1.0
 	base_speed       = move_speed
 	_proj_scene = load("res://scenes/enemy_projectile.tscn")
+	_is_boss = true
 	super._ready()
 	if health_bar:
 		health_bar.visible = true
