@@ -4,6 +4,7 @@ signal died
 
 var SPEED: float            = 90.0
 var AUTO_ATTACK_DAMAGE: int = 8
+var knockback: Vector2      = Vector2.ZERO
 const AUTO_ATTACK_RANGE     = 80.0
 const AUTO_ATTACK_COOLDOWN  = 0.6
 
@@ -453,6 +454,13 @@ func _handle_movement() -> void:
 	if Input.is_action_pressed("ui_down"):  dir.y += 1
 	if Input.is_action_pressed("ui_up"):    dir.y -= 1
 	var speed_mult = SNEAK_SPEED_MULT if _is_sneaking else 1.0
+	_process_slow(get_physics_process_delta_time())
+	speed_mult *= _slow_mult  # Apply ice/debuff slows
+	# Apply and decay knockback (from boss push effects)
+	if knockback.length() > 2.0:
+		velocity = knockback
+		knockback = knockback.move_toward(Vector2.ZERO, 300.0 * get_physics_process_delta_time())
+		return
 	if dir != Vector2.ZERO:
 		dir = dir.normalized()
 		facing_dir = dir
@@ -608,7 +616,7 @@ func _auto_attack() -> void:
 		var crit_pct = GameState.permanent.get("crit_chance_level", 0) * 3
 		crit_pct += GameState.perk_crit_bonus
 		if GameState.chimera_buff.get("effect", "") == "crit":
-			crit_pct += int(GameState.chimera_buff.value)
+			crit_pct += int(GameState.chimera_buff.get("value", 0))
 		if crit_pct > 0 and randf() * 100.0 < crit_pct:
 			actual_damage = int(actual_damage * 1.5)
 			is_crit = true
@@ -793,11 +801,13 @@ func start_fall_animation(on_complete: Callable) -> void:
 		and sprite.sprite_frames.get_frame_count("fall_s") > 0
 
 	if has_anim:
-		var fps = sprite.sprite_frames.get_animation_speed("fall_s")
+		var fps = maxf(sprite.sprite_frames.get_animation_speed("fall_s"), 1.0)
 		var frames = sprite.sprite_frames.get_frame_count("fall_s")
 		var duration = frames / fps
 		sprite.play("fall_s")
-		get_tree().create_timer(duration).timeout.connect(_on_fall_anim_finished)
+		get_tree().create_timer(duration).timeout.connect(
+			func(): if is_instance_valid(self): _on_fall_anim_finished()
+		)
 	else:
 		# Frames not imported yet — tween scale to zero as fallback visual
 		var tw = create_tween().set_ease(Tween.EASE_IN)
@@ -865,6 +875,20 @@ func take_damage(amount: int, from_enemy: Node = null) -> void:
 	if lethal:
 		_die()
 		died.emit()
+
+var _slow_timer: float = 0.0
+var _slow_mult: float = 1.0
+
+func apply_slow(amount: float, duration: float) -> void:
+	# amount = speed multiplier (0.5 = 50% speed), duration in seconds
+	_slow_mult = amount
+	_slow_timer = duration
+
+func _process_slow(delta: float) -> void:
+	if _slow_timer > 0:
+		_slow_timer -= delta
+		if _slow_timer <= 0:
+			_slow_mult = 1.0
 
 func _flash_hurt() -> void:
 	if sprite: sprite.modulate = Color(1.0, 0.3, 0.3)

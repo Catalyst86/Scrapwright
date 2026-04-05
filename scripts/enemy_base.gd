@@ -637,12 +637,17 @@ func _update_facing() -> void:
 func _check_contact_damage() -> void:
 	if not player_ref or not is_instance_valid(player_ref): return
 	var dist_sq = global_position.distance_squared_to(player_ref.global_position)
+	# Scale contact range based on sprite size — bosses are 160px+, grunts are 38px
+	var target_size = TYPE_SIZES.get(enemy_type, Vector2(14, 14))
+	var contact_range = maxf(18.0, target_size.x * 0.25)  # 25% of sprite width
+	var contact_range_sq = contact_range * contact_range
+	var anim_range_sq = (contact_range * 3.0) * (contact_range * 3.0)
 	# Play attack animation when approaching the player (visible wind-up before contact)
-	if dist_sq < 6400.0 and sprite and sprite.animation != "attack":  # 80^2
+	if dist_sq < anim_range_sq and sprite and sprite.animation != "attack":
 		_play_attack_anim()
 	# Actual damage on close contact
 	if contact_timer > 0: return
-	if dist_sq < 324.0:  # 18^2
+	if dist_sq < contact_range_sq:
 		if player_ref.has_method("take_damage"):
 			player_ref.take_damage(damage, self)
 		if _sfx_melee:

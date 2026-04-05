@@ -165,9 +165,9 @@ func _process_blizzard(delta: float) -> void:
 
 		if nearest_wall and is_instance_valid(nearest_wall):
 			var push_dir = (nearest_wall.global_position - player_ref.global_position).normalized()
-			# Apply push as velocity offset on the player
-			if player_ref.has_method("apply_external_force"):
-				player_ref.apply_external_force(push_dir * BLIZZARD_PUSH_FORCE * delta)
+			# Use knockback to push player — this survives the velocity recalculation
+			if "knockback" in player_ref:
+				player_ref.knockback = push_dir * BLIZZARD_PUSH_FORCE
 			elif "velocity" in player_ref:
 				player_ref.velocity += push_dir * BLIZZARD_PUSH_FORCE * delta
 
@@ -296,5 +296,5 @@ func _ice_blast() -> void:
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
