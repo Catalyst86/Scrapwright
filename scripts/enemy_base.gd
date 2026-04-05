@@ -167,6 +167,10 @@ const KEY_DROP_BOSS = [
 
 var _dot: ColorRect = null
 var _anim_time: float = 0.0
+# Cached animation parameters (set once in _ready via _cache_anim_params)
+var _anim_speed: float = 12.0
+var _anim_bob_amount: float = 3.0
+var _anim_squash_amount: float = 0.15
 
 func _ready() -> void:
 	_apply_stage_scaling()
@@ -181,6 +185,7 @@ func _ready() -> void:
 	_approach_angle_offset = randf_range(-APPROACH_ANGLE_MAX, APPROACH_ANGLE_MAX)
 	_circle_angle = randf() * TAU
 	_load_sprites()
+	_cache_anim_params()
 	_setup_enemy_audio()
 
 func _setup_enemy_audio() -> void:
@@ -302,6 +307,9 @@ func _load_sprites() -> void:
 
 	# Pick an initial walk animation — prefer east if directional sprites exist
 	var init_walk = "walk_east" if _has_directional_sprites and sf.has_animation("walk_east") else "walk"
+	# Remove the auto-created "default" animation (empty, causes errors if played)
+	if sf.has_animation("default") and sf.get_frame_count("default") == 0:
+		sf.remove_animation("default")
 	if _has_directional_sprites:
 		_current_facing = "east"
 	if sf.get_frame_count(init_walk) > 0:
@@ -413,7 +421,7 @@ func _move_toward_player(delta: float) -> void:
 		player_ref = get_tree().get_first_node_in_group("player")
 		if not player_ref:
 			return
-		return
+		# Fall through — player was re-fetched successfully, continue moving
 
 	# Sneak detection: if player is sneaking and far enough, lose track
 	if GameState.is_player_sneaking:
@@ -507,6 +515,54 @@ func _get_wave_aggression() -> float:
 	var wave = maxi(GameState.current_wave, 1)
 	return clampf(0.15 + wave * 0.01, 0.15, 0.95)
 
+func _cache_anim_params() -> void:
+	# Cache per-type animation parameters once at spawn instead of branching every frame.
+	# Defaults: anim_speed=12.0, bob_amount=3.0, squash_amount=0.15
+	const ANIM_PARAMS := {
+		# [anim_speed, bob_amount, squash_amount]
+		"tank":              [8.0,  2.0, 0.10],
+		"fungal_brute":      [8.0,  2.0, 0.10],
+		"flyer":             [16.0, 5.0, 0.20],
+		"magma_imp":         [16.0, 5.0, 0.20],
+		"exploder":          [10.0, 3.0, 0.18],
+		"obsidian_golem":    [6.0,  1.5, 0.08],
+		"mycelium_sniper":   [10.0, 3.0, 0.15],
+		"lava_lobber":       [10.0, 3.0, 0.15],
+		"scrap_sentinel":    [4.5,  1.5, 0.04],
+		"spore_mother":      [3.5,  1.2, 0.04],
+		"ember_drake":       [4.0,  1.8, 0.04],
+		"junkyard_mech":     [4.0,  1.5, 0.04],
+		"fungal_titan":      [3.5,  1.2, 0.03],
+		"molten_wyrm":       [3.5,  2.0, 0.03],
+		# Stage 4
+		"frost_sprite":      [16.0, 4.0, 0.18],
+		"ice_archer":        [10.0, 3.0, 0.15],
+		"glacial_hulk":      [6.0,  1.5, 0.08],
+		"crystal_bat":       [16.0, 5.0, 0.20],
+		"frost_warden":      [4.0,  1.5, 0.04],
+		"crystal_colossus":  [3.5,  1.2, 0.03],
+		# Stage 5
+		"gear_drone":        [18.0, 3.0, 0.15],
+		"steam_turret":      [4.0,  0.5, 0.05],
+		"brass_enforcer":    [7.0,  2.0, 0.10],
+		"spark_bug":         [16.0, 5.0, 0.20],
+		"piston_crusher":    [4.0,  1.5, 0.04],
+		"the_architect":     [3.5,  1.2, 0.03],
+		# Stage 6
+		"shadow_crawler":    [14.0, 3.5, 0.16],
+		"void_weaver":       [10.0, 3.0, 0.15],
+		"abyssal_knight":    [6.0,  1.8, 0.08],
+		"phantom":           [12.0, 4.0, 0.18],
+		"the_devourer":      [3.5,  1.5, 0.04],
+		"scrap_king":        [3.0,  1.0, 0.03],
+	}
+	if enemy_type in ANIM_PARAMS:
+		var p: Array = ANIM_PARAMS[enemy_type]
+		_anim_speed = p[0]
+		_anim_bob_amount = p[1]
+		_anim_squash_amount = p[2]
+	# else: defaults (12.0, 3.0, 0.15) already set at declaration
+
 func _animate_sprite(delta: float) -> void:
 	if not sprite or is_dead: return
 	_anim_time += delta
@@ -517,129 +573,13 @@ func _animate_sprite(delta: float) -> void:
 		var ftex = sprite.sprite_frames.get_frame_texture("walk", 0)
 		if ftex and ftex.get_width() > 0:
 			base_scale = target.x / float(ftex.get_width())
-	var anim_speed = 12.0
-	var bob_amount = 3.0
-	var squash_amount = 0.15
-	if enemy_type == "tank" or enemy_type == "fungal_brute":
-		anim_speed = 8.0
-		bob_amount = 2.0
-		squash_amount = 0.10
-	elif enemy_type == "flyer" or enemy_type == "magma_imp":
-		anim_speed = 16.0
-		bob_amount = 5.0
-		squash_amount = 0.20
-	elif enemy_type == "exploder":
-		anim_speed = 10.0
-		squash_amount = 0.18
-	elif enemy_type == "obsidian_golem":
-		anim_speed = 6.0
-		bob_amount = 1.5
-		squash_amount = 0.08
-	elif enemy_type == "mycelium_sniper" or enemy_type == "lava_lobber":
-		anim_speed = 10.0
-	elif enemy_type == "scrap_sentinel":
-		anim_speed = 4.5
-		bob_amount = 1.5
-		squash_amount = 0.04
-	elif enemy_type == "spore_mother":
-		anim_speed = 3.5
-		bob_amount = 1.2
-		squash_amount = 0.04
-	elif enemy_type == "ember_drake":
-		anim_speed = 4.0
-		bob_amount = 1.8
-		squash_amount = 0.04
-	elif enemy_type == "junkyard_mech":
-		anim_speed = 4.0
-		bob_amount = 1.5
-		squash_amount = 0.04
-	elif enemy_type == "fungal_titan":
-		anim_speed = 3.5
-		bob_amount = 1.2
-		squash_amount = 0.03
-	elif enemy_type == "molten_wyrm":
-		anim_speed = 3.5
-		bob_amount = 2.0
-		squash_amount = 0.03
-	# Stage 4 — Frozen Caverns
-	elif enemy_type == "frost_sprite":
-		anim_speed = 16.0
-		bob_amount = 4.0
-		squash_amount = 0.18
-	elif enemy_type == "ice_archer":
-		anim_speed = 10.0
-	elif enemy_type == "glacial_hulk":
-		anim_speed = 6.0
-		bob_amount = 1.5
-		squash_amount = 0.08
-	elif enemy_type == "crystal_bat":
-		anim_speed = 16.0
-		bob_amount = 5.0
-		squash_amount = 0.20
-	elif enemy_type == "frost_warden":
-		anim_speed = 4.0
-		bob_amount = 1.5
-		squash_amount = 0.04
-	elif enemy_type == "crystal_colossus":
-		anim_speed = 3.5
-		bob_amount = 1.2
-		squash_amount = 0.03
-	# Stage 5 — Clockwork Factory
-	elif enemy_type == "gear_drone":
-		anim_speed = 18.0
-		bob_amount = 3.0
-		squash_amount = 0.15
-	elif enemy_type == "steam_turret":
-		anim_speed = 4.0
-		bob_amount = 0.5
-		squash_amount = 0.05
-	elif enemy_type == "brass_enforcer":
-		anim_speed = 7.0
-		bob_amount = 2.0
-		squash_amount = 0.10
-	elif enemy_type == "spark_bug":
-		anim_speed = 16.0
-		bob_amount = 5.0
-		squash_amount = 0.20
-	elif enemy_type == "piston_crusher":
-		anim_speed = 4.0
-		bob_amount = 1.5
-		squash_amount = 0.04
-	elif enemy_type == "the_architect":
-		anim_speed = 3.5
-		bob_amount = 1.2
-		squash_amount = 0.03
-	# Stage 6 — The Abyss
-	elif enemy_type == "shadow_crawler":
-		anim_speed = 14.0
-		bob_amount = 3.5
-		squash_amount = 0.16
-	elif enemy_type == "void_weaver":
-		anim_speed = 10.0
-		bob_amount = 3.0
-	elif enemy_type == "abyssal_knight":
-		anim_speed = 6.0
-		bob_amount = 1.8
-		squash_amount = 0.08
-	elif enemy_type == "phantom":
-		anim_speed = 12.0
-		bob_amount = 4.0
-		squash_amount = 0.18
-	elif enemy_type == "the_devourer":
-		anim_speed = 3.5
-		bob_amount = 1.5
-		squash_amount = 0.04
-	elif enemy_type == "scrap_king":
-		anim_speed = 3.0
-		bob_amount = 1.0
-		squash_amount = 0.03
 	if velocity.length() > 5.0:
-		var bob = sin(_anim_time * anim_speed) * bob_amount
+		var bob = sin(_anim_time * _anim_speed) * _anim_bob_amount
 		sprite.offset.y = bob
-		var squash = 1.0 + sin(_anim_time * anim_speed) * squash_amount
+		var squash = 1.0 + sin(_anim_time * _anim_speed) * _anim_squash_amount
 		sprite.scale.x = base_scale / squash
 		sprite.scale.y = base_scale * squash
-		sprite.rotation = sin(_anim_time * anim_speed * 0.5) * 0.05
+		sprite.rotation = sin(_anim_time * _anim_speed * 0.5) * 0.05
 	else:
 		var breathe = sin(_anim_time * 3.5) * 0.04
 		sprite.scale.x = base_scale + breathe
@@ -696,13 +636,13 @@ func _update_facing() -> void:
 
 func _check_contact_damage() -> void:
 	if not player_ref or not is_instance_valid(player_ref): return
-	var dist = global_position.distance_to(player_ref.global_position)
+	var dist_sq = global_position.distance_squared_to(player_ref.global_position)
 	# Play attack animation when approaching the player (visible wind-up before contact)
-	if dist < 80.0 and sprite and sprite.animation != "attack":
+	if dist_sq < 6400.0 and sprite and sprite.animation != "attack":  # 80^2
 		_play_attack_anim()
 	# Actual damage on close contact
 	if contact_timer > 0: return
-	if dist < 18.0:
+	if dist_sq < 324.0:  # 18^2
 		if player_ref.has_method("take_damage"):
 			player_ref.take_damage(damage, self)
 		if _sfx_melee:
@@ -803,7 +743,8 @@ func stun(duration: float) -> void:
 	if sprite: sprite.modulate = Color(0.5, 0.5, 1.0)  # Blue tint while stunned
 
 func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
-	if is_dead or _is_burrowed: return
+	if is_dead or _is_burrowed or _phase_transitioning: return
+	if amount <= 0: return  # Prevent zero-damage spam and negative-healing exploit
 	health -= amount
 	if health_bar:
 		health_bar.visible = true
@@ -817,15 +758,20 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 		_hit_retreat_timer = HIT_RETREAT_DURATION
 		_hit_retreat_dir = -velocity.normalized()
 	_show_damage_number(amount)
-	# Boss phase transitions
+	# Boss phase transitions — use sequential ifs (not elif) so burst damage
+	# that skips past both thresholds triggers both phases in order.
 	if not _phase_transitioning:
 		var hp_pct = float(health) / float(max_health)
-		if _boss_phase == 1 and hp_pct <= _phase_2_threshold:
+		if _boss_phase < 2 and hp_pct <= _phase_2_threshold:
 			_boss_phase = 2
+			_phase_transitioning = true
 			_on_phase_change(2)
-		elif _boss_phase == 2 and hp_pct <= _phase_3_threshold:
+			_phase_transitioning = false
+		if _boss_phase < 3 and hp_pct <= _phase_3_threshold:
 			_boss_phase = 3
+			_phase_transitioning = true
 			_on_phase_change(3)
+			_phase_transitioning = false
 	if health <= 0:
 		# Skip damage flash on killing blow — go straight to death
 		if sprite: sprite.modulate = Color.WHITE
@@ -921,6 +867,8 @@ func _clear_boss_obstacles() -> void:
 func _die() -> void:
 	if is_dead: return
 	_attack_anim_playing = false
+	_phase_transitioning = false
+	_clear_boss_obstacles()  # Clean up cover/obstacles from any boss phase
 	is_dead = true
 	set_physics_process(false)
 	set_collision_layer_value(2, false)
@@ -1134,7 +1082,7 @@ func _get_pickup_container() -> Node:
 	if parent:
 		var c = parent.get_node_or_null("PickupsContainer")
 		if c: return c
-	return parent if parent else self
+	return get_tree().current_scene if get_tree() else self
 
 # ==============================
 # Burrow-Flank System
