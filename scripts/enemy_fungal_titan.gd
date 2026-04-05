@@ -43,11 +43,14 @@ var _eruption_active: bool = false
 var _player_positions: Array = []
 var _eruption_index: int = 0
 var _eruption_delay_timer: float = 0.0
+var _eruption_cooldown: float = 0.0
+var _position_sample_timer: float = 0.0
 
 const ERUPTION_POSITIONS = 5
 const ERUPTION_DELAY = 1.5
-const ERUPTION_POOL_RADIUS = 20.0
+const ERUPTION_POOL_RADIUS = 45.0
 const ERUPTION_POOL_DURATION = 4.0
+const ERUPTION_REPEAT_INTERVAL = 10.0
 
 var _proj_scene: PackedScene = null
 
@@ -99,15 +102,21 @@ func _physics_process(delta: float) -> void:
 			_laser_sweep_cooldown_timer = 0.0
 			_start_laser_sweep()
 
-	# Phase 3: Track player positions for eruption
-	if _boss_phase >= 3 and not _eruption_active:
+	# Phase 3: Track player positions for eruption (sample every 0.5s)
+	if _boss_phase >= 3:
 		if player_ref and is_instance_valid(player_ref):
-			# Sample player position periodically (every ~0.5s based on frame accumulation)
-			if _player_positions.size() < 20:
+			_position_sample_timer += delta
+			if _position_sample_timer >= 0.5:
+				_position_sample_timer = 0.0
 				_player_positions.append(player_ref.global_position)
-			elif randf() < 0.1:
-				# Replace a random older position to keep the list fresh
-				_player_positions[randi() % _player_positions.size()] = player_ref.global_position
+				if _player_positions.size() > 20:
+					_player_positions.pop_front()
+		# Repeat eruption on cooldown
+		if not _eruption_active:
+			_eruption_cooldown += delta
+			if _eruption_cooldown >= ERUPTION_REPEAT_INTERVAL:
+				_eruption_cooldown = 0.0
+				_start_eruption()
 
 	super._physics_process(delta)
 
@@ -122,8 +131,8 @@ func _on_phase_change(new_phase: int) -> void:
 			_start_laser_sweep()
 		3:
 			_show_boss_warning("FUNGAL ERUPTION!")
-			# Increase heal amount
 			_heal_amount = 30
+			_start_eruption()
 
 # --- Poison Trail ---
 
@@ -457,14 +466,19 @@ func _start_eruption() -> void:
 	_eruption_index = 0
 	_eruption_delay_timer = 0.0
 
-	# Collect the last N player positions (or current if not enough)
-	# Use the tracked positions, picking the most recent ones
-	_player_positions.clear()
-	if player_ref and is_instance_valid(player_ref):
-		# Record 5 positions with slight offsets to spread them
+	# Use the ACTUAL tracked player positions (where they were recently)
+	# Pick the 5 most recent, evenly spaced from the history
+	var eruption_positions: Array = []
+	if _player_positions.size() >= ERUPTION_POSITIONS:
+		var step = _player_positions.size() / ERUPTION_POSITIONS
 		for i in ERUPTION_POSITIONS:
-			var offset = Vector2(randf_range(-30, 30), randf_range(-30, 30))
-			_player_positions.append(player_ref.global_position + offset)
+			var idx = clampi(int(i * step), 0, _player_positions.size() - 1)
+			eruption_positions.append(_player_positions[idx])
+	elif player_ref and is_instance_valid(player_ref):
+		# Not enough history — use current position with trail behind
+		for i in ERUPTION_POSITIONS:
+			eruption_positions.append(player_ref.global_position)
+	_player_positions = eruption_positions
 
 func _process_eruption(delta: float) -> void:
 	if _eruption_index >= _player_positions.size():
