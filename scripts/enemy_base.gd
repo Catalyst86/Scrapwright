@@ -865,9 +865,13 @@ func _spawn_cover_obstacle(pos: Vector2, sprite_name: String, hp: int = 10, cove
 	return obstacle
 
 func _clear_boss_obstacles() -> void:
+	var count = 0
 	for obs in get_tree().get_nodes_in_group("boss_obstacles"):
 		if is_instance_valid(obs):
 			obs.queue_free()
+			count += 1
+	if count > 0:
+		print("[BOSS] _clear_boss_obstacles called by %s — freed %d obstacles" % [enemy_type, count])
 
 func _die() -> void:
 	if is_dead: return
@@ -875,6 +879,7 @@ func _die() -> void:
 	_phase_transitioning = false
 	# Only clean up boss obstacles when a BOSS dies (not regular enemies)
 	if _boss_phase > 1:
+		print("[BOSS] %s dying at phase %d — clearing obstacles" % [enemy_type, _boss_phase])
 		_clear_boss_obstacles()
 	is_dead = true
 	set_physics_process(false)
