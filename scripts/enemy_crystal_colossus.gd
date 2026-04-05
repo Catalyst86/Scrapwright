@@ -264,20 +264,23 @@ func _spawn_slam_pillars(slam_pos: Vector2) -> void:
 	if not _proj_scene: return
 	var parent = get_parent()
 	if not parent: return
+	if not player_ref or not is_instance_valid(player_ref): return
 
+	# Spawn pillars AROUND THE PLAYER (not the boss) so they're actually threatening
+	var player_pos = player_ref.global_position
 	var offsets = [
-		Vector2(30, 0), Vector2(-30, 0),
-		Vector2(0, 30), Vector2(0, -30),
+		Vector2(80, 0), Vector2(-80, 0),
+		Vector2(0, 80), Vector2(0, -80),
 	]
 
 	for offset in offsets:
-		var pos = slam_pos + offset
-		var pillar = _spawn_cover_obstacle(pos, "crystal_wall", PILLAR_HP, 1.0)
+		var pos = player_pos + offset
+		var pillar = _spawn_cover_obstacle(pos, "crystal_wall", PILLAR_HP, 1.5)
 		if pillar:
-			# After 1 second, the pillar fires a projectile toward the player
-			_pillar_fire_delayed(pillar, pos)
+			# Pillar fires 3 volleys at the player then self-destructs
+			_pillar_fire_volley(pillar, pos, 3)
 
-func _pillar_fire_delayed(pillar: Node2D, pos: Vector2) -> void:
+func _pillar_fire_volley(pillar: Node2D, pos: Vector2, shots_left: int) -> void:
 	await get_tree().create_timer(PILLAR_FIRE_DELAY).timeout
 	if is_dead or not is_inside_tree(): return
 	if not is_instance_valid(pillar): return
@@ -287,20 +290,30 @@ func _pillar_fire_delayed(pillar: Node2D, pos: Vector2) -> void:
 	var parent = get_parent()
 	if not parent: return
 
+	# Fire at the player
 	var dir = (player_ref.global_position - pos).normalized()
 	var proj = _proj_scene.instantiate()
 	proj.source_enemy = self
 	proj.projectile_type = "ice"
 	parent.add_child(proj)
 	proj.global_position = pos
-	proj.setup(dir * ICE_SHARD_SPEED, ICE_SHARD_DAMAGE)
+	proj.setup(dir * ICE_SHARD_SPEED * 1.2, ICE_SHARD_DAMAGE)
 
-	# Flash the pillar then destroy it
+	# Flash on fire
 	if is_instance_valid(pillar):
 		var tw = pillar.create_tween()
 		tw.tween_property(pillar, "modulate", Color(2.0, 2.0, 2.5), 0.1)
-		tw.tween_property(pillar, "modulate:a", 0.0, 0.3)
-		tw.tween_callback(pillar.queue_free)
+		tw.tween_property(pillar, "modulate", Color.WHITE, 0.15)
+
+	# Fire again or self-destruct
+	if shots_left > 1:
+		_pillar_fire_volley(pillar, pos, shots_left - 1)
+	else:
+		# Self-destruct after all shots fired
+		await get_tree().create_timer(0.5).timeout
+		if is_instance_valid(pillar):
+			_shatter_wall_visual(pillar.global_position)
+			pillar.queue_free()
 
 # --- Original Attacks ---
 
