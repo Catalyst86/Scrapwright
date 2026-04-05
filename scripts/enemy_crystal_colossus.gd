@@ -26,7 +26,7 @@ const ICE_SHARD_DAMAGE = 12
 # Crystal Prison constants
 const PRISON_WALL_COUNT = 8
 const PRISON_RADIUS = 50.0
-const PRISON_WALL_HP = 10
+const PRISON_WALL_HP = 50
 const PRISON_ESCAPE_TIME = 6.0
 const PRISON_FAIL_DAMAGE = 50
 const PRISON_REPEAT_INTERVAL = 20.0
