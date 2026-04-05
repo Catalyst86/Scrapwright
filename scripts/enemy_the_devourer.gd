@@ -177,15 +177,29 @@ func _start_void_rift() -> void:
 	_void_portal_node.z_index = -1
 	parent.add_child(_void_portal_node)
 
-	# Try to load void portal sprite, fallback to colored circle
-	var tex_path = "res://assets/sprites/boss_fx/void_portal.png"
-	if ResourceLoader.exists(tex_path):
-		var spr = Sprite2D.new()
-		spr.texture = load(tex_path)
-		spr.scale = Vector2(2.0, 2.0)
-		_void_portal_node.add_child(spr)
+	# Animated void portal spritesheet
+	var sheet_path = "res://assets/sprites/boss_fx/void_portal_v2_sheet.png"
+	if ResourceLoader.exists(sheet_path):
+		var tex = load(sheet_path)
+		var anim_spr = AnimatedSprite2D.new()
+		var sf = SpriteFrames.new()
+		if not sf.has_animation("default"): sf.add_animation("default")
+		sf.set_animation_speed("default", 8.0)
+		sf.set_animation_loop("default", true)
+		var frame_size = 64
+		var frame_count = tex.get_width() / frame_size
+		for i in frame_count:
+			var atlas = AtlasTexture.new()
+			atlas.atlas = tex
+			atlas.region = Rect2(i * frame_size, 0, frame_size, frame_size)
+			sf.add_frame("default", atlas)
+		anim_spr.sprite_frames = sf
+		anim_spr.play("default")
+		anim_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		anim_spr.scale = Vector2(2.5, 2.5)
+		_void_portal_node.add_child(anim_spr)
 	else:
-		# Fallback: dark purple pulsing circle
+		# Fallback
 		var circle = ColorRect.new()
 		circle.size = Vector2(60, 60)
 		circle.position = Vector2(-30, -30)
@@ -208,11 +222,8 @@ func _process_void_rift(delta: float) -> void:
 		_void_rift_active = false
 		return
 
-	# Rotate portal visual
-	_void_portal_node.rotation += delta * 2.0
-
-	# Pulse portal
-	var pulse = 1.0 + 0.1 * sin(_void_rift_elapsed * 5.0)
+	# Pulse portal gently (animated sprite handles the swirl)
+	var pulse = 1.0 + 0.05 * sin(_void_rift_elapsed * 3.0)
 	_void_portal_node.scale = Vector2(pulse, pulse)
 
 	var center = _void_portal_node.global_position
@@ -276,8 +287,13 @@ func _draw_pull_line(from: Vector2, to: Vector2, color: Color) -> void:
 		tw.tween_property(line, "modulate:a", 0.0, 0.2)
 		tw.tween_callback(line.queue_free)
 
+func _die() -> void:
+	if is_instance_valid(_void_portal_node): _void_portal_node.queue_free()
+	_void_portal_node = null
+	super._die()
+
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
