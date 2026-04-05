@@ -6,7 +6,7 @@ extends Control
 const FRAME_DIR := "res://assets/video/frames/"
 const FRAME_COUNT := 552
 const FRAME_DURATION := 0.1  # 10fps playback to match extraction rate
-const LOGO_PATH := "res://assets/Northern Oak Games company logo.png"
+const LOGO_PATH := "res://assets/northern_oak_logo.png"
 const LOGO_DISPLAY_TIME := 3.0  # How long the logo stays on screen
 const LOGO_FADE_TIME := 0.6
 
