@@ -873,7 +873,9 @@ func _die() -> void:
 	if is_dead: return
 	_attack_anim_playing = false
 	_phase_transitioning = false
-	_clear_boss_obstacles()  # Clean up cover/obstacles from any boss phase
+	# Only clean up boss obstacles when a BOSS dies (not regular enemies)
+	if _boss_phase > 1:
+		_clear_boss_obstacles()
 	is_dead = true
 	set_physics_process(false)
 	set_collision_layer_value(2, false)

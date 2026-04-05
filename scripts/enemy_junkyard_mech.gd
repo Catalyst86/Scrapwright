@@ -133,6 +133,7 @@ func _fire_ground_pound_saws() -> void:
 		var angle = TAU * i / 4.0
 		var dir = Vector2.from_angle(angle)
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 15.0
@@ -212,12 +213,11 @@ func _process_whirlwind(delta: float) -> void:
 	# End whirlwind after duration
 	if _whirlwind_elapsed >= WHIRLWIND_DURATION:
 		_whirlwind_active = false
-		# Destroy cover after whirlwind ends
+		# Destroy only THIS boss's cover (not all boss obstacles globally)
 		for obs in _cover_nodes:
 			if is_instance_valid(obs):
 				obs.queue_free()
 		_cover_nodes.clear()
-		_clear_boss_obstacles()
 
 func _fire_whirlwind_projectiles(tick: int) -> void:
 	if not _proj_scene: return
@@ -232,6 +232,7 @@ func _fire_whirlwind_projectiles(tick: int) -> void:
 		var angle = base_angle + TAU * i / num_blades
 		var dir = Vector2.from_angle(angle)
 		var proj = _proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.projectile_type = "saw"
 		parent.add_child(proj)
 		proj.global_position = global_position + dir * 15.0
@@ -242,5 +243,5 @@ func _fire_whirlwind_projectiles(tick: int) -> void:
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
