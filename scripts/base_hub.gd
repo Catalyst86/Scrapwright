@@ -520,14 +520,13 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	name_lbl.add_theme_constant_override("outline_size", 2)
 	vbox.add_child(name_lbl)
 
-	# Progress
+	# Progress — only show "MAX" when fully upgraded, otherwise hide
 	var prog_lbl = Label.new()
 	if is_max:
 		prog_lbl.text = "MAX"
 		prog_lbl.add_theme_color_override("font_color", CLR_GREEN)
 	else:
-		prog_lbl.text = "%d/%d" % [progress, max_progress]
-		prog_lbl.add_theme_color_override("font_color", CLR_SILVER)
+		prog_lbl.visible = false
 	prog_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prog_lbl.add_theme_font_size_override("font_size", 9)
 	prog_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
@@ -812,6 +811,7 @@ func _create_upgrade_card(upgrade_id: String, accent: Color, cat_id: String) -> 
 		var cid = cat_id
 		btn.pressed.connect(func():
 			if _udb.purchase_upgrade(uid):
+				Achievements.increment_stat("buildings_upgraded")
 				Achievements.check_building_achievements()
 				_refresh_top_bar()
 				_refresh_category_nodes()
