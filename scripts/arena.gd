@@ -1151,7 +1151,7 @@ func _restore_card_perks() -> void:
 				var spr = _make_anim_sprite(sheet_path, 9, 10.0, "BugSwarmVFX", 0.6, Color(1, 1, 1, 0.7), 5)
 				if spr: p.add_child(spr)
 			else:
-				# Fallback to static sprite with rotation
+				# Static sprite with rotation animation
 				var swarm_tex = load("res://assets/sprites/effects/bug_swarm.png") if ResourceLoader.exists("res://assets/sprites/effects/bug_swarm.png") else null
 				if swarm_tex:
 					var swarm_spr = Sprite2D.new()
@@ -1159,8 +1159,20 @@ func _restore_card_perks() -> void:
 					swarm_spr.texture = swarm_tex
 					swarm_spr.scale = Vector2(0.6, 0.6)
 					swarm_spr.modulate = Color(1, 1, 1, 0.7)
+					swarm_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 					swarm_spr.z_index = 5
 					p.add_child(swarm_spr)
+					# Rotate continuously
+					var rot_timer = Timer.new()
+					rot_timer.name = "BugSwarmRotate"
+					rot_timer.wait_time = 0.03
+					rot_timer.autostart = true
+					rot_timer.process_mode = Node.PROCESS_MODE_INHERIT
+					rot_timer.timeout.connect(func():
+						if is_instance_valid(swarm_spr):
+							swarm_spr.rotation += 0.06
+					)
+					p.add_child(rot_timer)
 		# Damage
 		var bug_timer = Timer.new()
 		bug_timer.name = "BugSwarmTimer"
@@ -1193,8 +1205,13 @@ func _restore_card_perks() -> void:
 					vine_spr.texture = vine_tex
 					vine_spr.scale = Vector2(0.8, 0.8)
 					vine_spr.modulate = Color(0.6, 1.0, 0.5, 0.5)
+					vine_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 					vine_spr.z_index = -1
 					p2.add_child(vine_spr)
+					# Pulse animation
+					var pulse_tw = p2.create_tween().set_loops()
+					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.9, 0.9), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.7, 0.7), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 		# Slow
 		var vine_timer = Timer.new()
 		vine_timer.name = "VineSnareTimer"
