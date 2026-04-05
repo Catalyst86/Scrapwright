@@ -103,17 +103,21 @@ func _physics_process(delta: float) -> void:
 	if lifetime <= 0:
 		queue_free()
 
+var _hit_processed: bool = false
+
 func _play_hit_and_free() -> void:
-	if _sfx_hit:
+	if _hit_processed: return
+	_hit_processed = true
+	if _sfx_hit and _sfx_hit.get_parent() == self:
 		_sfx_hit.pitch_scale = randf_range(0.9, 1.1)
-		# Reparent audio so it survives queue_free
 		var parent = get_parent()
 		if parent:
 			remove_child(_sfx_hit)
 			parent.add_child(_sfx_hit)
 			_sfx_hit.global_position = global_position
 			_sfx_hit.play()
-			_sfx_hit.finished.connect(_sfx_hit.queue_free)
+			if not _sfx_hit.finished.is_connected(_sfx_hit.queue_free):
+				_sfx_hit.finished.connect(_sfx_hit.queue_free)
 	queue_free()
 
 func _on_body_entered(body: Node) -> void:

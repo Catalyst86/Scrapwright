@@ -261,16 +261,16 @@ func _zap_electric_tiles() -> void:
 	# Visual: flash all electric tiles bright white
 	for tile in _electric_tiles:
 		if is_instance_valid(tile):
-			tile.color = Color(1.0, 1.0, 0.3, 0.8)
+			tile.modulate = Color(2.0, 2.0, 1.0, 1.0)
 			var tw = tile.create_tween()
-			tw.tween_property(tile, "color", Color(1.0, 0.2, 0.1, 0.4), 0.4)
+			tw.tween_property(tile, "modulate", Color(1.0, 1.0, 1.0, 0.6), 0.4)
 
 	# Check if player is standing on any electric tile
 	var player_pos = player_ref.global_position
+	var half_tile = BLUEPRINT_TILE_SIZE * 0.5
 	for tile in _electric_tiles:
 		if not is_instance_valid(tile): continue
-		var tile_rect = Rect2(tile.global_position, tile.size)
-		if tile_rect.has_point(player_pos):
+		if tile.global_position.distance_to(player_pos) < half_tile:
 			if player_ref.has_method("take_damage"):
 				player_ref.take_damage(BLUEPRINT_DAMAGE, self)
 			break  # Only damage once
