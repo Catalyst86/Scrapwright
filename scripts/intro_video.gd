@@ -6,28 +6,67 @@ extends Control
 const FRAME_DIR := "res://assets/video/frames/"
 const FRAME_COUNT := 552
 const FRAME_DURATION := 0.1  # 10fps playback to match extraction rate
+const LOGO_PATH := "res://assets/Northern Oak Games company logo.png"
+const LOGO_DISPLAY_TIME := 3.0  # How long the logo stays on screen
+const LOGO_FADE_TIME := 0.6
 
 var _display: TextureRect
+var _logo_display: TextureRect
+var _bg: ColorRect
 var _skippable := false
 var _current_frame := 0
 var _total_frames := 0
 var _timer: Timer
+var _showing_logo := true
 
 func _ready() -> void:
 	# Black background
-	var bg := ColorRect.new()
-	bg.color = Color.BLACK
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	_bg = ColorRect.new()
+	_bg.color = Color.BLACK
+	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_bg)
 
-	# Frame display
+	# Frame display (hidden during logo)
 	_display = TextureRect.new()
 	_display.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_display.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_display.visible = false
 	add_child(_display)
 
-	# Count available frames (don't load them all — stream on demand)
+	# Show Northern Oak Games logo first
+	if ResourceLoader.exists(LOGO_PATH):
+		_logo_display = TextureRect.new()
+		_logo_display.texture = load(LOGO_PATH)
+		_logo_display.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_logo_display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_logo_display.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_logo_display.modulate.a = 0.0
+		add_child(_logo_display)
+
+		# Fade in logo
+		var fade_in = create_tween()
+		fade_in.tween_property(_logo_display, "modulate:a", 1.0, LOGO_FADE_TIME)
+		fade_in.tween_interval(LOGO_DISPLAY_TIME)
+		fade_in.tween_property(_logo_display, "modulate:a", 0.0, LOGO_FADE_TIME)
+		fade_in.tween_callback(_start_intro_video)
+
+		# Allow skip after brief delay
+		await get_tree().create_timer(0.5).timeout
+		if not is_inside_tree(): return
+		_skippable = true
+	else:
+		_showing_logo = false
+		_start_intro_video()
+
+func _start_intro_video() -> void:
+	_showing_logo = false
+	if is_instance_valid(_logo_display):
+		_logo_display.queue_free()
+
+	_display.visible = true
+
+	# Count available frames
 	_total_frames = 0
 	for i in range(1, FRAME_COUNT + 1):
 		var path := FRAME_DIR + "frame_%04d.png" % i
@@ -53,9 +92,7 @@ func _ready() -> void:
 	add_child(_timer)
 	_timer.start()
 
-	# Small delay before allowing skip
-	await get_tree().create_timer(0.5).timeout
-	if not is_inside_tree(): return
+	# Allow skip
 	_skippable = true
 
 func _load_frame(frame_num: int) -> Texture2D:
