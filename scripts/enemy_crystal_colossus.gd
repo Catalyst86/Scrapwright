@@ -27,7 +27,7 @@ const ICE_SHARD_DAMAGE = 12
 const PRISON_WALL_COUNT = 8
 const PRISON_RADIUS = 50.0
 const PRISON_WALL_HP = 10
-const PRISON_ESCAPE_TIME = 4.0
+const PRISON_ESCAPE_TIME = 6.0
 const PRISON_FAIL_DAMAGE = 50
 const PRISON_REPEAT_INTERVAL = 20.0
 
@@ -100,12 +100,12 @@ func _start_crystal_prison() -> void:
 		_prison_active = false
 		return
 
-	# Spawn 8 crystal wall obstacles in a circle around the player
+	# Spawn 8 breakable crystal wall obstacles in a circle around the player
 	var prison_walls: Array = []
 	for i in PRISON_WALL_COUNT:
 		var angle = TAU * i / float(PRISON_WALL_COUNT)
 		var pos = player_pos + Vector2(cos(angle), sin(angle)) * PRISON_RADIUS
-		var wall = _spawn_cover_obstacle(pos, "crystal_wall", PRISON_WALL_HP, 1.5)
+		var wall = _spawn_breakable_wall(pos, parent)
 		if wall:
 			prison_walls.append(wall)
 
@@ -116,6 +116,9 @@ func _run_prison_timer(prison_walls: Array, center_pos: Vector2) -> void:
 	await get_tree().create_timer(PRISON_ESCAPE_TIME).timeout
 	if is_dead or not is_inside_tree():
 		_prison_active = false
+		for wall in prison_walls:
+			if is_instance_valid(wall):
+				wall.queue_free()
 		return
 
 	# Check if any walls remain (player failed to break out)
@@ -166,6 +169,68 @@ func _run_prison_timer(prison_walls: Array, center_pos: Vector2) -> void:
 				tw.tween_callback(lbl.queue_free)
 
 	_prison_active = false
+
+func _spawn_breakable_wall(pos: Vector2, parent: Node) -> Node2D:
+	# Create a wall the player can break with bite attacks
+	var wall = CharacterBody2D.new()
+	wall.collision_layer = 2  # Same as enemies so player bite can target them
+	wall.collision_mask = 0
+	wall.global_position = pos
+	wall.add_to_group("enemies")  # So player auto-attack can find and hit them
+	wall.add_to_group("boss_obstacles")
+	wall.add_to_group("wall")  # So projectiles collide
+
+	# Collision shape
+	var col = CollisionShape2D.new()
+	var shape = RectangleShape2D.new()
+	shape.size = Vector2(28, 28)
+	col.shape = shape
+	wall.add_child(col)
+
+	# Visual
+	var tex_path = "res://assets/sprites/boss_fx/crystal_wall.png"
+	if ResourceLoader.exists(tex_path):
+		var spr = Sprite2D.new()
+		spr.texture = load(tex_path)
+		spr.scale = Vector2(1.5, 1.5)
+		wall.add_child(spr)
+	else:
+		var fb = ColorRect.new()
+		fb.size = Vector2(24, 24)
+		fb.position = Vector2(-12, -12)
+		fb.color = Color(0.4, 0.7, 1.0, 0.8)
+		wall.add_child(fb)
+
+	# Make it act like an enemy with HP so player bite damages it
+	wall.set_meta("is_dead", false)
+	wall.set_meta("health", PRISON_WALL_HP)
+	wall.set_meta("max_health", PRISON_WALL_HP)
+
+	# Add take_damage method via script
+	var script = GDScript.new()
+	script.source_code = """extends CharacterBody2D
+
+var is_dead: bool = false
+var health: int = %d
+
+func take_damage(amount: int, _from_pos: Variant = null) -> void:
+	if is_dead: return
+	health -= amount
+	# Flash on hit
+	for child in get_children():
+		if child is Sprite2D:
+			child.modulate = Color(2.0, 1.5, 1.5)
+			var tw = create_tween()
+			tw.tween_property(child, "modulate", Color.WHITE, 0.1)
+	if health <= 0:
+		is_dead = true
+		queue_free()
+""" % PRISON_WALL_HP
+	script.reload()
+	wall.set_script(script)
+
+	parent.add_child(wall)
+	return wall
 
 func _shatter_wall_visual(pos: Vector2) -> void:
 	var parent = get_parent()
@@ -224,6 +289,7 @@ func _pillar_fire_delayed(pillar: Node2D, pos: Vector2) -> void:
 
 	var dir = (player_ref.global_position - pos).normalized()
 	var proj = _proj_scene.instantiate()
+	proj.source_enemy = self
 	proj.projectile_type = "ice"
 	parent.add_child(proj)
 	proj.global_position = pos
@@ -291,13 +357,18 @@ func _do_shard_burst() -> void:
 		var angle = TAU * i / count
 		var dir = Vector2(cos(angle), sin(angle))
 		var proj = proj_scene.instantiate()
+		proj.source_enemy = self
 		proj.global_position = global_position + dir * 12.0
 		proj.projectile_type = "ice"
 		proj.setup(dir * ICE_SHARD_SPEED, ICE_SHARD_DAMAGE)
 		parent.add_child(proj)
 
+func _die() -> void:
+	_prison_active = false
+	super._die()
+
 func _get_arena_center() -> Vector2:
 	if player_ref and is_instance_valid(player_ref):
 		var cam = player_ref.get_node_or_null("Camera2D")
-		if cam: return cam.get_screen_center_position()
-	return Vector2(640, 360)
+		if cam: return cam.global_position
+	return Vector2(480, 270)
