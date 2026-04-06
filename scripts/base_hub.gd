@@ -250,26 +250,26 @@ func _setup_tab_buttons() -> void:
 func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Render GLB model into a SubViewport and use as button texture
 	var viewport = SubViewport.new()
-	viewport.size = Vector2i(256, 128)
+	viewport.size = Vector2i(400, 160)
 	viewport.transparent_bg = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport.own_world_3d = true
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 30.0
-	cam.position = Vector3(0, 2.0, 0)
-	cam.rotation_degrees = Vector3(-90, 0, 0)
+	cam.fov = 35.0
+	cam.position = Vector3(0, 0, 2.5)
+	cam.rotation_degrees = Vector3(0, 0, 0)
 	viewport.add_child(cam)
 
 	var light = DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-40, 25, 0)
-	light.light_energy = 1.8
+	light.light_energy = 2.0
 	viewport.add_child(light)
 
 	var fill = DirectionalLight3D.new()
 	fill.rotation_degrees = Vector3(30, -40, 0)
-	fill.light_energy = 0.6
+	fill.light_energy = 0.8
 	viewport.add_child(fill)
 
 	var model_scene = load(glb_path)
@@ -278,16 +278,19 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 		model.position = Vector3(0, 0, 0)
 		viewport.add_child(model)
 
+	# Add viewport as child of the button so it renders
 	btn.add_child(viewport)
 	_hatch_viewports[tid] = viewport
 
-	# Use viewport texture as button background
-	# Wait a frame for the viewport to render
-	await get_tree().process_frame
-	if not is_instance_valid(btn): return
+	# Apply texture after 2 frames so viewport has time to render
+	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
 
+func _apply_hatch_texture_deferred(btn: Button, viewport: SubViewport) -> void:
+	# Wait one more frame
+	if not is_instance_valid(btn) or not is_instance_valid(viewport): return
 	var tex = viewport.get_texture()
-	_style_tab_button(btn, tex)
+	if tex:
+		_style_tab_button(btn, tex)
 
 func _switch_tab(tab_id: String) -> void:
 	_current_tab = tab_id
@@ -298,8 +301,13 @@ func _switch_tab(tab_id: String) -> void:
 	# Bottom buttons always visible in new radial layout
 	for tid in _tab_buttons:
 		var btn: Button = _tab_buttons[tid]
-		var tex_path = TAB_RECT_TEXTURES.get(tid, "")
-		var tex = _load_tex(tex_path) if tex_path != "" else null
+		# Use hatch viewport texture if available, otherwise 2D fallback
+		var tex: Texture2D = null
+		if _hatch_viewports.has(tid) and is_instance_valid(_hatch_viewports[tid]):
+			tex = _hatch_viewports[tid].get_texture()
+		else:
+			var tex_path = TAB_RECT_TEXTURES.get(tid, "")
+			tex = _load_tex(tex_path) if tex_path != "" else null
 		var tab_def = null
 		for td in TAB_DEFS:
 			if td.id == tid:
