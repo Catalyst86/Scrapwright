@@ -296,9 +296,9 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 40.0
-	cam.position = Vector3(0, 0, 5.0)
-	cam.rotation_degrees = Vector3(0, 0, 0)
+	cam.fov = 30.0
+	cam.position = Vector3(1.5, -0.3, 3.0)
+	cam.rotation_degrees = Vector3(5.0, -25.0, 0.0)  # Angled from right side
 	viewport.add_child(cam)
 
 	var light = DirectionalLight3D.new()
@@ -1432,7 +1432,7 @@ func _setup_bottom_bar() -> void:
 	# Enter Dungeon — 3D GLB at dramatic angle (bottom-right, modern style)
 	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
 	if ResourceLoader.exists(dungeon_glb):
-		_setup_3d_button_angled(_enter_dungeon_btn, dungeon_glb, Vector2i(520, 320))
+		_setup_3d_button_angled(_enter_dungeon_btn, dungeon_glb, Vector2i(760, 400))
 		_enter_dungeon_btn.text = ""  # GLB has text baked in
 	else:
 		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
