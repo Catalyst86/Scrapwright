@@ -1393,17 +1393,18 @@ func _build_archive_tab() -> void:
 # ===================================================================
 
 func _setup_bottom_bar() -> void:
-	# Enter Dungeon — try 3D GLB model first, fallback to 2D
+	# Enter Dungeon — 3D GLB at dramatic angle (bottom-right, modern style)
 	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
 	if ResourceLoader.exists(dungeon_glb):
-		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(1360, 400), 2.5, 35.0)
+		_setup_3d_button_angled(_enter_dungeon_btn, dungeon_glb, Vector2i(460, 220))
+		_enter_dungeon_btn.text = ""  # GLB has text baked in
 	else:
 		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
 		if dungeon_tex:
 			_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
 		else:
 			_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
-	_enter_dungeon_btn.add_theme_font_size_override("font_size", 16)
+		_enter_dungeon_btn.add_theme_font_size_override("font_size", 15)
 
 	# Wave indicator above Enter Dungeon button
 	_wave_indicator = Label.new()
