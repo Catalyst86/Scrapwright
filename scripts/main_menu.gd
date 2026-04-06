@@ -52,8 +52,10 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Title card — show ENTIRE image, no cropping, puppy must be visible
-	var title_tex = _load_tex("res://assets/sprites/ui/title_card_menu.jpg")
+	# Title card background
+	var title_tex = _load_tex("res://assets/sprites/ui/menu_background.jpg")
+	if not title_tex:
+		title_tex = _load_tex("res://assets/sprites/ui/title_card_menu.jpg")
 	if not title_tex:
 		title_tex = _load_tex("res://assets/sprites/ui/title_card_menu.png")
 	if not title_tex:
