@@ -285,6 +285,39 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Apply texture after 2 frames so viewport has time to render
 	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
 
+func _setup_3d_button(btn: Button, glb_path: String, vp_size: Vector2i, cam_dist: float, cam_fov: float) -> void:
+	var viewport = SubViewport.new()
+	viewport.size = vp_size
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = cam_fov
+	cam.position = Vector3(0, 0, cam_dist)
+	cam.rotation_degrees = Vector3(0, 0, 0)
+	viewport.add_child(cam)
+
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-40, 25, 0)
+	light.light_energy = 2.0
+	viewport.add_child(light)
+
+	var fill = DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(30, -40, 0)
+	fill.light_energy = 0.8
+	viewport.add_child(fill)
+
+	var model_scene = load(glb_path)
+	if model_scene:
+		var model = model_scene.instantiate()
+		model.position = Vector3(0, 0, 0)
+		viewport.add_child(model)
+
+	btn.add_child(viewport)
+	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
+
 func _apply_hatch_texture_deferred(btn: Button, viewport: SubViewport) -> void:
 	# Wait one more frame
 	if not is_instance_valid(btn) or not is_instance_valid(viewport): return
@@ -1358,12 +1391,16 @@ func _build_archive_tab() -> void:
 # ===================================================================
 
 func _setup_bottom_bar() -> void:
-	# Enter Dungeon — use dedicated button asset
-	var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
-	if dungeon_tex:
-		_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
+	# Enter Dungeon — try 3D GLB model first, fallback to 2D
+	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
+	if ResourceLoader.exists(dungeon_glb):
+		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(500, 100), 3.0, 40.0)
 	else:
-		_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
+		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
+		if dungeon_tex:
+			_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
+		else:
+			_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
 	_enter_dungeon_btn.add_theme_font_size_override("font_size", 16)
 
 	# Wave indicator above Enter Dungeon button
