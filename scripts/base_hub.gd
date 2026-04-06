@@ -6,6 +6,14 @@ extends Control
 # dynamic content populated in code.
 # ============================================================
 
+# --- Enter Dungeon 3D Button Tuning (adjust in Inspector) ---
+@export_group("Enter Dungeon 3D Button")
+@export var dungeon_model_rotation := Vector3(10.0, -30.0, 5.0)
+@export var dungeon_cam_distance := 4.0
+@export var dungeon_cam_fov := 35.0
+@export var dungeon_model_scale := Vector3(1.0, 1.0, 1.0)
+@export var dungeon_light_energy := 3.0
+
 # --- Colors ---
 const CLR_GOLD      = Color(0.95, 0.82, 0.35)
 const CLR_SILVER    = Color(0.85, 0.85, 0.88)
@@ -180,6 +188,15 @@ func _ready() -> void:
 	GameState.keys_changed.connect(_refresh_top_bar)
 
 func _process(delta: float) -> void:
+	# Live-update 3D Enter Dungeon button from exported vars (tweak in Inspector)
+	if _dungeon_model_ref and is_instance_valid(_dungeon_model_ref):
+		_dungeon_model_ref.rotation_degrees = dungeon_model_rotation
+		_dungeon_model_ref.scale = dungeon_model_scale
+	if _dungeon_cam_ref and is_instance_valid(_dungeon_cam_ref):
+		_dungeon_cam_ref.position.z = dungeon_cam_distance
+		_dungeon_cam_ref.fov = dungeon_cam_fov
+	if _dungeon_light_ref and is_instance_valid(_dungeon_light_ref):
+		_dungeon_light_ref.light_energy = dungeon_light_energy
 	if _puppy_sprite and is_instance_valid(_puppy_sprite) and not _bust_playing_oneshot:
 		_bust_timer += delta
 		if _bust_timer >= _bust_next_anim_time:
@@ -286,6 +303,10 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Apply texture after 2 frames so viewport has time to render
 	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
 
+var _dungeon_model_ref: Node3D = null
+var _dungeon_cam_ref: Camera3D = null
+var _dungeon_light_ref: DirectionalLight3D = null
+
 func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -> void:
 	var viewport = SubViewport.new()
 	viewport.size = vp_size
@@ -296,15 +317,17 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 35.0
-	cam.position = Vector3(0, 0, 4.0)  # Straight-on (this works)
+	cam.fov = dungeon_cam_fov
+	cam.position = Vector3(0, 0, dungeon_cam_distance)
 	cam.rotation_degrees = Vector3(0, 0, 0)
 	viewport.add_child(cam)
+	_dungeon_cam_ref = cam
 
 	var light = DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-45, 0, 0)
-	light.light_energy = 3.0
+	light.light_energy = dungeon_light_energy
 	viewport.add_child(light)
+	_dungeon_light_ref = light
 
 	var fill = DirectionalLight3D.new()
 	fill.rotation_degrees = Vector3(45, 180, 0)
@@ -315,8 +338,9 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 	var model_scene = load(glb_path)
 	if model_scene:
 		var model = model_scene.instantiate()
-		# Rotate the MODEL to get the angled view (camera stays straight)
-		model.rotation_degrees = Vector3(10.0, -30.0, 5.0)
+		model.rotation_degrees = dungeon_model_rotation
+		model.scale = dungeon_model_scale
+		_dungeon_model_ref = model
 		model.position = Vector3(0, 0, 0)
 		viewport.add_child(model)
 
