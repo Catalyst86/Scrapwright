@@ -47,7 +47,7 @@ var _eruption_cooldown: float = 0.0
 var _position_sample_timer: float = 0.0
 
 const ERUPTION_POSITIONS = 5
-const ERUPTION_DELAY = 1.5
+const ERUPTION_DELAY = 0.4
 const ERUPTION_POOL_RADIUS = 45.0
 const ERUPTION_POOL_DURATION = 4.0
 const ERUPTION_REPEAT_INTERVAL = 10.0
