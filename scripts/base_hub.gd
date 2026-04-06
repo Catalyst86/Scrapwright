@@ -298,7 +298,7 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
 	cam.fov = 30.0
 	cam.position = Vector3(1.0, -0.5, 3.0)
-	cam.look_at(Vector3(0, 0, 0))
+	cam.rotation_degrees = Vector3(8.0, -18.0, 0.0)  # Angled view matching Meshy preview
 	viewport.add_child(cam)
 
 	var light = DirectionalLight3D.new()
