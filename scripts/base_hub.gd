@@ -296,9 +296,9 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
-	cam.fov = 30.0
-	cam.position = Vector3(1.5, -0.3, 3.0)
-	cam.rotation_degrees = Vector3(5.0, -25.0, 0.0)  # Angled from right side
+	cam.fov = 35.0
+	cam.position = Vector3(0, 0, 4.0)  # Straight-on (this works)
+	cam.rotation_degrees = Vector3(0, 0, 0)
 	viewport.add_child(cam)
 
 	var light = DirectionalLight3D.new()
@@ -315,7 +315,8 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 	var model_scene = load(glb_path)
 	if model_scene:
 		var model = model_scene.instantiate()
-		print("[HUB] Enter Dungeon GLB loaded, children: ", model.get_child_count())
+		# Rotate the MODEL to get the angled view (camera stays straight)
+		model.rotation_degrees = Vector3(10.0, -30.0, 5.0)
 		model.position = Vector3(0, 0, 0)
 		viewport.add_child(model)
 
