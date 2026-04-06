@@ -250,10 +250,11 @@ func _setup_tab_buttons() -> void:
 func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Render GLB model into a SubViewport and use as button texture
 	var viewport = SubViewport.new()
-	viewport.size = Vector2i(400, 160)
+	viewport.size = Vector2i(512, 256)
 	viewport.transparent_bg = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport.own_world_3d = true
+	viewport.msaa_3d = SubViewport.MSAA_4X
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
@@ -291,6 +292,7 @@ func _setup_3d_button(btn: Button, glb_path: String, vp_size: Vector2i, cam_dist
 	viewport.transparent_bg = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport.own_world_3d = true
+	viewport.msaa_3d = SubViewport.MSAA_4X  # Anti-aliasing for smooth 3D
 
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
@@ -1394,7 +1396,7 @@ func _setup_bottom_bar() -> void:
 	# Enter Dungeon — try 3D GLB model first, fallback to 2D
 	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
 	if ResourceLoader.exists(dungeon_glb):
-		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(600, 120), 2.5, 35.0)
+		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(1360, 400), 2.5, 35.0)
 	else:
 		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
 		if dungeon_tex:
