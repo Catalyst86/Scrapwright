@@ -286,6 +286,41 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Apply texture after 2 frames so viewport has time to render
 	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
 
+func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -> void:
+	var viewport = SubViewport.new()
+	viewport.size = vp_size
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+	viewport.msaa_3d = SubViewport.MSAA_4X
+
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 30.0
+	cam.position = Vector3(1.0, -0.5, 3.0)
+	cam.look_at(Vector3(0, 0, 0))
+	viewport.add_child(cam)
+
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-30, -45, 0)
+	light.light_energy = 2.5
+	viewport.add_child(light)
+
+	var fill = DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(20, 30, 0)
+	fill.light_energy = 1.0
+	fill.light_color = Color(1.0, 0.9, 0.7)
+	viewport.add_child(fill)
+
+	var model_scene = load(glb_path)
+	if model_scene:
+		var model = model_scene.instantiate()
+		model.position = Vector3(0, 0, 0)
+		viewport.add_child(model)
+
+	btn.add_child(viewport)
+	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
+
 func _setup_3d_button(btn: Button, glb_path: String, vp_size: Vector2i, cam_dist: float, cam_fov: float) -> void:
 	var viewport = SubViewport.new()
 	viewport.size = vp_size
