@@ -1394,7 +1394,7 @@ func _setup_bottom_bar() -> void:
 	# Enter Dungeon — try 3D GLB model first, fallback to 2D
 	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
 	if ResourceLoader.exists(dungeon_glb):
-		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(500, 100), 3.0, 40.0)
+		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(600, 120), 2.5, 35.0)
 	else:
 		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
 		if dungeon_tex:
