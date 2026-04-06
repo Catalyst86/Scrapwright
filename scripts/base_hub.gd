@@ -180,9 +180,6 @@ func _ready() -> void:
 	GameState.keys_changed.connect(_refresh_top_bar)
 
 func _process(delta: float) -> void:
-	# Slowly rotate the 3D ring model
-	if _ring_model and is_instance_valid(_ring_model):
-		_ring_model.rotation.y += delta * 0.3  # Slow rotation
 	if _puppy_sprite and is_instance_valid(_puppy_sprite) and not _bust_playing_oneshot:
 		_bust_timer += delta
 		if _bust_timer >= _bust_next_anim_time:
@@ -228,14 +225,69 @@ const TAB_RECT_TEXTURES = {
 	"archive": "res://assets/sprites/hub_ui/steel_rect_1.png",
 }
 
+const TAB_HATCH_MODELS = {
+	"den_upgrades": "res://assets/models/hatch_1.glb",
+	"card_collection": "res://assets/models/hatch_2.glb",
+	"achievements": "res://assets/models/hatch_3.glb",
+	"archive": "res://assets/models/hatch_4.glb",
+}
+
+var _hatch_viewports: Dictionary = {}  # tid -> SubViewport
+
 func _setup_tab_buttons() -> void:
 	for tid in _tab_buttons:
 		var btn = _tab_buttons[tid]
-		var tex_path = TAB_RECT_TEXTURES.get(tid, "")
-		var tex = _load_tex(tex_path) if tex_path != "" else null
-		_style_tab_button(btn, tex)
+		var glb_path = TAB_HATCH_MODELS.get(tid, "")
+		if glb_path != "" and ResourceLoader.exists(glb_path):
+			_setup_3d_hatch_button(btn, tid, glb_path)
+		else:
+			var tex_path = TAB_RECT_TEXTURES.get(tid, "")
+			var tex = _load_tex(tex_path) if tex_path != "" else null
+			_style_tab_button(btn, tex)
 		var tab_id = tid
 		btn.pressed.connect(func(): _switch_tab(tab_id))
+
+func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
+	# Render GLB model into a SubViewport and use as button texture
+	var viewport = SubViewport.new()
+	viewport.size = Vector2i(256, 128)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 30.0
+	cam.position = Vector3(0, 2.0, 0)
+	cam.rotation_degrees = Vector3(-90, 0, 0)
+	viewport.add_child(cam)
+
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-40, 25, 0)
+	light.light_energy = 1.8
+	viewport.add_child(light)
+
+	var fill = DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(30, -40, 0)
+	fill.light_energy = 0.6
+	viewport.add_child(fill)
+
+	var model_scene = load(glb_path)
+	if model_scene:
+		var model = model_scene.instantiate()
+		model.position = Vector3(0, 0, 0)
+		viewport.add_child(model)
+
+	btn.add_child(viewport)
+	_hatch_viewports[tid] = viewport
+
+	# Use viewport texture as button background
+	# Wait a frame for the viewport to render
+	await get_tree().process_frame
+	if not is_instance_valid(btn): return
+
+	var tex = viewport.get_texture()
+	_style_tab_button(btn, tex)
 
 func _switch_tab(tab_id: String) -> void:
 	_current_tab = tab_id
@@ -306,8 +358,8 @@ func _setup_3d_ring(glb_path: String) -> void:
 	var cam = Camera3D.new()
 	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
 	cam.fov = 35.0
-	cam.position = Vector3(0, 3.5, 0)
-	cam.rotation_degrees = Vector3(-90, 0, 0)  # Look straight down
+	cam.position = Vector3(0, 0, 4.0)
+	cam.rotation_degrees = Vector3(0, 0, 0)  # Look straight at the ring from front
 	viewport.add_child(cam)
 
 	# Ambient light so the model is visible
