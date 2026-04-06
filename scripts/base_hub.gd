@@ -286,6 +286,44 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 	# Apply texture after 2 frames so viewport has time to render
 	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
 
+func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -> void:
+	var viewport = SubViewport.new()
+	viewport.size = vp_size
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+	viewport.msaa_3d = SubViewport.MSAA_4X
+
+	# Camera angled from lower-right for dramatic lighting on text
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 30.0
+	cam.position = Vector3(1.0, -0.5, 3.0)
+	cam.look_at(Vector3(0, 0, 0))
+	viewport.add_child(cam)
+
+	# Key light from upper-left to catch the raised letters
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-30, -45, 0)
+	light.light_energy = 2.5
+	viewport.add_child(light)
+
+	# Warm fill from below-right
+	var fill = DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(20, 30, 0)
+	fill.light_energy = 1.0
+	fill.light_color = Color(1.0, 0.9, 0.7)
+	viewport.add_child(fill)
+
+	var model_scene = load(glb_path)
+	if model_scene:
+		var model = model_scene.instantiate()
+		model.position = Vector3(0, 0, 0)
+		viewport.add_child(model)
+
+	btn.add_child(viewport)
+	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
+
 func _setup_3d_button(btn: Button, glb_path: String, vp_size: Vector2i, cam_dist: float, cam_fov: float) -> void:
 	var viewport = SubViewport.new()
 	viewport.size = vp_size
@@ -1393,17 +1431,14 @@ func _build_archive_tab() -> void:
 # ===================================================================
 
 func _setup_bottom_bar() -> void:
-	# Enter Dungeon — try 3D GLB model first, fallback to 2D
-	var dungeon_glb = "res://assets/models/enter_dungeon.glb"
-	if ResourceLoader.exists(dungeon_glb):
-		_setup_3d_button(_enter_dungeon_btn, dungeon_glb, Vector2i(1360, 400), 2.5, 35.0)
+	# Enter Dungeon — simple styled button (swapped to small bottom-right)
+	var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
+	if dungeon_tex:
+		_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
 	else:
-		var dungeon_tex = _load_tex("res://assets/sprites/hub_ui/enter_dungeon_btn.png")
-		if dungeon_tex:
-			_style_button_with_texture(_enter_dungeon_btn, dungeon_tex, Color.WHITE)
-		else:
-			_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
-	_enter_dungeon_btn.add_theme_font_size_override("font_size", 16)
+		_style_button_accent(_enter_dungeon_btn, CLR_ORANGE)
+	_enter_dungeon_btn.add_theme_font_size_override("font_size", 12)
+	_enter_dungeon_btn.text = "ENTER\nDUNGEON"
 
 	# Wave indicator above Enter Dungeon button
 	_wave_indicator = Label.new()
@@ -1424,12 +1459,17 @@ func _setup_bottom_bar() -> void:
 	else:
 		_style_button_accent(_junkyard_btn, Color(0.75, 0.55, 0.25))
 
-	# Wardrobe — use steel rect or fallback
-	var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_1.png")
-	if wardrobe_tex:
-		_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
+	# Wardrobe — 3D Enter Dungeon GLB model (angled for dramatic lighting)
+	var wardrobe_glb = "res://assets/models/enter_dungeon.glb"
+	if ResourceLoader.exists(wardrobe_glb):
+		_setup_3d_button_angled(_wardrobe_btn, wardrobe_glb, Vector2i(1360, 400))
+		_wardrobe_btn.text = ""  # GLB has its own text baked in
 	else:
-		_style_button_accent(_wardrobe_btn, CLR_SILVER)
+		var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_1.png")
+		if wardrobe_tex:
+			_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
+		else:
+			_style_button_accent(_wardrobe_btn, CLR_SILVER)
 	_enter_dungeon_btn.pressed.connect(_start_run)
 	_junkyard_btn.pressed.connect(_enter_junkyard)
 	_wardrobe_btn.pressed.connect(_open_armor_popup)
