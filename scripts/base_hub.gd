@@ -180,6 +180,9 @@ func _ready() -> void:
 	GameState.keys_changed.connect(_refresh_top_bar)
 
 func _process(delta: float) -> void:
+	# Slowly rotate the 3D ring model
+	if _ring_model and is_instance_valid(_ring_model):
+		_ring_model.rotation.y += delta * 0.3  # Slow rotation
 	if _puppy_sprite and is_instance_valid(_puppy_sprite) and not _bust_playing_oneshot:
 		_bust_timer += delta
 		if _bust_timer >= _bust_next_anim_time:
@@ -265,7 +268,15 @@ func _switch_tab(tab_id: String) -> void:
 # CIRCULAR RINGS (radial wheel background)
 # ===================================================================
 
+var _ring_model: Node3D = null
+
 func _setup_circular_rings() -> void:
+	# Try to load 3D ring model, fallback to 2D texture
+	var glb_path = "res://assets/models/ring_shield.glb"
+	if ResourceLoader.exists(glb_path):
+		_setup_3d_ring(glb_path)
+		return
+	# Fallback: 2D texture ring
 	var rings_tex = _load_tex("res://assets/sprites/hub_ui/circular_rings.png")
 	if not rings_tex:
 		return
@@ -276,13 +287,63 @@ func _setup_circular_rings() -> void:
 	rings.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	rings.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rings.z_index = 1
-	# Center the rings on the porthole, sized to fill most of the screen
 	var ring_w = 1100.0
 	var ring_h = 640.0
 	rings.position = Vector2(480.0 - ring_w / 2.0, 224.0 - ring_h / 2.0)
 	rings.size = Vector2(ring_w, ring_h)
 	_den_tab.add_child(rings)
 	_den_tab.move_child(rings, 0)
+
+func _setup_3d_ring(glb_path: String) -> void:
+	# Create a SubViewport to render the 3D model into a 2D texture
+	var viewport = SubViewport.new()
+	viewport.size = Vector2i(1100, 700)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+
+	# Camera looking down at the ring from above
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = 35.0
+	cam.position = Vector3(0, 3.5, 0)
+	cam.rotation_degrees = Vector3(-90, 0, 0)  # Look straight down
+	viewport.add_child(cam)
+
+	# Ambient light so the model is visible
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-45, 30, 0)
+	light.light_energy = 1.5
+	viewport.add_child(light)
+
+	# Fill light from below
+	var fill_light = DirectionalLight3D.new()
+	fill_light.rotation_degrees = Vector3(45, -30, 0)
+	fill_light.light_energy = 0.5
+	viewport.add_child(fill_light)
+
+	# Load and add the GLB model
+	var model_scene = load(glb_path)
+	if model_scene:
+		_ring_model = model_scene.instantiate()
+		_ring_model.position = Vector3(0, 0, 0)
+		viewport.add_child(_ring_model)
+
+	_den_tab.add_child(viewport)
+
+	# Display the SubViewport's texture on a TextureRect in 2D
+	var display = TextureRect.new()
+	display.texture = viewport.get_texture()
+	display.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	display.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	display.z_index = 1
+	var ring_w = 1100.0
+	var ring_h = 700.0
+	display.position = Vector2(480.0 - ring_w / 2.0, 224.0 - ring_h / 2.0)
+	display.size = Vector2(ring_w, ring_h)
+	_den_tab.add_child(display)
+	_den_tab.move_child(display, 0)
 
 # ===================================================================
 # TOP BAR (materials + keys)
