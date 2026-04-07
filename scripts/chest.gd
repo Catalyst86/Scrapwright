@@ -7,7 +7,7 @@ extends Area2D
 #   Frames 0-2: idle/closed, 3-5: opening, 6-8: fully open + magic burst
 # ============================================================
 
-signal chest_opened
+signal chest_opened  # NOTE: Currently unconnected — arena tracks via _chest_opened_count
 
 const TIER_COLORS = {
 	"bronze": Color(0.72, 0.45, 0.20),
@@ -281,7 +281,7 @@ func _close_key_choice() -> void:
 
 func _exit_tree() -> void:
 	# Safety: if chest is freed while key choice UI is open, ensure unpause
-	if get_tree():
+	if _choice_ui and get_tree():
 		get_tree().paused = false
 
 func _on_tier_chosen(tier: String) -> void:

@@ -45,6 +45,7 @@ var prep_timer_label: Label
 var material_float_container: Control
 
 var _banner_tween: Tween = null
+var _banner_cache: Dictionary = {}
 var _hp_current: int = 100
 var _hp_max: int = 100
 
@@ -315,7 +316,13 @@ func update_wave(current_wave: int, total_waves: int) -> void:
 	# Try to show banner image for this stage
 	var banner_path = STAGE_BANNERS.get(stage_name, "")
 	if banner_path != "" and ResourceLoader.exists(banner_path):
-		var tex = load(banner_path) as Texture2D
+		var tex: Texture2D
+		if banner_path in _banner_cache:
+			tex = _banner_cache[banner_path]
+		else:
+			tex = load(banner_path) as Texture2D
+			if tex:
+				_banner_cache[banner_path] = tex
 		if tex and stage_banner_tex:
 			stage_banner_tex.texture = tex
 			stage_banner_tex.visible = true

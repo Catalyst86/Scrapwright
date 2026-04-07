@@ -4,10 +4,10 @@ extends Node
 # WaveManager — Spawning logic, wave progression (multi-stage)
 # ============================================================
 
-signal wave_started(wave_num)
+signal wave_started(wave_num)  # NOTE: Currently unconnected — available for HUD/mod hooks
 signal wave_complete(wave_num)
 signal all_waves_complete
-signal enemy_spawned(enemy)
+signal enemy_spawned(enemy)  # NOTE: Currently unconnected — available for HUD/mod hooks
 signal enemies_remaining_changed(count)
 
 var current_wave: int = 0

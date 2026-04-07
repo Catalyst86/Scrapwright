@@ -1,6 +1,6 @@
 extends Node
 
-signal card_collected(card: Dictionary)
+signal card_collected(card: Dictionary)  # NOTE: Currently unconnected — deck progress read via polling
 
 # All 40 cards across 4 decks
 var cards: Array[Dictionary] = []

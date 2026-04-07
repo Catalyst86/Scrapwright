@@ -1,8 +1,0 @@
-file 'scene1.mp4'
-file 'scene2.mp4'
-file 'scene3.mp4'
-file 'scene4.mp4'
-file 'scene6.mp4'
-file 'scene7.mp4'
-file 'scene8.mp4'
-file 'scene9.mp4'

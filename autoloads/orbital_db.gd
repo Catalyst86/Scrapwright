@@ -134,7 +134,7 @@ const WEAPONS = {
 		"damage": [4, 6, 8],
 		"cooldown": [4.0, 3.0, 2.5],
 		"attack_type": "heal_burst",
-		"heal_amount": [2, 3, 4],  # percentage of max HP
+		"heal_amount": [3, 6, 10],  # flat HP healed
 	},
 	"shadow_dagger": {
 		"name": "Shadow Dagger",

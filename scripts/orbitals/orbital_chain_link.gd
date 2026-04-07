@@ -17,11 +17,12 @@ func _fire(target: Node) -> void:
 	var hit_enemies: Array = [target]
 	var last_pos = target.global_position
 
+	var chain_dmg = weapon_damage
 	for _i in range(chain_count):
 		var best: Node = null
 		var best_dist: float = 50.0
-		for enemy in get_tree().get_nodes_in_group("enemies"):
-			if not is_instance_valid(enemy) or enemy.get("is_dead"):
+		for enemy in _cached_enemies:
+			if not is_instance_valid(enemy):
 				continue
 			if enemy in hit_enemies:
 				continue
@@ -31,7 +32,8 @@ func _fire(target: Node) -> void:
 				best = enemy
 		if best:
 			_show_lightning(last_pos, best.global_position, chain_color, 1.5)
-			best.take_damage(weapon_damage, last_pos)
+			best.take_damage(maxi(1, chain_dmg), last_pos)
+			chain_dmg = maxi(1, int(chain_dmg * 0.7))
 			hit_enemies.append(best)
 			last_pos = best.global_position
 		else:

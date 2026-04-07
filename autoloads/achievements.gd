@@ -111,12 +111,31 @@ func check_material_achievements() -> void:
 # --- Building checks ---
 
 func check_building_achievements() -> void:
-	var building_ids = ["workbench", "forge", "garden", "armory", "scrapheap"]
+	# Check upgrades using actual UpgradeDB keys and their max levels
+	var upgrade_max = {
+		"bite_damage": 10, "attack_speed": 5, "crit_chance": 5,
+		"max_hp": 10, "health_regen": 10, "damage_reduction": 5,
+		"dig_charges": 10, "salvage_speed": 5, "pickup_magnet": 5,
+		"rerolls": 5, "xp_gain": 10, "perk_choices": 1,
+		"revival": 1, "feral_howl": 1, "junkyard_chimera": 1,
+	}
+	# Map upgrade_id -> permanent dict key (matches UpgradeDB UPGRADES[id].key)
+	var upgrade_keys = {
+		"bite_damage": "bite_damage_level", "attack_speed": "attack_speed_level",
+		"crit_chance": "crit_chance_level", "max_hp": "max_hp_level",
+		"health_regen": "health_regen_level", "damage_reduction": "damage_reduction_level",
+		"dig_charges": "dig_charges_level", "salvage_speed": "salvage_speed_level",
+		"pickup_magnet": "pickup_magnet_level", "rerolls": "reroll_level",
+		"xp_gain": "xp_gain_level", "perk_choices": "perk_choices_level",
+		"revival": "mutation_revival", "feral_howl": "mutation_feral_howl",
+		"junkyard_chimera": "mutation_junkyard_chimera",
+	}
 	var any_maxed = false
 	var all_maxed = true
-	for b_id in building_ids:
-		var level = GameState.permanent.get(b_id + "_level", 0)
-		if level >= 3:
+	for uid in upgrade_max:
+		var key = upgrade_keys[uid]
+		var level = GameState.permanent.get(key, 0)
+		if level >= upgrade_max[uid]:
 			any_maxed = true
 		else:
 			all_maxed = false

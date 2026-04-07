@@ -548,7 +548,7 @@ func _spawn_mapped_props() -> void:
 		var sb = StaticBody2D.new()
 		sb.collision_layer = 1
 		sb.collision_mask = 0
-		sb.add_to_group("junkyard_prop")
+
 
 		var sprite_path = PROP_DIR + entry.sprite
 		if ResourceLoader.exists(sprite_path):
@@ -596,7 +596,7 @@ func _spawn_mapped_props() -> void:
 		sb.set_meta("hp", entry.hp)
 		sb.set_meta("max_hp", entry.hp)
 		sb.set_meta("prop_type", entry.type)
-		sb.add_to_group("destructible")
+
 
 		ysort_container.add_child(sb)
 

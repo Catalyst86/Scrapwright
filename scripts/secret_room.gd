@@ -219,9 +219,13 @@ class _SecretFloor extends Node2D:
 class _GlowCircle extends Node2D:
 	var center: Vector2 = Vector2.ZERO
 	var _time: float = 0.0
+	var _redraw_timer: float = 0.0
 	func _process(delta: float) -> void:
 		_time += delta
-		queue_redraw()
+		_redraw_timer += delta
+		if _redraw_timer >= 0.033:
+			_redraw_timer = 0.0
+			queue_redraw()
 	func _draw() -> void:
 		# Concentric glow rings (pulse with time)
 		for i in range(8, 0, -1):

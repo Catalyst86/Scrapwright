@@ -50,6 +50,7 @@ func _do_shoot() -> void:
 	var proj_scene = _proj_scene
 	if not proj_scene: return
 	var proj = proj_scene.instantiate()
+	proj.source_enemy = self
 	var dir  = (player_ref.global_position - global_position).normalized()
 	proj.global_position = global_position + dir * 14.0
 	proj.projectile_type = "ice"

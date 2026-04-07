@@ -389,7 +389,7 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 
 func _setup_3d_wardrobe_button(btn: Button, glb_path: String) -> void:
 	var viewport = SubViewport.new()
-	viewport.size = Vector2i(600, 100)
+	viewport.size = Vector2i(760, 400)
 	viewport.transparent_bg = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport.own_world_3d = true
@@ -429,7 +429,7 @@ func _setup_3d_wardrobe_button(btn: Button, glb_path: String) -> void:
 
 func _setup_3d_junkyard_button(btn: Button, glb_path: String) -> void:
 	var viewport = SubViewport.new()
-	viewport.size = Vector2i(400, 100)
+	viewport.size = Vector2i(760, 400)
 	viewport.transparent_bg = true
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	viewport.own_world_3d = true

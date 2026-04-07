@@ -59,6 +59,7 @@ func _do_shoot() -> void:
 
 	var dir = (predicted_pos - global_position).normalized()
 	var proj = proj_scene.instantiate()
+	proj.source_enemy = self
 	proj.global_position = global_position + dir * 14.0
 	proj.projectile_type = "spore"
 	proj.setup(dir * PROJECTILE_SPEED, damage)

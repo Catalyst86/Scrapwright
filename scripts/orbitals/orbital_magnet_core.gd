@@ -8,8 +8,8 @@ func _fire(_target: Node) -> void:
 	var player = get_parent()
 	if not player:
 		return
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(enemy) or enemy.get("is_dead"):
+	for enemy in _cached_enemies:
+		if not is_instance_valid(enemy):
 			continue
 		var dist = player.global_position.distance_to(enemy.global_position)
 		if dist > attack_range or dist < 5.0:

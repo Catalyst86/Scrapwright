@@ -58,6 +58,7 @@ const SPRITE_OVERRIDES = {
 var _vis: Node2D  # Sprite2D or ColorRect fallback
 var _hp_bar: ColorRect
 var _hp_bg: ColorRect
+var _shake_tween: Tween = null
 
 const SPRITE_PATH = "res://assets/sprites/environment/"
 
@@ -141,9 +142,12 @@ func interact(tool_speed: float = 1.0, tool_yield: float = 1.0) -> void:
 
 	# Shake
 	AudioManager.play("prop_hit", 0.1)
-	var tw = create_tween()
-	tw.tween_property(self, "position", position + Vector2(randf_range(-2, 2), randf_range(-2, 2)), 0.04)
-	tw.tween_property(self, "position", position, 0.04)
+	if _shake_tween and _shake_tween.is_valid():
+		_shake_tween.kill()
+	var origin = position
+	_shake_tween = create_tween()
+	_shake_tween.tween_property(self, "position", origin + Vector2(randf_range(-2, 2), randf_range(-2, 2)), 0.04)
+	_shake_tween.tween_property(self, "position", origin, 0.04)
 
 	if health <= 0:
 		_break(tool_yield)

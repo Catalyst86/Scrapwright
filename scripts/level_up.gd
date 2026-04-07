@@ -559,11 +559,14 @@ func _on_chosen(perk: Dictionary) -> void:
 			tw.tween_property(card, "modulate:a", 0.2, 0.2)
 			tw.tween_property(card, "scale", Vector2(0.8, 0.8), 0.2)
 
+	# CRITICAL: Unpause IMMEDIATELY — not inside the tween callback.
+	# If a scene change happens during the 0.6s tween, the callback never fires
+	# and the tree stays paused forever, freezing the next scene.
+	get_tree().paused = false
 	var dismiss_tw = create_tween()
 	dismiss_tw.tween_interval(0.4)
 	dismiss_tw.tween_property(self, "modulate:a", 0.0, 0.2)
 	dismiss_tw.tween_callback(func():
-		get_tree().paused = false
 		hide()
 		if perk.get("is_orbital", false):
 			_apply_orbital(perk.weapon_id)

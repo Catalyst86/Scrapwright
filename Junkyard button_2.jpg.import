@@ -1,0 +1,45 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://bvw716k144ck2"
+path.s3tc="res://.godot/imported/Junkyard button_2.jpg-959d5bf1960d88ad9c7716c03c61cd3b.s3tc.ctex"
+path.etc2="res://.godot/imported/Junkyard button_2.jpg-959d5bf1960d88ad9c7716c03c61cd3b.etc2.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "87d58af8304306e2dd5c87127bca0af5"
+}
+
+[deps]
+
+source_file="res://Junkyard button_2.jpg"
+dest_files=["res://.godot/imported/Junkyard button_2.jpg-959d5bf1960d88ad9c7716c03c61cd3b.s3tc.ctex", "res://.godot/imported/Junkyard button_2.jpg-959d5bf1960d88ad9c7716c03c61cd3b.etc2.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=1
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=1
+roughness/src_normal="res://Junkyard button_2.jpg"
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

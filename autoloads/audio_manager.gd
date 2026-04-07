@@ -180,6 +180,10 @@ func play_music(track_name: String, fade_in: float = 1.0) -> void:
 	var stream = load(path)
 	if not stream:
 		return
+	if _music_player and is_instance_valid(_music_player):
+		_music_player.stop()
+		_music_player.queue_free()
+		_music_player = null
 	_music_player = AudioStreamPlayer.new()
 	_music_player.stream = stream
 	_music_player.volume_db = -40.0
@@ -251,7 +255,7 @@ func _on_music_finished(track_name: String) -> void:
 			if new_path != "" and ResourceLoader.exists(new_path):
 				_music_player.stream = load(new_path)
 				_current_music_path = new_path
-			_music_player.play()
+				_music_player.play()
 
 # ═══════════════════════════════════════════════════════════════
 # SFX

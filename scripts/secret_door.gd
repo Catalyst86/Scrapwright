@@ -5,7 +5,7 @@ extends Area2D
 # Consumes a secret key and teleports player to bonus room
 # ============================================================
 
-signal door_used
+signal door_used  # NOTE: Currently unconnected — arena monitors _secret_door ref directly
 
 const DOOR_W = 36.0
 const DOOR_H = 48.0

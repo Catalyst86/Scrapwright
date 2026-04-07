@@ -48,7 +48,8 @@ func _on_overlay_click(event: InputEvent) -> void:
 
 func show_card(card: Dictionary) -> void:
 	if _showing:
-		_queue.append(card)
+		if _queue.size() < 3:
+			_queue.append(card)
 		return
 	_reveal(card)
 

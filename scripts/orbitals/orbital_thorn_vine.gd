@@ -17,8 +17,8 @@ func _fire(target: Node) -> void:
 	_show_vine_whip(player.global_position, line_end)
 
 	# Hit all enemies within 15px of the line
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(enemy) or enemy.get("is_dead"):
+	for enemy in _cached_enemies:
+		if not is_instance_valid(enemy):
 			continue
 		var ep = enemy.global_position
 		var closest = _closest_point_on_segment(player.global_position, line_end, ep)
