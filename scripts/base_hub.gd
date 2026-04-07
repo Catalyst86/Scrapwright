@@ -14,6 +14,14 @@ extends Control
 @export var dungeon_model_scale := Vector3(1.0, 1.0, 1.0)
 @export var dungeon_light_energy := 3.0
 
+# --- Wardrobe 3D Button Tuning (adjust in Inspector) ---
+@export_group("Wardrobe 3D Button")
+@export var wardrobe_model_rotation := Vector3(0.0, 0.0, 0.0)
+@export var wardrobe_cam_distance := 4.0
+@export var wardrobe_cam_fov := 35.0
+@export var wardrobe_model_scale := Vector3(1.0, 1.0, 1.0)
+@export var wardrobe_light_energy := 3.0
+
 # --- Colors ---
 const CLR_GOLD      = Color(0.95, 0.82, 0.35)
 const CLR_SILVER    = Color(0.85, 0.85, 0.88)
@@ -197,6 +205,15 @@ func _process(delta: float) -> void:
 		_dungeon_cam_ref.fov = dungeon_cam_fov
 	if _dungeon_light_ref and is_instance_valid(_dungeon_light_ref):
 		_dungeon_light_ref.light_energy = dungeon_light_energy
+	# Live-update Wardrobe 3D button
+	if _wardrobe_model_ref and is_instance_valid(_wardrobe_model_ref):
+		_wardrobe_model_ref.rotation_degrees = wardrobe_model_rotation
+		_wardrobe_model_ref.scale = wardrobe_model_scale
+	if _wardrobe_cam_ref and is_instance_valid(_wardrobe_cam_ref):
+		_wardrobe_cam_ref.position.z = wardrobe_cam_distance
+		_wardrobe_cam_ref.fov = wardrobe_cam_fov
+	if _wardrobe_light_ref and is_instance_valid(_wardrobe_light_ref):
+		_wardrobe_light_ref.light_energy = wardrobe_light_energy
 	if _puppy_sprite and is_instance_valid(_puppy_sprite) and not _bust_playing_oneshot:
 		_bust_timer += delta
 		if _bust_timer >= _bust_next_anim_time:
@@ -306,6 +323,9 @@ func _setup_3d_hatch_button(btn: Button, tid: String, glb_path: String) -> void:
 var _dungeon_model_ref: Node3D = null
 var _dungeon_cam_ref: Camera3D = null
 var _dungeon_light_ref: DirectionalLight3D = null
+var _wardrobe_model_ref: Node3D = null
+var _wardrobe_cam_ref: Camera3D = null
+var _wardrobe_light_ref: DirectionalLight3D = null
 
 func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -> void:
 	var viewport = SubViewport.new()
@@ -341,6 +361,46 @@ func _setup_3d_button_angled(btn: Button, glb_path: String, vp_size: Vector2i) -
 		model.rotation_degrees = dungeon_model_rotation
 		model.scale = dungeon_model_scale
 		_dungeon_model_ref = model
+		model.position = Vector3(0, 0, 0)
+		viewport.add_child(model)
+
+	btn.add_child(viewport)
+	_apply_hatch_texture_deferred.call_deferred(btn, viewport)
+
+func _setup_3d_wardrobe_button(btn: Button, glb_path: String) -> void:
+	var viewport = SubViewport.new()
+	viewport.size = Vector2i(600, 100)
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.own_world_3d = true
+	viewport.msaa_3d = SubViewport.MSAA_4X
+
+	var cam = Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_PERSPECTIVE
+	cam.fov = wardrobe_cam_fov
+	cam.position = Vector3(0, 0, wardrobe_cam_distance)
+	cam.rotation_degrees = Vector3(0, 0, 0)
+	viewport.add_child(cam)
+	_wardrobe_cam_ref = cam
+
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-45, 0, 0)
+	light.light_energy = wardrobe_light_energy
+	viewport.add_child(light)
+	_wardrobe_light_ref = light
+
+	var fill = DirectionalLight3D.new()
+	fill.rotation_degrees = Vector3(45, 180, 0)
+	fill.light_energy = 1.5
+	fill.light_color = Color(1.0, 0.9, 0.7)
+	viewport.add_child(fill)
+
+	var model_scene = load(glb_path)
+	if model_scene:
+		var model = model_scene.instantiate()
+		model.rotation_degrees = wardrobe_model_rotation
+		model.scale = wardrobe_model_scale
+		_wardrobe_model_ref = model
 		model.position = Vector3(0, 0, 0)
 		viewport.add_child(model)
 
@@ -1486,12 +1546,17 @@ func _setup_bottom_bar() -> void:
 	else:
 		_style_button_accent(_junkyard_btn, Color(0.75, 0.55, 0.25))
 
-	# Wardrobe — use steel rect or fallback
-	var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_1.png")
-	if wardrobe_tex:
-		_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
+	# Wardrobe — 3D GLB button with Inspector-adjustable values
+	var wardrobe_glb = "res://assets/models/wardrobe_btn.glb"
+	if ResourceLoader.exists(wardrobe_glb):
+		_setup_3d_wardrobe_button(_wardrobe_btn, wardrobe_glb)
+		_wardrobe_btn.text = ""
 	else:
-		_style_button_accent(_wardrobe_btn, CLR_SILVER)
+		var wardrobe_tex = _load_tex("res://assets/sprites/hub_ui/steel_rect_1.png")
+		if wardrobe_tex:
+			_style_button_with_texture(_wardrobe_btn, wardrobe_tex, CLR_SILVER)
+		else:
+			_style_button_accent(_wardrobe_btn, CLR_SILVER)
 	_enter_dungeon_btn.pressed.connect(_start_run)
 	_junkyard_btn.pressed.connect(_enter_junkyard)
 	_wardrobe_btn.pressed.connect(_open_armor_popup)
