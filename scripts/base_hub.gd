@@ -141,6 +141,7 @@ var _wave_indicator: Label = null
 func _ready() -> void:
 	_udb = get_node_or_null("/root/UpgradeDB")
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	AudioManager.play_music("base_hub")
 
 	# Map tab containers and buttons
 	_tab_containers = {
@@ -881,6 +882,7 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 		tw.tween_property(p, "scale", Vector2(1.08, 1.08), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		if asp and is_instance_valid(asp):
 			asp.play("hover")
+		AudioManager.play("button_hover")
 	)
 	slot.mouse_exited.connect(func():
 		var tw = p.create_tween()

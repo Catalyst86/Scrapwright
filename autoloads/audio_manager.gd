@@ -12,7 +12,7 @@ var sfx_volume: float = 0.7
 const SFX_REGISTRY = {
 	# UI sounds
 	"button_click": ["res://assets/audio/sfx/ui/button_click.wav", -14.0],
-	"button_hover": ["res://assets/audio/sfx/ui/button_hover.wav", -18.0],
+	"button_hover": ["res://assets/audio/sfx/ui/A Short Quick Dull _bloop_ 32 Bit 2.wav", -18.0],
 	"menu_transition": ["res://assets/audio/sfx/ui/menu_transition.wav", -12.0],
 	"level_up": ["res://assets/audio/sfx/ui/level_up.wav", -10.0],
 	"card_select": ["res://assets/audio/sfx/ui/card_select.wav", -12.0],
@@ -92,6 +92,7 @@ var _current_music: String = ""
 var _current_music_path: String = ""
 var _last_played: Dictionary = {}  # category -> last path played
 var _stage_first_played: Dictionary = {}  # stage_index -> bool (track if first song played)
+var _shuffle_queues: Dictionary = {}  # category -> Array of shuffled paths remaining
 
 const MUSIC_DIR = "res://assets/audio/Music/"
 const MUSIC_VOLUME = -20.0
@@ -109,8 +110,10 @@ const STAGE_FIRST_TRACKS = {
 
 # General battle pool — randomized after the first song, or for stages without a "First" track
 const BATTLE_POOL_FILES = [
-	"battle_song_1.wav",
-	"battle_song_2.wav",
+	"Aluminum Thunder.wav",
+	"Aluminum Thunder 2.wav",
+	"Arcade Iron.wav",
+	"Arcade Iron 2.wav",
 	"metal_01.ogg",
 	"metal_02.ogg",
 	"metal_03.ogg",
@@ -119,12 +122,15 @@ const BATTLE_POOL_FILES = [
 	"metal_06.ogg",
 	"metal_07.ogg",
 	"metal_08.ogg",
+	"Pixel Guillotine.wav",
+	"Pixel Guillotine 2.wav",
+	"Pixel Iron Heartbeat.wav",
+	"Pixel Iron Heartbeat (1).wav",
 ]
 
 const HUB_POOL_FILES = [
 	"hub_song_1.wav",
 	"hub_song_2.wav",
-	"base_hub.ogg",
 ]
 
 const MENU_TRACK = "main_menu_song.wav"
@@ -144,11 +150,25 @@ func _build_pool(files: Array) -> Array:
 func _pick_from_pool(pool: Array, category: String) -> String:
 	if pool.is_empty():
 		return ""
-	var last = _last_played.get(category, "")
-	var available = pool.duplicate()
-	if last != "" and available.size() > 1:
-		available.erase(last)
-	var pick = available[randi() % available.size()]
+	# Shuffle-bag: play every track before repeating any
+	if not _shuffle_queues.has(category) or _shuffle_queues[category].is_empty():
+		var shuffled = pool.duplicate()
+		# Fisher-Yates shuffle
+		for i in range(shuffled.size() - 1, 0, -1):
+			var j = randi() % (i + 1)
+			var tmp = shuffled[i]
+			shuffled[i] = shuffled[j]
+			shuffled[j] = tmp
+		# Avoid repeating the last song from the previous cycle
+		var last = _last_played.get(category, "")
+		if last != "" and shuffled.size() > 1 and shuffled[0] == last:
+			# Swap first track with a random later position
+			var swap_idx = (randi() % (shuffled.size() - 1)) + 1
+			var tmp = shuffled[0]
+			shuffled[0] = shuffled[swap_idx]
+			shuffled[swap_idx] = tmp
+		_shuffle_queues[category] = shuffled
+	var pick = _shuffle_queues[category].pop_front()
 	_last_played[category] = pick
 	return pick
 

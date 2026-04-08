@@ -1,7 +1,8 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1775608270
+::res://::1775676900
+BALANCE_AUDIT.md::TextFile::-1::1775613801::0::1::::<><><>0<>0<><>::
 CLAUDE.md::TextFile::-1::1775281897::0::1::::<><><>0<>0<><>::
-default_bus_layout.tres::AudioBusLayout::4412078536714254442::1775605105::0::1::::<><><>0<>0<><>::
+default_bus_layout.tres::AudioBusLayout::4412078536714254442::1775676900::0::1::::<><><>0<>0<><>::
 enter dungeon 3.glb::PackedScene::5093166586194383671::1775602132::1775602753::1::::<><><>0<>0<>b1651632e19d21613770cff956179ba1<>res://.godot/imported/enter dungeon 3.glb-4261836b39280d6d42ec13077756a3e3.scn::uid://djnnup3wiu2c8::::res://enter dungeon 3_0.jpg<>uid://cechpqgm25i7j::::res://enter dungeon 3_1.jpg<>uid://582i7tvma7oo::::res://enter dungeon 3_2.jpg
 enter dungeon 3_0.jpg::CompressedTexture2D::7818624423524296881::1775602745::1775602773::1::::<><><>0<>0<>0095313a7d1644123dd968d164fe0a50<>res://.godot/imported/enter dungeon 3_0.jpg-f19ef05d401b8bda58757359f05eba55.s3tc.ctex<*>res://.godot/imported/enter dungeon 3_0.jpg-f19ef05d401b8bda58757359f05eba55.etc2.ctex::
 enter dungeon 3_1.jpg::CompressedTexture2D::5058178153529314313::1775602747::1775602773::1::::<><><>0<>0<>9f5bbb33a589dc8c7393b737d0242314<>res://.godot/imported/enter dungeon 3_1.jpg-4b57e7f77866eb3143431ec34d36a960.s3tc.ctex<*>res://.godot/imported/enter dungeon 3_1.jpg-4b57e7f77866eb3143431ec34d36a960.etc2.ctex::
@@ -52,19 +53,15 @@ Game icon.png::CompressedTexture2D::8072697238771532032::1774816515::1774816681:
 Northern Oak Games company logo.png::CompressedTexture2D::842010054587231782::1775311463::1775414332::0::::<><><>0<>0<>f5e7356aa72581995f7375d0f244b217<>::
 northern_oak_logo.png::CompressedTexture2D::3841495276474570506::1775414623::1775414666::1::::<><><>0<>0<>6a242b5ec65cca3b12b6233b1ba57411<>res://.godot/imported/northern_oak_logo.png-17e3381a84e92883c04fb5d4d3572791.ctex::
 ::res://assets/audio/::1774893168
-::res://assets/audio/Music/::1774914442
-arena_combat.ogg::AudioStreamOggVorbis::6135749288535979951::1774836083::1774836173::1::::<><><>0<>0<>6a86334ae06902de812c6395806c333e<>res://.godot/imported/arena_combat.ogg-16e0241865ad3db6e627cab1672e83f1.oggvorbisstr::
+::res://assets/audio/Music/::1775678515
+Aluminum Thunder 2.wav::AudioStreamWAV::8598890576964883705::1775677816::1775678515::1::::<><><>0<>0<>8bb5d7c406728692963070b3d06ef36b<>res://.godot/imported/Aluminum Thunder 2.wav-3581b4286f6818e897b5cf226bbbdd1b.sample::
+Aluminum Thunder.wav::AudioStreamWAV::170464737409642769::1775677801::1775678515::1::::<><><>0<>0<>377e4916fd2611d0910ec3450dde01ae<>res://.godot/imported/Aluminum Thunder.wav-5e51eff0701ca1fc3d553b81019c0455.sample::
+Arcade Iron 2.wav::AudioStreamWAV::5505207978885469196::1775677691::1775678515::1::::<><><>0<>0<>2ec1d47fa1847e5917ffbcb3786f8d9d<>res://.godot/imported/Arcade Iron 2.wav-073ff41d9cae56a56b2a0b72bfe42d48.sample::
+Arcade Iron.wav::AudioStreamWAV::7564705708691644070::1775677679::1775678515::1::::<><><>0<>0<>7cb8c6351b5e00bb24b1d4100350c01b<>res://.godot/imported/Arcade Iron.wav-c34ffdd2264e32ef39a44f0bfb6f0265.sample::
 base_hub.ogg::AudioStreamOggVorbis::1449850925358697513::1774836085::1774836173::1::::<><><>0<>0<>d31da380bc047e415ef170885dfd27b0<>res://.godot/imported/base_hub.ogg-fc9019a7c445783e342417e2a24bac5d.oggvorbisstr::
-battle_song_1.wav::AudioStreamWAV::8767813397347290334::1774913840::1774913962::1::::<><><>0<>0<>fbc072a7d16839d8d9cb643847468bb7<>res://.godot/imported/battle_song_1.wav-acfb319750eb5d7e97c8aa26a228cb43.sample::
-battle_song_2.wav::AudioStreamWAV::6311238755768211438::1774913841::1774913962::1::::<><><>0<>0<>c0c965ebb14142e9acf12287bb5e462a<>res://.godot/imported/battle_song_2.wav-d78ec4c100433bf49f0aa8f2df3690c4.sample::
-boss_battle.ogg::AudioStreamOggVorbis::3115797971648014980::1774836086::1774836173::1::::<><><>0<>0<>afcd3f97000549d1cdb3ec6f4f95ef43<>res://.godot/imported/boss_battle.ogg-13bb824f73db005cbbea91f9143266b9.oggvorbisstr::
-clockwork_factory_first.wav::AudioStreamWAV::6929008454565035746::1774913841::1774913962::1::::<><><>0<>0<>d65efc48530f9df57c9ad2a31867543c<>res://.godot/imported/clockwork_factory_first.wav-216292afb4614a9d072360c9a18f04bd.sample::
-frozen_caverns_first.wav::AudioStreamWAV::8059992836916859345::1774913841::1774913962::1::::<><><>0<>0<>b203f913f57bb3c60fcb159d71e3ee72<>res://.godot/imported/frozen_caverns_first.wav-300b241f0d83f283e97d1f96ea9252d4.sample::
-fungal_depths_first.wav::AudioStreamWAV::3877667427408800774::1774913841::1774913962::1::::<><><>0<>0<>3294320ced51188687151ceeae3b6ad9<>res://.godot/imported/fungal_depths_first.wav-09ece41e31b1ea27919695fed816c9e8.sample::
 game_over.ogg::AudioStreamOggVorbis::3356333409623555700::1774836090::1774836173::1::::<><><>0<>0<>1971a5ca532c9a7bb9c1d1f1c7307a19<>res://.godot/imported/game_over.ogg-8c0177fbadc57b41bc93908a713ae05a.oggvorbisstr::
 hub_song_1.wav::AudioStreamWAV::1324018090474829741::1774913841::1774913962::1::::<><><>0<>0<>2f5f361cc8e39b9eda621ff14e608527<>res://.godot/imported/hub_song_1.wav-673a01b9f35a04f5a3378623e13445d8.sample::
 hub_song_2.wav::AudioStreamWAV::6094647582762005115::1774913841::1774913961::1::::<><><>0<>0<>1dd0a9440157fd6eb9e2f26a8ff2d7c2<>res://.godot/imported/hub_song_2.wav-1d59e70db4ba548960c51a36bf2818a7.sample::
-main_menu.ogg::AudioStreamOggVorbis::986531921854839070::1774836091::1774836173::1::::<><><>0<>0<>3b11c10adaf2c6902dcb6c724f641400<>res://.godot/imported/main_menu.ogg-1ecc387ffb22266054399f9900de9f26.oggvorbisstr::
 main_menu_song.wav::AudioStreamWAV::4900233090136225086::1774913841::1774913962::1::::<><><>0<>0<>a1ec399ca3f9653c71e2e0020adad7d2<>res://.godot/imported/main_menu_song.wav-55f67bba4f380a04cbc5597effc66846.sample::
 metal_01.ogg::AudioStreamOggVorbis::6408953151926693974::1774836093::1774836173::1::::<><><>0<>0<>5524cca501120c4c8756cd024f287a54<>res://.godot/imported/metal_01.ogg-b7ea39243d8500b1547eb5d65cd8d9f9.oggvorbisstr::
 metal_02.ogg::AudioStreamOggVorbis::2920335272318573191::1774836095::1774836173::1::::<><><>0<>0<>763970c23a3d8a344bb4338d39a4e5e9<>res://.godot/imported/metal_02.ogg-e02f9f4754fb798888d1abe0f399d9f7.oggvorbisstr::
@@ -74,9 +71,10 @@ metal_05.ogg::AudioStreamOggVorbis::1790183700736352543::1774836101::1774836173:
 metal_06.ogg::AudioStreamOggVorbis::5627908605199424653::1774836102::1774836173::1::::<><><>0<>0<>02ce4eb1c78cc9540a88ae2b26ca2fb9<>res://.godot/imported/metal_06.ogg-f495396617c0b756d7c13901a1dbec61.oggvorbisstr::
 metal_07.ogg::AudioStreamOggVorbis::4919319962689095401::1774836104::1774836173::1::::<><><>0<>0<>53456cba4e2fe2509ef948c05038b357<>res://.godot/imported/metal_07.ogg-6883ac8b9b22caa7c2503c5f3c41b000.oggvorbisstr::
 metal_08.ogg::AudioStreamOggVorbis::9205493036527651390::1774836106::1774836173::1::::<><><>0<>0<>9e8f8ef2fb164c7e6c95594f841eadb7<>res://.godot/imported/metal_08.ogg-6ab1e49559170caa116d953cda9070a2.oggvorbisstr::
-scrapyard first.wav::AudioStreamWAV::6207660249061929408::1774914335::1774914399::1::::<><><>0<>0<>58b37b6a191a3e031191e7c8f5378219<>res://.godot/imported/scrapyard first.wav-4f7889bd69758933eb21bcbedad7d40c.sample::
-scrapyard_first.wav::AudioStreamWAV::8496122040944940275::1774914421::1774914442::1::::<><><>0<>0<>a02655d3d7dcdfaaacebb5262bb27c92<>res://.godot/imported/scrapyard_first.wav-5e97a9e643f5dc3950f2d4d44cb2c9a6.sample::
-the_abyss_first.wav::AudioStreamWAV::4510001102638587783::1774913841::1774913962::1::::<><><>0<>0<>29f3355f092c359f07f9d906ec5763da<>res://.godot/imported/the_abyss_first.wav-9a40e49f63d0a24af968499ebb442348.sample::
+Pixel Guillotine 2.wav::AudioStreamWAV::3516369585081283482::1775677667::1775678515::1::::<><><>0<>0<>615572dda43ec54f051c43984b9a4ed4<>res://.godot/imported/Pixel Guillotine 2.wav-8b83eb75b5c061b6093478fca3659cc6.sample::
+Pixel Guillotine.wav::AudioStreamWAV::4877713443758057057::1775677654::1775678515::1::::<><><>0<>0<>2074c4b3acb5a7835dc2a8170885f98b<>res://.godot/imported/Pixel Guillotine.wav-fad6426a7ba19aeb479a08490ba4e8b0.sample::
+Pixel Iron Heartbeat (1).wav::AudioStreamWAV::7987498557482299706::1775678175::1775678515::1::::<><><>0<>0<>5bced78f280c3d649ff0529686928144<>res://.godot/imported/Pixel Iron Heartbeat (1).wav-b189ce625cfd6f015a9613285358d12b.sample::
+Pixel Iron Heartbeat.wav::AudioStreamWAV::1651539531698724188::1775678157::1775678515::1::::<><><>0<>0<>5f88426188723aec7825ca51b5fba659<>res://.godot/imported/Pixel Iron Heartbeat.wav-c04f4212980ecfd2275fa71d9dd3374f.sample::
 victory_theme.ogg::AudioStreamOggVorbis::1563160079646762270::1774836108::1774836173::1::::<><><>0<>0<>f5f103d2e28a880726e5edd72d671967<>res://.godot/imported/victory_theme.ogg-e286749149ba20ec6920a16b594e0a50.oggvorbisstr::
 ::res://assets/audio/sfx/::1774893169
 ::res://assets/audio/sfx/enemies/::1774893168
@@ -162,7 +160,8 @@ sneak.wav::AudioStreamWAV::8084768092702935931::1774819503::1774819738::1::::<><
 ::res://assets/audio/sfx/traps/::1774893169
 trap_collapse.wav::AudioStreamWAV::4868864327927183284::1774819504::1774819738::1::::<><><>0<>0<>29a64533a2221f32d937fda022e9a88c<>res://.godot/imported/trap_collapse.wav-53fed7f9f9de5dde07af486ce00a74bb.sample::
 trap_snap.wav::AudioStreamWAV::8640265944742745966::1774819504::1774819738::1::::<><><>0<>0<>959f0bb418dbc58ffb92ac0055d52d72<>res://.godot/imported/trap_snap.wav-e9be57d80f27955f16cec07b85181720.sample::
-::res://assets/audio/sfx/ui/::1774893169
+::res://assets/audio/sfx/ui/::1775679390
+A Short Quick Dull _bloop_ 32 Bit 2.wav::AudioStreamWAV::8929549929734540096::1775679350::1775679427::1::::<><><>0<>0<>f1ff716173db750b20835a95e0f86299<>res://.godot/imported/A Short Quick Dull _bloop_ 32 Bit 2.wav-132dffc775cfdbd6f3d95bb81c9d703f.sample::
 button_click.wav::AudioStreamWAV::358432260659817836::1774819505::1774819738::1::::<><><>0<>0<>ac60e32fea2674cf7bad6fea4502aad3<>res://.godot/imported/button_click.wav-66f0871781751e4f2a7dac2b7de43638.sample::
 button_hover.wav::AudioStreamWAV::6145947351507868884::1774819505::1774819738::1::::<><><>0<>0<>972bd25a9d8cfb6810fa564bfd9c23a3<>res://.godot/imported/button_hover.wav-6235f0c1150e261cbb0c620c33496866.sample::
 card_select.wav::AudioStreamWAV::815759121982140632::1774819505::1774819738::1::::<><><>0<>0<>0d74051b1d39281895561e62c3abb2ab<>res://.godot/imported/card_select.wav-4725c9534c81a891b33a7ff7f63852c6.sample::
@@ -945,7 +944,7 @@ upgrade_button.png::CompressedTexture2D::9076844327313963117::1774986655::177498
 upgrade_card_frame.png::CompressedTexture2D::4061356603355687908::1774985420::1774985751::1::::<><><>0<>0<>184283cecca53b1dcfbbba9f2550276b<>res://.godot/imported/upgrade_card_frame.png-7ec597f4e3c5e86991a9247078c50dfd.ctex::
 upgrade_card_frame_v2.png::CompressedTexture2D::3433671740799828272::1774987862::1774987994::1::::<><><>0<>0<>989855e8c5f6772d7f674cda9fc51097<>res://.godot/imported/upgrade_card_frame_v2.png-23252a5324e55b73d82d440ed50fc3fa.ctex::
 wardrobe_button.png::CompressedTexture2D::5652184434869405713::1775428565::1775428588::1::::<><><>0<>0<>7aac728430769eab13ff490be0e32297<>res://.godot/imported/wardrobe_button.png-3a152b770206eaac89898d05722882fe.ctex::
-::res://assets/sprites/items/::1775340842
+::res://assets/sprites/items/::1775608321
 chest_bronze_closed.png::CompressedTexture2D::4393354805555971389::1773763188::1773768237::1::::<><><>0<>0<>347c1252c3b704bf09fc31d4c1d82d2e<>res://.godot/imported/chest_bronze_closed.png-52a6954ed890b394ee7f05e927d8ab67.ctex::
 chest_bronze_open.png::CompressedTexture2D::4735227543885510305::1773763199::1773768237::1::::<><><>0<>0<>e46a9b543acb4e4eb94f2b542ee647b5<>res://.godot/imported/chest_bronze_open.png-2015bb590d884a5e0fe9ca97c3c911a0.ctex::
 chest_closed.png::CompressedTexture2D::3276764428012666934::1774903245::1774903418::1::::<><><>0<>0<>abdb556355ecabe810993b438b7b4d8c<>res://.godot/imported/chest_closed.png-663fbb61fdf44b6e17c15bf02d6f7c78.ctex::
@@ -4421,21 +4420,21 @@ frame_0549.png::CompressedTexture2D::5734291420583184573::1773741814::1773741906
 frame_0550.png::CompressedTexture2D::3277995811810802298::1773741814::1773741906::1::::<><><>0<>0<>03710dbdf248d0b8e121900d97e4c63c<>res://.godot/imported/frame_0550.png-0305bd0aea70f4b698d7937db3538436.ctex::
 frame_0551.png::CompressedTexture2D::2950672545291258317::1773741814::1773741906::1::::<><><>0<>0<>917ca0110dfc7234c1d43e34971d92a7<>res://.godot/imported/frame_0551.png-9282e43f3b5aceb8a1f93c2042120a7c.ctex::
 frame_0552.png::CompressedTexture2D::7643864448343350540::1773741814::1773741906::1::::<><><>0<>0<>5b34be4515897307736f5c1b3b7bafee<>res://.godot/imported/frame_0552.png-3461ddaa1ccd0c9c04b755fe3c6c8712.ctex::
-::res://autoloads/::1775314266
+::res://autoloads/::1775679415
 achievements.gd::GDScript::661183010788616932::1775310603::0::1::::<>Node<><>0<>0<><>::
 armor_db.gd::GDScript::5042467736925234099::1775013770::0::1::::<>Node<><>0<>0<><>::
-audio_manager.gd::GDScript::3738736199076595546::1775310560::0::1::::<>Node<><>0<>0<><>::
+audio_manager.gd::GDScript::3738736199076595546::1775679415::0::1::::<>Node<><>0<>0<><>::
 card_db.gd::GDScript::8903851375117108243::1775311140::0::1::::<>Node<><>0<>0<><>::
 crafting_db.gd::GDScript::935032016970898862::1775263789::0::1::::<>Node<><>0<>0<><>::
-game_state.gd::GDScript::5216304225478660235::1775314062::0::1::::<>Node<><>0<>0<><>::
-orbital_db.gd::GDScript::7407697847381789929::1775310711::0::1::::<>Node<><>0<>0<><>::
+game_state.gd::GDScript::5216304225478660235::1775609944::0::1::::<>Node<><>0<>0<><>::
+orbital_db.gd::GDScript::7407697847381789929::1775615263::0::1::::<>Node<><>0<>0<><>::
 save_manager.gd::GDScript::3713482823669525421::1775314266::0::1::::<>Node<><>0<>0<><>::
 stage_data.gd::GDScript::123494150723304769::1775000757::0::1::::<>Node<><>0<>0<><>::
 upgrade_db.gd::GDScript::5494777064593672205::1775314084::0::1::::<>Node<><>0<>0<><>::
 wave_manager.gd::GDScript::7000445477960032311::1775311137::0::1::::<>Node<><>0<>0<><>::
-::res://scenes/::1775607916
+::res://scenes/::1775609603
 arena.tscn::PackedScene::-1::1774702028::0::1::::<><><>0<>0<><>::res://scripts/arena.gd<>res://scripts/hud.gd<>res://scenes/player.tscn<>res://scenes/level_up.tscn
-base_hub.tscn::PackedScene::1826225796672882367::1775607916::0::1::::<><><>0<>0<><>::uid://b0eb14j2vqvyo::::res://scripts/base_hub.gd<>uid://blkb8owa8uck7::::res://assets/sprites/hub_bg.jpg<>uid://uwkaa0vh7lkt::::res://assets/sprites/hub_ui/bust_orbital_frame.png
+base_hub.tscn::PackedScene::1826225796672882367::1775609603::0::1::::<><><>0<>0<><>::uid://b0eb14j2vqvyo::::res://scripts/base_hub.gd<>uid://blkb8owa8uck7::::res://assets/sprites/hub_bg.jpg<>uid://uwkaa0vh7lkt::::res://assets/sprites/hub_ui/bust_orbital_frame.png
 card_popup.tscn::PackedScene::-1::1774656719::0::1::::<><><>0<>0<><>::res://scripts/card_popup.gd
 chest.tscn::PackedScene::-1::1773763749::0::1::::<><><>0<>0<><>::
 debug_boot.tscn::PackedScene::-1::1773444685::0::1::::<><><>0<>0<><>::
@@ -4489,17 +4488,17 @@ enemy_tank.tscn::PackedScene::-1::1773449427::0::1::::<><><>0<>0<><>::res://scri
 enemy_the_architect.tscn::PackedScene::-1::1774190510::0::1::::<><><>0<>0<><>::
 enemy_the_devourer.tscn::PackedScene::-1::1774190531::0::1::::<><><>0<>0<><>::
 enemy_void_weaver.tscn::PackedScene::-1::1774190520::0::1::::<><><>0<>0<><>::
-::res://scripts/::1775608311
-arena.gd::GDScript::6552663552599282315::1775608311::0::1::::<>Node2D<><>0<>0<><>::
+::res://scripts/::1775678752
+arena.gd::GDScript::6552663552599282315::1775615587::0::1::::<>Node2D<><>0<>0<><>::
 arena_builder.gd::GDScript::4414238464236221407::1774936989::0::1::::<>Node2D<><>0<>0<><>::
-base_hub.gd::GDScript::4149507971630310914::1775604461::0::1::::<>Control<><>0<>0<><>::
+base_hub.gd::GDScript::4149507971630310914::1775678752::0::1::::<>Control<><>0<>0<><>::
 card_popup.gd::GDScript::7728640890761488548::1775310761::0::1::::<>CanvasLayer<><>0<>0<><>::
-chest.gd::GDScript::6040861616573671045::1775311141::0::1::::<>Area2D<><>0<>0<><>::
+chest.gd::GDScript::6040861616573671045::1775615604::0::1::::<>Area2D<><>0<>0<><>::
 debug_boot.gd::GDScript::9150006473410855722::1775000207::0::1::::<>Control<><>0<>0<><>::
 destructible_prop.gd::GDScript::8586143511105014489::1775311108::0::1::::<>StaticBody2D<><>0<>0<><>::
 dig_hole.gd::GDScript::5979878166946630606::1774932328::0::1::::<>Area2D<><>0<>0<><>::
 enemy_abyssal_knight.gd::GDScript::4395709177053277423::1774190404::0::1::::<>EnemyBase<><>0<>0<><>::
-enemy_base.gd::GDScript::8209796587071869164::1775425718::0::1::::EnemyBase<>CharacterBody2D<><>0<>0<><>::
+enemy_base.gd::GDScript::8209796587071869164::1775609920::0::1::::EnemyBase<>CharacterBody2D<><>0<>0<><>::
 enemy_brass_enforcer.gd::GDScript::5485594114832803067::1774190319::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_crystal_bat.gd::GDScript::7031277959473634111::1774190264::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_crystal_colossus.gd::GDScript::9221326350962165435::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
@@ -4510,7 +4509,7 @@ enemy_frost_sprite.gd::GDScript::2618222963822697237::1775285035::0::1::::<>Enem
 enemy_frost_warden.gd::GDScript::433315168034378972::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_fungal_brute.gd::GDScript::2723618283721294527::1775009908::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_fungal_titan.gd::GDScript::4272659659642253646::1775434435::0::1::::<>EnemyBase<><>0<>0<><>::
-enemy_gear_drone.gd::GDScript::7434603012864153631::1774190306::0::1::::<>EnemyBase<><>0<>0<><>::
+enemy_gear_drone.gd::GDScript::7434603012864153631::1775615492::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_glacial_hulk.gd::GDScript::9097108277636352683::1774729139::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_ice_archer.gd::GDScript::8441685755978444870::1775311273::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_junkyard_mech.gd::GDScript::1659338306985351443::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
@@ -4518,12 +4517,12 @@ enemy_lava_lobber.gd::GDScript::449351226467488291::1775311271::0::1::::<>EnemyB
 enemy_magma_imp.gd::GDScript::967133983680066810::1775285071::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_molten_wyrm.gd::GDScript::3985045518805257667::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_mycelium_sniper.gd::GDScript::4195267525901805549::1775311275::0::1::::<>EnemyBase<><>0<>0<><>::
-enemy_obsidian_golem.gd::GDScript::7583663127181148670::1773588571::0::1::::<>EnemyBase<><>0<>0<><>::
+enemy_obsidian_golem.gd::GDScript::7583663127181148670::1775615491::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_phantom.gd::GDScript::155433282979115158::1774190409::0::1::::<>EnemyBase<><>0<>0<><>::
-enemy_piston_crusher.gd::GDScript::8088246000349402013::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
+enemy_piston_crusher.gd::GDScript::8088246000349402013::1775615490::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_projectile.gd::GDScript::5258183863116262096::1775418335::0::1::::<>Area2D<><>0<>0<><>::
 enemy_rusher.gd::GDScript::4699114320430094006::1773442880::0::1::::<>EnemyBase<><>0<>0<><>::
-enemy_scrap_king.gd::GDScript::230318355298646505::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
+enemy_scrap_king.gd::GDScript::230318355298646505::1775615489::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_scrap_sentinel.gd::GDScript::941709335138191905::1775425748::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_shadow_crawler.gd::GDScript::4875069312338176438::1775285130::0::1::::<>EnemyBase<><>0<>0<><>::
 enemy_shooter.gd::GDScript::5468668581085186519::1775311269::0::1::::<>EnemyBase<><>0<>0<><>::
@@ -4542,7 +4541,7 @@ junkyard_state.gd::GDScript::6251008211413026286::1775341199::0::1::::<>Node<><>
 junkyard_v2.gd::GDScript::3313088431704730531::1775311135::0::1::::<>Node2D<><>0<>0<><>::
 junkyard_waves.gd::GDScript::8571058607675550318::1774397775::0::1::::JunkyardWaves<>RefCounted<><>0<>0<><>::
 key_pickup.gd::GDScript::4088190970880126786::1775277357::0::1::::<>Area2D<><>0<>0<><>::
-level_up.gd::GDScript::1539152626098723905::1775310426::0::1::::<>Control<><>0<>0<><>::
+level_up.gd::GDScript::1539152626098723905::1775615548::0::1::::<>Control<><>0<>0<><>::
 main_menu.gd::GDScript::5564104424479241526::1775435687::0::1::::<>Control<><>0<>0<><>::
 material_pickup.gd::GDScript::3818257874820407689::1775277325::0::1::::<>Area2D<><>0<>0<><>::
 orbital_weapon.gd::GDScript::7832123117697056531::1775143679::0::1::::OrbitalWeapon<>Node2D<><>0<>0<><>::
@@ -4552,14 +4551,14 @@ secret_door.gd::GDScript::1371773537111094319::1775311142::0::1::::<>Area2D<><>0
 secret_room.gd::GDScript::318286174192436689::1775311110::0::1::::<>Node2D<><>0<>0<><>::
 setup_sprite_frames.gd::GDScript::1907974296204727930::1773443694::0::1::::<>EditorScript<><>0<>1<><>::
 xp_pickup.gd::GDScript::5019253430192695783::1775246865::0::1::::<>Area2D<><>0<>0<><>::
-::res://scripts/orbitals/::1775311102
+::res://scripts/orbitals/::1775615430
 orbital_arcane_book.gd::GDScript::6916140819151123444::1774935435::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_blade_fan.gd::GDScript::166308879961016356::1775311097::0::1::::<>OrbitalWeapon<><>0<>0<><>::
-orbital_chain_link.gd::GDScript::2784913085248609156::1775311098::0::1::::<>OrbitalWeapon<><>0<>0<><>::
+orbital_chain_link.gd::GDScript::2784913085248609156::1775615430::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_flame_wisp.gd::GDScript::5333119542531859401::1774935445::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_frost_shard.gd::GDScript::1250627851922582121::1773592088::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_holy_lantern.gd::GDScript::8161282035989922995::1775311099::0::1::::<>OrbitalWeapon<><>0<>0<><>::
-orbital_magnet_core.gd::GDScript::3862864491295050887::1775311100::0::1::::<>OrbitalWeapon<><>0<>0<><>::
+orbital_magnet_core.gd::GDScript::3862864491295050887::1775615406::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_poison_orb.gd::GDScript::5281543006652175770::1774935413::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_shadow_dagger.gd::GDScript::5617009639123716496::1774935615::0::1::::<>OrbitalWeapon<><>0<>0<><>::
 orbital_shield_drone.gd::GDScript::3928105913062064749::1773592204::0::1::::<>OrbitalWeapon<><>0<>0<><>::

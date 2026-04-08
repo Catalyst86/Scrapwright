@@ -1,4 +1,2 @@
-res://scenes/base_hub.tscn
-res://scripts/arena.gd
-res://scripts/enemy_base.gd
-res://autoloads/game_state.gd
+res://autoloads/audio_manager.gd
+res://scripts/base_hub.gd
