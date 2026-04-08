@@ -1,7 +1,7 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1775605104
+::res://::1775608270
 CLAUDE.md::TextFile::-1::1775281897::0::1::::<><><>0<>0<><>::
-default_bus_layout.tres::AudioBusLayout::4412078536714254442::1775604245::0::1::::<><><>0<>0<><>::
+default_bus_layout.tres::AudioBusLayout::4412078536714254442::1775605105::0::1::::<><><>0<>0<><>::
 enter dungeon 3.glb::PackedScene::5093166586194383671::1775602132::1775602753::1::::<><><>0<>0<>b1651632e19d21613770cff956179ba1<>res://.godot/imported/enter dungeon 3.glb-4261836b39280d6d42ec13077756a3e3.scn::uid://djnnup3wiu2c8::::res://enter dungeon 3_0.jpg<>uid://cechpqgm25i7j::::res://enter dungeon 3_1.jpg<>uid://582i7tvma7oo::::res://enter dungeon 3_2.jpg
 enter dungeon 3_0.jpg::CompressedTexture2D::7818624423524296881::1775602745::1775602773::1::::<><><>0<>0<>0095313a7d1644123dd968d164fe0a50<>res://.godot/imported/enter dungeon 3_0.jpg-f19ef05d401b8bda58757359f05eba55.s3tc.ctex<*>res://.godot/imported/enter dungeon 3_0.jpg-f19ef05d401b8bda58757359f05eba55.etc2.ctex::
 enter dungeon 3_1.jpg::CompressedTexture2D::5058178153529314313::1775602747::1775602773::1::::<><><>0<>0<>9f5bbb33a589dc8c7393b737d0242314<>res://.godot/imported/enter dungeon 3_1.jpg-4b57e7f77866eb3143431ec34d36a960.s3tc.ctex<*>res://.godot/imported/enter dungeon 3_1.jpg-4b57e7f77866eb3143431ec34d36a960.etc2.ctex::
@@ -36,6 +36,7 @@ Meshy_AI_Riveted_Steel_Hatch_0406010211_texture.glb::PackedScene::51330181187497
 Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_0.jpg::CompressedTexture2D::768015018778377831::1775437473::1775437505::1::::<><><>0<>0<>b634c8ab4d5c8a2880c093d8bb056177<>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_0.jpg-c72c34b8ff33af86746d0856a8f2e5e0.s3tc.ctex<*>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_0.jpg-c72c34b8ff33af86746d0856a8f2e5e0.etc2.ctex::
 Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_1.jpg::CompressedTexture2D::8852029465163404377::1775437474::1775437505::1::::<><><>0<>0<>51938065a0ab34099c73b8797f57daa8<>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_1.jpg-75dce0e89a9e8d5160dd785a1837ca7a.s3tc.ctex<*>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_1.jpg-75dce0e89a9e8d5160dd785a1837ca7a.etc2.ctex::
 Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_2.jpg::CompressedTexture2D::5748705860013133597::1775437475::1775437506::1::::<><><>0<>0<>a11567aa6a3102419733d97522a14d82<>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_2.jpg-d10ab717b97483437487c1acf26e768e.s3tc.ctex<*>res://.godot/imported/Meshy_AI_Riveted_Steel_Hatch_0406010211_texture_2.jpg-d10ab717b97483437487c1acf26e768e.etc2.ctex::
+NewChest animation.png::CompressedTexture2D::5850024231179200840::1775608181::1775608270::1::::<><><>0<>0<>6cc242ed01e5a91335050ed78af662da<>res://.godot/imported/NewChest animation.png-f0c0bd3d6236cc8437c8e59f30c21962.ctex::
 README.md::TextFile::-1::1775056321::0::1::::<><><>0<>0<><>::
 rusty enter dungeon buton.glb::PackedScene::3867649971600424681::1775599839::1775600162::1::::<><><>0<>0<>25b8489d090e692b2e82ec7ace10f08c<>res://.godot/imported/rusty enter dungeon buton.glb-b564841c196937320601b30f42947961.scn::uid://c7jldoox6y7of::::res://rusty enter dungeon buton_0.jpg<>uid://x3mhhyq2r6lu::::res://rusty enter dungeon buton_1.jpg<>uid://rfwej6tn8vys::::res://rusty enter dungeon buton_2.jpg
 rusty enter dungeon buton_0.jpg::CompressedTexture2D::7038137765933507953::1775600156::1775600163::1::::<><><>0<>0<>722886b49f5f6138dd7be574cdf3b114<>res://.godot/imported/rusty enter dungeon buton_0.jpg-658d9346307cd32bc1a34f3043d37374.s3tc.ctex<*>res://.godot/imported/rusty enter dungeon buton_0.jpg-658d9346307cd32bc1a34f3043d37374.etc2.ctex::
@@ -951,7 +952,7 @@ chest_closed.png::CompressedTexture2D::3276764428012666934::1774903245::17749034
 chest_gold_closed.png::CompressedTexture2D::6007755882127996665::1773763246::1773768237::1::::<><><>0<>0<>130c5b26a9541b60763db97191b7bc74<>res://.godot/imported/chest_gold_closed.png-85acb231b26da4b5930cdede2c073f94.ctex::
 chest_gold_open.png::CompressedTexture2D::7376700578725068799::1773763269::1773768237::1::::<><><>0<>0<>d1fb318c5dc4018daf65f4c06e54b451<>res://.godot/imported/chest_gold_open.png-76d9f43ed7e0cd2f49c3954a1cc063b4.ctex::
 chest_open.png::CompressedTexture2D::915371577262457974::1774903245::1774903418::1::::<><><>0<>0<>90d85ad903fab84fec9c4d1ac6b2dcde<>res://.godot/imported/chest_open.png-52ed24e49524b5de0d1739632a7ad522.ctex::
-chest_open_sheet.png::CompressedTexture2D::1387476167511118322::1774903245::1774903418::1::::<><><>0<>0<>68289a7fb262c4e59a68fa676a2ca5e5<>res://.godot/imported/chest_open_sheet.png-35b909673749ab4664ac701bfb2f3720.ctex::
+chest_open_sheet.png::CompressedTexture2D::1387476167511118322::1775608287::1775608321::1::::<><><>0<>0<>68289a7fb262c4e59a68fa676a2ca5e5<>res://.godot/imported/chest_open_sheet.png-35b909673749ab4664ac701bfb2f3720.ctex::
 chest_secret_closed.png::CompressedTexture2D::8416973495245255418::1773789815::1773790381::1::::<><><>0<>0<>535631786ae001dab6638601e02dbe65<>res://.godot/imported/chest_secret_closed.png-1d6a0d28cf922eb278dc9c72a2378bcb.ctex::
 chest_secret_open.png::CompressedTexture2D::6799877806316957259::1773789877::1773790381::1::::<><><>0<>0<>02fa798a8b40ca874708a8905bcc3bca<>res://.godot/imported/chest_secret_open.png-7f2bac98af648cbe1da68f5925a3b728.ctex::
 chest_silver_closed.png::CompressedTexture2D::3814422024414971234::1773763216::1773768237::1::::<><><>0<>0<>d6d12af4d5da1c27c34098fc96b53075<>res://.godot/imported/chest_silver_closed.png-89d233f94fb5c9a99e9351920ba57c01.ctex::
@@ -3779,13 +3780,16 @@ frame_004.png::CompressedTexture2D::7015762371842053973::1774224108::1774224187:
 frame_005.png::CompressedTexture2D::5568183252939990965::1774224108::1774224187::1::::<><><>0<>0<>dfe0cf3608431a51ced978085d57d390<>res://.godot/imported/frame_005.png-5dca78b2ab43852a7c8cda2f38227a24.ctex::
 frame_006.png::CompressedTexture2D::8697487311523997577::1774224108::1774224187::1::::<><><>0<>0<>86e32688c9250e07cf1469fd9f53d9fe<>res://.godot/imported/frame_006.png-991f76e854b2e99bcbfd281f58e567d6.ctex::
 frame_007.png::CompressedTexture2D::3914392994567540199::1774224108::1774224187::1::::<><><>0<>0<>dd42582197f87e7f420b3479442eafd6<>res://.godot/imported/frame_007.png-cf709c16d087ab9472c286ba36ddff73.ctex::
-::res://assets/sprites/ui/::1775435714
+::res://assets/sprites/ui/::1775607867
+chest_toolbox_frame.png::CompressedTexture2D::5562497287836095191::1775607319::1775607867::1::::<><><>0<>0<>277c41a5b3832a83fa5e51f18c1f5d48<>res://.godot/imported/chest_toolbox_frame.png-ef161a040d944ee238a99a22d3583b47.ctex::
 Clockwork factory.jpg::CompressedTexture2D::2142875004433410314::1774890655::1774890704::1::::<><><>0<>0<>8fffa06a9345efdf24b0e41e67fcdc90<>res://.godot/imported/Clockwork factory.jpg-448b2d7ce8dde6d9418b72436baee867.ctex::
 corner_bracket_bl.png::CompressedTexture2D::6410973008075358141::1773537705::1773539418::1::::<><><>0<>0<>dcc9ef019e154abe677d159fbe9ec7f6<>res://.godot/imported/corner_bracket_bl.png-a868c6cf4b53a58511696ee68dee3030.ctex::
 corner_bracket_br.png::CompressedTexture2D::2952683728393894830::1773537725::1773539418::1::::<><><>0<>0<>29c8d127d5252498b152d48905e85b53<>res://.godot/imported/corner_bracket_br.png-9b9cccfb95f7890946990ab40b9b1a51.ctex::
 corner_bracket_tl.png::CompressedTexture2D::2524437528064660379::1773537641::1773539418::1::::<><><>0<>0<>565d886837e027cc07b83790e5dc9a7f<>res://.godot/imported/corner_bracket_tl.png-3b7aa173c4f683b38a50f5bb368cef67.ctex::
 corner_bracket_tr.png::CompressedTexture2D::3612188326401537303::1773537663::1773539418::1::::<><><>0<>0<>b430c6d3471562e292fa47abac5045c5<>res://.godot/imported/corner_bracket_tr.png-173c60565517cc9c7e9cae4e38cf235a.ctex::
 divider_horizontal.png::CompressedTexture2D::742384107737627828::1773537591::1773539418::1::::<><><>0<>0<>3c88d33b2af2582d8eb1b31819906430<>res://.godot/imported/divider_horizontal.png-e38cfa658c69f1257fe9460e40568837.ctex::
+forge_arrow.png::CompressedTexture2D::3238951639922331539::1775607475::1775607867::1::::<><><>0<>0<>e83d6af22364d5734cd45007d3566446<>res://.godot/imported/forge_arrow.png-3044d158c54d5be09edd2c7f95037ad1.ctex::
+forge_bar_frame.png::CompressedTexture2D::892864658806441670::1775607262::1775607867::1::::<><><>0<>0<>a9b2b9cff047526fa6d95a7c15e3a68e<>res://.godot/imported/forge_bar_frame.png-73d5a56f5f861f0b3d47b860fabacc44.ctex::
 Frozen Cavern.jpg::CompressedTexture2D::6559690600653285957::1774890346::1774890704::1::::<><><>0<>0<>8bc49a3f254b5a79f4d63015ca99fc7a<>res://.godot/imported/Frozen Cavern.jpg-c9945616b519504bf24d75596117e658.ctex::
 Fungal Depths.jpg::CompressedTexture2D::1154838584423691762::1774890215::1774890704::1::::<><><>0<>0<>a19799e9f34c51f71d1644461f1f89f4<>res://.godot/imported/Fungal Depths.jpg-c1bcfbe3bd2c5cfdf98a30a08cc6df71.ctex::
 gear_large.png::CompressedTexture2D::581578557842847263::1773536698::1773539418::1::::<><><>0<>0<>78ebf607f1f95363df101d52f064f69f<>res://.godot/imported/gear_large.png-088902de8effb614d96df5374dcdf738.ctex::
@@ -3809,6 +3813,7 @@ key_bronze.png::CompressedTexture2D::6384239786960727924::1774732193::1774732524
 key_gold.png::CompressedTexture2D::7724419920632163837::1774732194::1774732524::1::::<><><>0<>0<>a0e3495bb26b9a345bf16dd857376df2<>res://.godot/imported/key_gold.png-9f12f80ae4a2eb86f8f8e5e421e63aed.ctex::
 key_secret.png::CompressedTexture2D::205428520176566171::1774732298::1774732524::1::::<><><>0<>0<>35e71e9902d0328cd6ac795ff4ea1370<>res://.godot/imported/key_secret.png-e3a4fbcc8e000afeff582fe1c532bd43.ctex::
 key_silver.png::CompressedTexture2D::1374792841721613210::1774732194::1774732524::1::::<><><>0<>0<>9d98c36acca0ac3bded78435bc4e5936<>res://.godot/imported/key_silver.png-857c61cc425e3342243b613aed44c362.ctex::
+key_slot_card.png::CompressedTexture2D::7076189444557113597::1775607277::1775607867::1::::<><><>0<>0<>00b3fe48eba7afba65a8085c612ed56a<>res://.godot/imported/key_slot_card.png-71e3163f2b051f32f0c5c404c6ff5506.ctex::
 mat_icon_blueprint.png::CompressedTexture2D::6105130378676514383::1775092902::1775092907::1::::<><><>0<>0<>bf9bd0060be37ad9af89b250f6267c2a<>res://.godot/imported/mat_icon_blueprint.png-50e37f43d1767aab991e5877be121d39.ctex::
 mat_icon_fuel.png::CompressedTexture2D::5130352182932061621::1775092979::1775093523::1::::<><><>0<>0<>0cbe4702cc97f36ea769e8b9c7a8199f<>res://.godot/imported/mat_icon_fuel.png-b635e59a01770f85b5e7918ea2b2376c.ctex::
 mat_icon_iron.png::CompressedTexture2D::7754916291204898999::1775092888::1775092907::1::::<><><>0<>0<>fa20d2ec8d1bf491a32d883a58c369df<>res://.godot/imported/mat_icon_iron.png-600d2cc00de60b1d53b7521521108076.ctex::
@@ -4428,9 +4433,9 @@ save_manager.gd::GDScript::3713482823669525421::1775314266::0::1::::<>Node<><>0<
 stage_data.gd::GDScript::123494150723304769::1775000757::0::1::::<>Node<><>0<>0<><>::
 upgrade_db.gd::GDScript::5494777064593672205::1775314084::0::1::::<>Node<><>0<>0<><>::
 wave_manager.gd::GDScript::7000445477960032311::1775311137::0::1::::<>Node<><>0<>0<><>::
-::res://scenes/::1775604815
+::res://scenes/::1775607916
 arena.tscn::PackedScene::-1::1774702028::0::1::::<><><>0<>0<><>::res://scripts/arena.gd<>res://scripts/hud.gd<>res://scenes/player.tscn<>res://scenes/level_up.tscn
-base_hub.tscn::PackedScene::1826225796672882367::1775604815::0::1::::<><><>0<>0<><>::uid://b0eb14j2vqvyo::::res://scripts/base_hub.gd<>uid://blkb8owa8uck7::::res://assets/sprites/hub_bg.jpg<>uid://uwkaa0vh7lkt::::res://assets/sprites/hub_ui/bust_orbital_frame.png
+base_hub.tscn::PackedScene::1826225796672882367::1775607916::0::1::::<><><>0<>0<><>::uid://b0eb14j2vqvyo::::res://scripts/base_hub.gd<>uid://blkb8owa8uck7::::res://assets/sprites/hub_bg.jpg<>uid://uwkaa0vh7lkt::::res://assets/sprites/hub_ui/bust_orbital_frame.png
 card_popup.tscn::PackedScene::-1::1774656719::0::1::::<><><>0<>0<><>::res://scripts/card_popup.gd
 chest.tscn::PackedScene::-1::1773763749::0::1::::<><><>0<>0<><>::
 debug_boot.tscn::PackedScene::-1::1773444685::0::1::::<><><>0<>0<><>::
@@ -4484,8 +4489,8 @@ enemy_tank.tscn::PackedScene::-1::1773449427::0::1::::<><><>0<>0<><>::res://scri
 enemy_the_architect.tscn::PackedScene::-1::1774190510::0::1::::<><><>0<>0<><>::
 enemy_the_devourer.tscn::PackedScene::-1::1774190531::0::1::::<><><>0<>0<><>::
 enemy_void_weaver.tscn::PackedScene::-1::1774190520::0::1::::<><><>0<>0<><>::
-::res://scripts/::1775604461
-arena.gd::GDScript::6552663552599282315::1775417350::0::1::::<>Node2D<><>0<>0<><>::
+::res://scripts/::1775608311
+arena.gd::GDScript::6552663552599282315::1775608311::0::1::::<>Node2D<><>0<>0<><>::
 arena_builder.gd::GDScript::4414238464236221407::1774936989::0::1::::<>Node2D<><>0<>0<><>::
 base_hub.gd::GDScript::4149507971630310914::1775604461::0::1::::<>Control<><>0<>0<><>::
 card_popup.gd::GDScript::7728640890761488548::1775310761::0::1::::<>CanvasLayer<><>0<>0<><>::

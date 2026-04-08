@@ -1,1 +1,4 @@
 res://scenes/base_hub.tscn
+res://scripts/arena.gd
+res://scripts/enemy_base.gd
+res://autoloads/game_state.gd

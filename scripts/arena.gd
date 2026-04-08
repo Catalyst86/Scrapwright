@@ -338,11 +338,14 @@ func _end_chest_phase() -> void:
 # ═══════════════════════════════════════════════════════════════
 
 const CHEST_SHEET_PATH = "res://assets/sprites/items/chest_open_sheet.png"
-const CHEST_FRAME_W = 256
-const CHEST_FRAME_H = 256
-const CHEST_FRAME_COUNT = 9
+const KEY_SLOT_CARD_PATH = "res://assets/sprites/ui/key_slot_card.png"
+const FORGE_BAR_PATH = "res://assets/sprites/ui/forge_bar_frame.png"
+const FORGE_ARROW_PATH = "res://assets/sprites/ui/forge_arrow.png"
+const CHEST_FRAME_W = 128
+const CHEST_FRAME_H = 128
+const CHEST_FRAME_COUNT = 17
 const CHEST_IDLE_FRAMES = [0, 1, 2]
-const CHEST_OPEN_FRAMES = [3, 4, 5, 6, 7, 8]
+const CHEST_OPEN_FRAMES = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 const TIER_COLORS = {
 	"bronze": Color(0.72, 0.45, 0.20),
@@ -514,6 +517,8 @@ func _build_chest_event_ui(count: int) -> void:
 	_refresh_chest_event_ui()
 	if not GameState.keys_changed.is_connected(_refresh_chest_event_ui):
 		GameState.keys_changed.connect(_refresh_chest_event_ui)
+	if not GameState.materials_changed.is_connected(_refresh_chest_event_ui):
+		GameState.materials_changed.connect(_refresh_chest_event_ui)
 
 func _make_tier_btn_sb(tier_color: Color, state: String) -> StyleBoxFlat:
 	var sb = StyleBoxFlat.new()
@@ -536,6 +541,8 @@ func _make_tier_btn_sb(tier_color: Color, state: String) -> StyleBoxFlat:
 	return sb
 
 func _refresh_chest_event_ui() -> void:
+	if not is_instance_valid(_chest_event_ui) or _chest_event_ui == null:
+		return
 	for i in _chest_key_panels.size():
 		if i >= _chest_states.size():
 			break
@@ -556,11 +563,15 @@ func _refresh_chest_event_ui() -> void:
 
 		var btn_row = HBoxContainer.new()
 		btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-		btn_row.add_theme_constant_override("separation", 5)
+		btn_row.add_theme_constant_override("separation", 8)
 		btn_row.process_mode = Node.PROCESS_MODE_ALWAYS
 		panel.add_child(btn_row)
 
 		var has_keys = false
+		var _key_slot_tex: Texture2D = null
+		if ResourceLoader.exists(KEY_SLOT_CARD_PATH):
+			_key_slot_tex = load(KEY_SLOT_CARD_PATH)
+
 		for tier in GameState.KEY_TIERS:
 			var count = GameState.get_key_count(tier)
 			if count <= 0:
@@ -568,17 +579,43 @@ func _refresh_chest_event_ui() -> void:
 			has_keys = true
 			var tc = TIER_COLORS.get(tier, Color.WHITE)
 
-			# Button with key icon + count
+			# Button with pixel art card background
 			var btn = Button.new()
 			btn.process_mode = Node.PROCESS_MODE_ALWAYS
-			btn.custom_minimum_size = Vector2(40, 40)
-			btn.add_theme_stylebox_override("normal", _make_tier_btn_sb(tc, "normal"))
-			btn.add_theme_stylebox_override("hover", _make_tier_btn_sb(tc, "hover"))
-			btn.add_theme_stylebox_override("pressed", _make_tier_btn_sb(tc, "pressed"))
+			btn.custom_minimum_size = Vector2(50, 60)
+			# Transparent button style — the card texture is the visual
+			var transparent_sb = StyleBoxFlat.new()
+			transparent_sb.bg_color = Color(0, 0, 0, 0)
+			transparent_sb.set_border_width_all(0)
+			transparent_sb.set_content_margin_all(0)
+			btn.add_theme_stylebox_override("normal", transparent_sb)
+			var hover_sb = StyleBoxFlat.new()
+			hover_sb.bg_color = Color(1, 1, 1, 0.1)
+			hover_sb.set_border_width_all(0)
+			hover_sb.set_content_margin_all(0)
+			btn.add_theme_stylebox_override("hover", hover_sb)
+			var press_sb = StyleBoxFlat.new()
+			press_sb.bg_color = Color(1, 1, 1, 0.05)
+			press_sb.set_border_width_all(0)
+			press_sb.set_content_margin_all(0)
+			btn.add_theme_stylebox_override("pressed", press_sb)
 
+			# Card background texture
+			if _key_slot_tex:
+				var card_bg = TextureRect.new()
+				card_bg.texture = _key_slot_tex
+				card_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+				card_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				card_bg.stretch_mode = TextureRect.STRETCH_SCALE
+				card_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				card_bg.modulate = tc.lightened(0.3)
+				btn.add_child(card_bg)
+
+			# Content layered on top of card
 			var btn_content = VBoxContainer.new()
+			btn_content.set_anchors_preset(Control.PRESET_FULL_RECT)
 			btn_content.alignment = BoxContainer.ALIGNMENT_CENTER
-			btn_content.add_theme_constant_override("separation", 0)
+			btn_content.add_theme_constant_override("separation", 1)
 			btn_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			btn.add_child(btn_content)
 
@@ -587,27 +624,21 @@ func _refresh_chest_event_ui() -> void:
 			if ResourceLoader.exists(key_path):
 				var icon = TextureRect.new()
 				icon.texture = load(key_path)
-				icon.custom_minimum_size = Vector2(24, 24)
+				icon.custom_minimum_size = Vector2(28, 28)
 				icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				btn_content.add_child(icon)
-			else:
-				# Fallback: colored diamond
-				var icon_lbl = Label.new()
-				icon_lbl.text = "◆"
-				icon_lbl.add_theme_font_size_override("font_size", 14)
-				icon_lbl.add_theme_color_override("font_color", tc)
-				icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-				icon_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				btn_content.add_child(icon_lbl)
 
 			# Count label
 			var count_lbl = Label.new()
 			count_lbl.text = "x%d" % count
-			count_lbl.add_theme_font_size_override("font_size", 9)
+			count_lbl.add_theme_font_size_override("font_size", 10)
 			count_lbl.add_theme_color_override("font_color", tc)
+			count_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+			count_lbl.add_theme_constant_override("shadow_offset_x", 1)
+			count_lbl.add_theme_constant_override("shadow_offset_y", 1)
 			count_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			btn_content.add_child(count_lbl)
@@ -621,70 +652,182 @@ func _refresh_chest_event_ui() -> void:
 			prompt.text = "No keys!"
 			prompt.add_theme_color_override("font_color", Color(1, 0.4, 0.3))
 
-	# Rebuild combine panel
+	# Rebuild combine panel — forge buttons with material costs
 	if _combine_panel:
 		for child in _combine_panel.get_children():
 			child.queue_free()
 
-		var sb = StyleBoxFlat.new()
-		sb.bg_color = Color(0.08, 0.06, 0.04, 0.85)
-		sb.border_color = Color(0.55, 0.45, 0.3, 0.6)
-		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(5)
-		sb.set_content_margin_all(6)
-		_combine_panel.add_theme_stylebox_override("panel", sb)
-
-		var cvbox = HBoxContainer.new()
-		cvbox.add_theme_constant_override("separation", 6)
-		cvbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		cvbox.process_mode = Node.PROCESS_MODE_ALWAYS
-		_combine_panel.add_child(cvbox)
-
+		# Show tiers that have 3+ keys (even if can't afford materials)
+		var forgeable_tiers: Array = []
 		for tier in GameState.KEY_TIERS:
-			var count = GameState.get_key_count(tier)
-			if count <= 0 and not GameState.can_combine(tier):
-				continue
-			var tc = TIER_COLORS.get(tier, Color.WHITE)
+			var next = GameState.get_next_tier(tier)
+			if next != "" and GameState.get_key_count(tier) >= 3:
+				forgeable_tiers.append(tier)
 
-			# Key icon
-			var key_path = "res://assets/sprites/items/key_%s.png" % tier
-			if ResourceLoader.exists(key_path):
-				var icon = TextureRect.new()
-				icon.texture = load(key_path)
-				icon.custom_minimum_size = Vector2(16, 16)
-				icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-				cvbox.add_child(icon)
-			else:
-				var pip = PanelContainer.new()
-				var pip_sb = StyleBoxFlat.new()
-				pip_sb.bg_color = tc
-				pip_sb.set_corner_radius_all(3)
-				pip.add_theme_stylebox_override("panel", pip_sb)
-				pip.custom_minimum_size = Vector2(8, 8)
-				pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-				cvbox.add_child(pip)
+		if forgeable_tiers.is_empty():
+			_combine_panel.visible = false
+		else:
+			_combine_panel.visible = true
+			var panel_sb = StyleBoxFlat.new()
+			panel_sb.bg_color = Color(0, 0, 0, 0)
+			panel_sb.set_border_width_all(0)
+			panel_sb.set_content_margin_all(0)
+			_combine_panel.add_theme_stylebox_override("panel", panel_sb)
 
-			var lbl = Label.new()
-			lbl.text = "%d" % count
-			lbl.add_theme_font_size_override("font_size", 10)
-			lbl.add_theme_color_override("font_color", tc)
-			cvbox.add_child(lbl)
+			var cvbox = HBoxContainer.new()
+			cvbox.add_theme_constant_override("separation", 8)
+			cvbox.alignment = BoxContainer.ALIGNMENT_CENTER
+			cvbox.process_mode = Node.PROCESS_MODE_ALWAYS
+			_combine_panel.add_child(cvbox)
 
-			if GameState.can_combine(tier):
-				var btn = Button.new()
-				btn.process_mode = Node.PROCESS_MODE_ALWAYS
-				btn.text = "3>1"
-				btn.add_theme_font_size_override("font_size", 9)
-				btn.custom_minimum_size = Vector2(32, 18)
-				btn.add_theme_stylebox_override("normal", _make_tier_btn_sb(tc, "normal"))
-				btn.add_theme_stylebox_override("hover", _make_tier_btn_sb(tc, "hover"))
-				btn.add_theme_stylebox_override("pressed", _make_tier_btn_sb(tc, "pressed"))
-				btn.add_theme_color_override("font_color", Color.WHITE)
+			# "Forge" label
+			var forge_lbl = Label.new()
+			forge_lbl.text = "FORGE:"
+			forge_lbl.add_theme_font_size_override("font_size", 10)
+			forge_lbl.add_theme_color_override("font_color", Color(0.9, 0.75, 0.4))
+			forge_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+			forge_lbl.add_theme_constant_override("shadow_offset_x", 1)
+			forge_lbl.add_theme_constant_override("shadow_offset_y", 1)
+			forge_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			cvbox.add_child(forge_lbl)
+
+			var _key_slot_tex: Texture2D = null
+			if ResourceLoader.exists(KEY_SLOT_CARD_PATH):
+				_key_slot_tex = load(KEY_SLOT_CARD_PATH)
+
+			for tier in forgeable_tiers:
+				var tc = TIER_COLORS.get(tier, Color.WHITE)
+				var key_path = "res://assets/sprites/items/key_%s.png" % tier
+				var next_tier = GameState.get_next_tier(tier)
+				var next_key_path = "res://assets/sprites/items/key_%s.png" % next_tier
+				var can_afford = GameState.can_afford_conversion(tier)
+				var costs = GameState.KEY_CONVERSION_COSTS.get(tier, {})
+
+				# Forge card — VBoxContainer with key conversion + material costs
+				var card = VBoxContainer.new()
+				card.alignment = BoxContainer.ALIGNMENT_CENTER
+				card.add_theme_constant_override("separation", 2)
+				card.process_mode = Node.PROCESS_MODE_ALWAYS
+				cvbox.add_child(card)
+
+				# Conversion button
+				var conv_btn = Button.new()
+				conv_btn.process_mode = Node.PROCESS_MODE_ALWAYS
+				conv_btn.custom_minimum_size = Vector2(100, 50)
+				var trans_sb = StyleBoxFlat.new()
+				trans_sb.bg_color = Color(0, 0, 0, 0)
+				trans_sb.set_border_width_all(0)
+				trans_sb.set_content_margin_all(0)
+				conv_btn.add_theme_stylebox_override("normal", trans_sb)
+				var hover_sb = StyleBoxFlat.new()
+				hover_sb.bg_color = Color(1, 1, 1, 0.12)
+				hover_sb.set_border_width_all(0)
+				hover_sb.set_content_margin_all(0)
+				conv_btn.add_theme_stylebox_override("hover", hover_sb)
+				var press_sb = StyleBoxFlat.new()
+				press_sb.bg_color = Color(1, 1, 1, 0.05)
+				press_sb.set_border_width_all(0)
+				press_sb.set_content_margin_all(0)
+				conv_btn.add_theme_stylebox_override("pressed", press_sb)
+
+				# Gray out if can't afford
+				if not can_afford:
+					conv_btn.disabled = true
+					conv_btn.modulate = Color(0.5, 0.5, 0.5, 0.7)
+
+				# Card background
+				if _key_slot_tex:
+					var card_bg = TextureRect.new()
+					card_bg.texture = _key_slot_tex
+					card_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+					card_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+					card_bg.stretch_mode = TextureRect.STRETCH_SCALE
+					card_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					card_bg.modulate = tc.lightened(0.2) if can_afford else tc.darkened(0.3)
+					conv_btn.add_child(card_bg)
+
+				# Key conversion row: [3 key → next_key]
+				var content = HBoxContainer.new()
+				content.set_anchors_preset(Control.PRESET_FULL_RECT)
+				content.alignment = BoxContainer.ALIGNMENT_CENTER
+				content.add_theme_constant_override("separation", 3)
+				content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				conv_btn.add_child(content)
+
+				var src_lbl = Label.new()
+				src_lbl.text = "3"
+				src_lbl.add_theme_font_size_override("font_size", 12)
+				src_lbl.add_theme_color_override("font_color", tc.lightened(0.4))
+				src_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+				src_lbl.add_theme_constant_override("shadow_offset_x", 1)
+				src_lbl.add_theme_constant_override("shadow_offset_y", 1)
+				src_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				content.add_child(src_lbl)
+
+				if ResourceLoader.exists(key_path):
+					var src_icon = TextureRect.new()
+					src_icon.texture = load(key_path)
+					src_icon.custom_minimum_size = Vector2(22, 22)
+					src_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+					src_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					src_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					src_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					content.add_child(src_icon)
+
+				var arrow_lbl = Label.new()
+				arrow_lbl.text = "→"
+				arrow_lbl.add_theme_font_size_override("font_size", 14)
+				arrow_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
+				arrow_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+				arrow_lbl.add_theme_constant_override("shadow_offset_x", 1)
+				arrow_lbl.add_theme_constant_override("shadow_offset_y", 1)
+				arrow_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				content.add_child(arrow_lbl)
+
+				if ResourceLoader.exists(next_key_path):
+					var dst_icon = TextureRect.new()
+					dst_icon.texture = load(next_key_path)
+					dst_icon.custom_minimum_size = Vector2(22, 22)
+					dst_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+					dst_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					dst_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+					dst_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					content.add_child(dst_icon)
+
 				var captured_tier = tier
-				btn.pressed.connect(func(): GameState.combine_keys(captured_tier))
-				cvbox.add_child(btn)
+				conv_btn.pressed.connect(func(): GameState.combine_keys(captured_tier))
+				card.add_child(conv_btn)
+
+				# Material cost row below the button
+				var cost_row = HBoxContainer.new()
+				cost_row.alignment = BoxContainer.ALIGNMENT_CENTER
+				cost_row.add_theme_constant_override("separation", 3)
+				cost_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				card.add_child(cost_row)
+
+				for mat in costs:
+					var mat_count = costs[mat]
+					var has_enough = GameState.materials.get(mat, 0) >= mat_count
+					var mat_icon_path = "res://assets/sprites/ui/mat_icon_%s.png" % mat
+					if ResourceLoader.exists(mat_icon_path):
+						var mat_icon = TextureRect.new()
+						mat_icon.texture = load(mat_icon_path)
+						mat_icon.custom_minimum_size = Vector2(12, 12)
+						mat_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+						mat_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+						mat_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+						mat_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+						mat_icon.modulate = Color.WHITE if has_enough else Color(1, 0.3, 0.3)
+						cost_row.add_child(mat_icon)
+					var mat_lbl = Label.new()
+					mat_lbl.text = "%d" % mat_count
+					mat_lbl.add_theme_font_size_override("font_size", 8)
+					mat_lbl.add_theme_color_override("font_color", Color(0.8, 0.8, 0.7) if has_enough else Color(1, 0.3, 0.3))
+					mat_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+					mat_lbl.add_theme_constant_override("shadow_offset_x", 1)
+					mat_lbl.add_theme_constant_override("shadow_offset_y", 1)
+					mat_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					cost_row.add_child(mat_lbl)
 
 func _get_chest_frame_tex(idx: int) -> AtlasTexture:
 	if idx >= 0 and idx < _chest_frame_textures.size():

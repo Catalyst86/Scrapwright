@@ -151,19 +151,20 @@ const TYPE_SIZES = {
 	"the_devourer":    Vector2(180,180), "scrap_king":     Vector2(220,220),
 }
 # Key drop chances: [tier, cumulative_chance]
-# Normal: bronze 30%, silver 10%, gold 4%, secret 0.5%, nothing 55.5%
+# Normal: bronze 12%, silver 4%, gold 1.5%, nothing 82.5%
+# Boss: bronze 15%, silver 8%, gold 4%, nothing 73%
 # Secret keys only drop from stage-end bosses, not regular enemies
 const KEY_DROP_NORMAL = [
-	["bronze", 0.30],
-	["silver", 0.40],
-	["gold", 0.445],
-	# above 0.445 = no drop
+	["bronze", 0.12],
+	["silver", 0.16],
+	["gold", 0.175],
+	# above 0.175 = no drop (82.5%)
 ]
 const KEY_DROP_BOSS = [
-	["bronze", 0.25],
-	["silver", 0.40],
-	["gold", 0.49],
-	# above 0.49 = no drop
+	["bronze", 0.15],
+	["silver", 0.23],
+	["gold", 0.27],
+	# above 0.27 = no drop (73%)
 ]
 
 var _dot: ColorRect = null

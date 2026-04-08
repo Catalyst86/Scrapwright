@@ -303,23 +303,42 @@ func get_key_count(tier: String) -> int:
 
 const KEY_TIERS = ["bronze", "silver", "gold", "secret"]
 
+const KEY_CONVERSION_COSTS = {
+	"bronze": {"iron_scrap": 2, "stone": 1},
+	"silver": {"iron_scrap": 3, "timber": 2, "fuel": 1},
+	"gold": {"iron_scrap": 5, "stone": 3, "blueprint": 1},
+}
+
 func get_next_tier(tier: String) -> String:
 	var idx = KEY_TIERS.find(tier)
 	if idx >= 0 and idx < KEY_TIERS.size() - 1:
 		return KEY_TIERS[idx + 1]
 	return ""
 
+func can_afford_conversion(tier: String) -> bool:
+	var costs = KEY_CONVERSION_COSTS.get(tier, {})
+	for mat in costs:
+		if materials.get(mat, 0) < costs[mat]:
+			return false
+	return true
+
 func can_combine(tier: String) -> bool:
 	var next = get_next_tier(tier)
-	return next != "" and keys.get(tier, 0) >= 3
+	return next != "" and keys.get(tier, 0) >= 3 and can_afford_conversion(tier)
 
 func combine_keys(from_tier: String) -> bool:
 	if not can_combine(from_tier):
 		return false
 	var next = get_next_tier(from_tier)
+	# Deduct keys
 	keys[from_tier] -= 3
 	keys[next] += 1
+	# Deduct materials
+	var costs = KEY_CONVERSION_COSTS.get(from_tier, {})
+	for mat in costs:
+		materials[mat] = materials.get(mat, 0) - costs[mat]
 	emit_signal("keys_changed")
+	emit_signal("materials_changed")
 	return true
 
 func has_any_key() -> bool:
