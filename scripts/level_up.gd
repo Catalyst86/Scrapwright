@@ -48,19 +48,19 @@ const PERK_COLORS = {
 const ALL_PERKS = [
 	{"id":"hp_up",          "name":"+25 Max HP",        "desc":"Increase max health by 25",                    "base_val": 25.0},
 	{"id":"speed_up",       "name":"+15% Speed",        "desc":"Move faster through the arena",                "base_val": 15.0},
-	{"id":"damage_up",      "name":"+5 Attack Dmg",     "desc":"Auto-attacks hit harder",                      "base_val": 5.0},
-	{"id":"attack_speed",   "name":"Faster Attacks",    "desc":"-15% attack cooldown",                         "base_val": 15.0},
-	{"id":"regen",          "name":"Slow Regen",        "desc":"Regenerate 1% max HP every 5 seconds",         "base_val": 0.0},
+	{"id":"damage_up",      "name":"+8 Attack Dmg",     "desc":"Auto-attacks hit harder",                      "base_val": 8.0},
+	{"id":"attack_speed",   "name":"Faster Attacks",    "desc":"-12% attack cooldown",                         "base_val": 12.0},
+	{"id":"regen",          "name":"Slow Regen",        "desc":"Regenerate 1% max HP every 3 seconds",         "base_val": 0.0},
 	{"id":"xp_boost",       "name":"+25% XP",           "desc":"Gain more XP from kills",                      "base_val": 25.0},
 	{"id":"thick_skin",     "name":"+8% Armor",         "desc":"Reduce all damage taken by 8%",                "base_val": 8.0},
 	{"id":"iron_jaws",      "name":"+5% Crit",          "desc":"Bite attacks have a higher chance to crit",    "base_val": 5.0},
 	{"id":"quick_paws",     "name":"Quick Paws",        "desc":"-20% dodge cooldown",                          "base_val": 20.0},
 	{"id":"scavenger_nose", "name":"Scavenger",         "desc":"+30% pickup magnet range",                     "base_val": 30.0},
 	{"id":"second_wind",    "name":"Second Wind",       "desc":"Heal 30% HP when health drops below 20% (once per run)", "base_val": 0.0},
-	{"id":"bloodlust",      "name":"Bloodlust",         "desc":"Heal 2 HP on each kill",                       "base_val": 2.0},
+	{"id":"bloodlust",      "name":"Bloodlust",         "desc":"Heal 3 HP on each kill",                       "base_val": 3.0},
 	{"id":"bark_blast",     "name":"Bark Blast",        "desc":"+35% bite AoE radius — hit nearby enemies too", "base_val": 35.0},
 	{"id":"shadow_step",    "name":"Shadow Step",       "desc":"+1s sneak duration and -20% sneak cooldown",   "base_val": 1.0},
-	{"id":"thorns",         "name":"Thorns",            "desc":"Enemies take 5 damage when they hit you",      "base_val": 5.0},
+	{"id":"thorns",         "name":"Thorns",            "desc":"Enemies take 12 damage when they hit you",     "base_val": 12.0},
 	{"id":"lucky_find",     "name":"Lucky Find",        "desc":"+15% chance for chests to upgrade tier",       "base_val": 15.0},
 ]
 
@@ -68,11 +68,11 @@ const ALL_PERKS = [
 const DIMINISH_FACTOR = 0.7
 # Hard floors per perk type
 const DIMINISH_FLOORS = {
-	"hp_up": 1.0, "speed_up": 3.0, "damage_up": 1.0,
+	"hp_up": 1.0, "speed_up": 3.0, "damage_up": 2.0,
 	"attack_speed": 3.0, "xp_boost": 5.0,
 	"thick_skin": 2.0, "iron_jaws": 1.0, "quick_paws": 3.0,
 	"scavenger_nose": 5.0, "bloodlust": 1.0, "bark_blast": 5.0,
-	"shadow_step": 0.3, "thorns": 1.0, "lucky_find": 3.0,
+	"shadow_step": 0.3, "thorns": 3.0, "lucky_find": 3.0,
 }
 
 func _get_perk_pick_count(perk_id: String) -> int:

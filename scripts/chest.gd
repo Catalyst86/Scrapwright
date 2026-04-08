@@ -352,10 +352,14 @@ func _generate_loot() -> void:
 				GameState.player_health = min(GameState.player_health + 5, GameState.player_max_health)
 				GameState.emit_signal("health_changed", GameState.player_health, GameState.player_max_health)
 				loot_summary.append({"text": "+5 Max Health!", "color": Color(0.3, 1.0, 0.3)})
+			# 5% chance for blueprint from silver chests
+			if randf() < 0.05:
+				GameState.add_material("blueprint", 1)
+				loot_summary.append({"text": "+1 Blueprint!", "color": Color(0.3, 0.5, 0.95)})
 		"gold":
 			loot_summary.append_array(_drop_materials(ALL_MATS, randi_range(4, 6)))
-			# Bonus: 25% chance for extra blueprint + heal
-			if randf() < 0.25:
+			# Bonus: 40% chance for extra blueprint + heal
+			if randf() < 0.40:
 				GameState.add_material("blueprint", 1)
 				loot_summary.append({"text": "+1 Blueprint!", "color": Color(0.3, 0.5, 0.95)})
 			if randf() < 0.30:

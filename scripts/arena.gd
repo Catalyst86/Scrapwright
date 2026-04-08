@@ -1375,15 +1375,15 @@ func _restore_card_perks() -> void:
 		add_child(vine_timer)
 
 func _restore_regen_perk() -> void:
-	# Perk regen: +2 HP every 5 seconds (named to prevent duplication)
+	# Perk regen: 1% max HP every 3 seconds (scales with HP pool)
 	if GameState.perk_regen_active:
 		if not has_node("PerkRegenTimer"):
 			var regen_t = Timer.new()
 			regen_t.name = "PerkRegenTimer"
-			regen_t.wait_time = 5.0
+			regen_t.wait_time = 3.0
 			regen_t.autostart = true
 			regen_t.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
-			regen_t.timeout.connect(func(): GameState.heal(2))
+			regen_t.timeout.connect(func(): GameState.heal(maxi(1, int(GameState.player_max_health * 0.01))))
 			add_child(regen_t)
 	# Health regen: new system (health_regen_level) with fallback to legacy (armory_level)
 	var regen_lvl = GameState.permanent.get("health_regen_level", 0)

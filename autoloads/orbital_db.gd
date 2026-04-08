@@ -19,8 +19,9 @@ const WEAPONS = {
 		"orbit_speed": 3.5,
 		"attack_range": 90.0,
 		"color": Color(0.9, 0.8, 0.2),
-		"damage": [6, 9, 12],
-		"cooldown": [1.2, 1.0, 0.8],
+		"damage": [7, 10, 14],
+		"cooldown": [1.0, 0.8, 0.6],
+		"cooldown_floor": 0.3,
 		"attack_type": "bolt",
 	},
 	"flame_wisp": {
@@ -32,6 +33,7 @@ const WEAPONS = {
 		"color": Color(1.0, 0.5, 0.1),
 		"damage": [8, 12, 16],
 		"cooldown": [2.0, 1.6, 1.2],
+		"cooldown_floor": 0.7,
 		"attack_type": "projectile",
 	},
 	"frost_shard": {
@@ -43,6 +45,7 @@ const WEAPONS = {
 		"color": Color(0.4, 0.8, 1.0),
 		"damage": [5, 8, 11],
 		"cooldown": [1.5, 1.2, 1.0],
+		"cooldown_floor": 0.6,
 		"attack_type": "bolt_slow",
 	},
 	"poison_orb": {
@@ -52,8 +55,9 @@ const WEAPONS = {
 		"orbit_speed": 2.2,
 		"attack_range": 75.0,
 		"color": Color(0.3, 0.85, 0.2),
-		"damage": [3, 4, 6],  # per tick
-		"cooldown": [3.0, 2.5, 2.0],
+		"damage": [5, 8, 12],
+		"cooldown": [2.0, 1.6, 1.2],
+		"cooldown_floor": 0.6,
 		"attack_type": "poison",
 	},
 	"blade_fan": {
@@ -65,6 +69,7 @@ const WEAPONS = {
 		"color": Color(0.7, 0.7, 0.8),
 		"damage": [7, 10, 14],
 		"cooldown": [1.8, 1.4, 1.0],
+		"cooldown_floor": 0.7,
 		"attack_type": "aoe_orbit",
 	},
 	"arcane_book": {
@@ -74,8 +79,9 @@ const WEAPONS = {
 		"orbit_speed": 1.5,
 		"attack_range": 120.0,
 		"color": Color(0.7, 0.4, 1.0),
-		"damage": [5, 7, 10],
+		"damage": [6, 9, 13],
 		"cooldown": [1.0, 0.8, 0.6],
+		"cooldown_floor": 0.3,
 		"attack_type": "homing",
 	},
 	"chain_link": {
@@ -87,8 +93,10 @@ const WEAPONS = {
 		"color": Color(0.5, 0.7, 1.0),
 		"damage": [4, 6, 8],
 		"cooldown": [2.0, 1.6, 1.2],
+		"cooldown_floor": 0.7,
 		"attack_type": "chain",
-		"chain_count": [2, 3, 4],
+		"chain_count": [2, 3, 3],
+		"chain_falloff": 0.5,
 	},
 	"thorn_vine": {
 		"name": "Thorn Vine",
@@ -99,6 +107,7 @@ const WEAPONS = {
 		"color": Color(0.4, 0.7, 0.2),
 		"damage": [6, 9, 12],
 		"cooldown": [1.6, 1.3, 1.0],
+		"cooldown_floor": 0.6,
 		"attack_type": "line_pierce",
 	},
 	"shield_drone": {
@@ -110,6 +119,7 @@ const WEAPONS = {
 		"color": Color(0.6, 0.6, 0.7),
 		"damage": [5, 8, 12],
 		"cooldown": [3.0, 2.5, 2.0],
+		"cooldown_floor": 1.0,
 		"attack_type": "shield",
 		"passive_dr": 5,
 	},
@@ -121,7 +131,8 @@ const WEAPONS = {
 		"attack_range": [60.0, 80.0, 100.0],
 		"color": Color(0.8, 0.2, 0.2),
 		"damage": [3, 5, 8],
-		"cooldown": [2.5, 2.0, 1.5],
+		"cooldown": [2.5, 2.2, 2.0],
+		"cooldown_floor": 1.2,
 		"attack_type": "pull",
 	},
 	"holy_lantern": {
@@ -132,9 +143,10 @@ const WEAPONS = {
 		"attack_range": 65.0,
 		"color": Color(1.0, 0.9, 0.5),
 		"damage": [4, 6, 8],
-		"cooldown": [4.0, 3.0, 2.5],
+		"cooldown": [3.0, 2.5, 2.0],
+		"cooldown_floor": 1.0,
 		"attack_type": "heal_burst",
-		"heal_amount": [3, 6, 10],  # flat HP healed
+		"heal_amount": [5, 8, 12],
 	},
 	"shadow_dagger": {
 		"name": "Shadow Dagger",
@@ -143,8 +155,9 @@ const WEAPONS = {
 		"orbit_speed": 4.5,
 		"attack_range": 100.0,
 		"color": Color(0.5, 0.2, 0.6),
-		"damage": [12, 18, 25],
+		"damage": [10, 15, 20],
 		"cooldown": [3.0, 2.5, 2.0],
+		"cooldown_floor": 1.0,
 		"attack_type": "teleport_strike",
 	},
 }
@@ -186,7 +199,8 @@ func get_cooldown(weapon_id: String, level: int) -> float:
 	var lv1 = arr[0]
 	var lv3 = arr[2]
 	var decrement = (lv1 - lv3) / 2.0
-	return _scale_stat_down(lv1, decrement, level, 0.5)
+	var floor_val = data.get("cooldown_floor", 0.5)
+	return _scale_stat_down(lv1, decrement, level, floor_val)
 
 func get_attack_range(weapon_id: String, level: int) -> float:
 	var data = WEAPONS.get(weapon_id, {})

@@ -47,7 +47,7 @@ var _proj_scene: PackedScene = null
 
 func _ready() -> void:
 	enemy_type       = "scrap_king"
-	max_health       = 3000
+	max_health       = 2200
 	move_speed       = 30.0
 	damage           = 35
 	xp_value         = 500

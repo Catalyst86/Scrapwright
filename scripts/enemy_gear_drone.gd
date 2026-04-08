@@ -4,7 +4,7 @@ extends EnemyBase
 
 func _ready() -> void:
 	enemy_type       = "gear_drone"
-	max_health       = 15
+	max_health       = 25
 	move_speed       = 90.0
 	damage           = 6
 	xp_value         = 8

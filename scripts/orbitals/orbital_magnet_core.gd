@@ -14,9 +14,9 @@ func _fire(_target: Node) -> void:
 		var dist = player.global_position.distance_to(enemy.global_position)
 		if dist > attack_range or dist < 5.0:
 			continue
-		# Pull enemy 25px toward player + crush damage
+		# Pull enemy 15px toward player + crush damage
 		var dir = (player.global_position - enemy.global_position).normalized()
-		enemy.global_position += dir * 25.0
+		enemy.global_position += dir * 15.0
 		if weapon_damage > 0 and enemy.has_method("take_damage"):
 			enemy.take_damage(weapon_damage, player.global_position)
 		# Red/blue magnetic field lines

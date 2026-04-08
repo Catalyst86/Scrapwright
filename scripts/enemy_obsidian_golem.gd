@@ -6,7 +6,7 @@ var armor_hits: int = 3
 
 func _ready() -> void:
 	enemy_type       = "obsidian_golem"
-	max_health       = 200
+	max_health       = 140
 	move_speed       = 18.0
 	damage           = 40
 	xp_value         = 45

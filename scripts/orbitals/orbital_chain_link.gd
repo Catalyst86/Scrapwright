@@ -13,7 +13,7 @@ func _fire(target: Node) -> void:
 	target.take_damage(weapon_damage, global_position)
 
 	# Chain to nearby enemies
-	var chain_count = mini(6, OrbitalDB.get_chain_count("chain_link", level))  # Cap at 6 targets
+	var chain_count = mini(3, OrbitalDB.get_chain_count("chain_link", level))  # Cap at 3 targets
 	var hit_enemies: Array = [target]
 	var last_pos = target.global_position
 
@@ -33,7 +33,7 @@ func _fire(target: Node) -> void:
 		if best:
 			_show_lightning(last_pos, best.global_position, chain_color, 1.5)
 			best.take_damage(maxi(1, chain_dmg), last_pos)
-			chain_dmg = maxi(1, int(chain_dmg * 0.7))
+			chain_dmg = maxi(1, int(chain_dmg * 0.5))
 			hit_enemies.append(best)
 			last_pos = best.global_position
 		else:
