@@ -148,9 +148,10 @@ func _spawn_fire_puddle(pos: Vector2) -> void:
 	tick_timer.autostart = true
 	puddle.add_child(tick_timer)
 	tick_timer.timeout.connect(func():
+		if not is_instance_valid(puddle): return
 		tick_count += 1
 		if tick_count >= 6:
-			puddle.queue_free()
+			if is_instance_valid(puddle): puddle.queue_free()
 			return
 		var bodies = puddle.get_overlapping_bodies()
 		for body in bodies:

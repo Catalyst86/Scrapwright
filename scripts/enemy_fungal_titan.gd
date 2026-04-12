@@ -196,25 +196,27 @@ func _make_circle_poly(radius: float, segments: int = 12, jitter: float = 0.0) -
 	poly.polygon = pts
 	return poly
 
-func _run_poison_ticks(pool: Area2D, ticks_left: int) -> void:
-	if ticks_left <= 0 or not is_instance_valid(pool):
-		if is_instance_valid(pool):
-			pool.queue_free()
-		return
-	if not is_instance_valid(self) or not is_inside_tree():
-		if is_instance_valid(pool): pool.queue_free()
-		return
-	await get_tree().create_timer(0.5).timeout
-	if not is_inside_tree() or not is_instance_valid(pool):
-		return
-	var bodies = pool.get_overlapping_bodies()
-	for body in bodies:
-		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(POISON_DPS, self)
-	var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
-	if vis:
-		vis.modulate.a = float(ticks_left) / (POISON_TRAIL_DURATION / 0.5)
-	_run_poison_ticks(pool, ticks_left - 1)
+func _run_poison_ticks(pool: Area2D, total_ticks: int) -> void:
+	for tick in range(total_ticks):
+		if not is_instance_valid(pool):
+			return
+		if not is_instance_valid(self) or not is_inside_tree():
+			if is_instance_valid(pool): pool.queue_free()
+			return
+		await get_tree().create_timer(0.5).timeout
+		if not is_inside_tree() or not is_instance_valid(pool):
+			return
+		if not is_stunned and is_instance_valid(pool):
+			var bodies = pool.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					body.take_damage(POISON_DPS, self)
+		var ticks_remaining = total_ticks - tick - 1
+		var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
+		if vis:
+			vis.modulate.a = float(ticks_remaining) / (POISON_TRAIL_DURATION / 0.5)
+	if is_instance_valid(pool):
+		pool.queue_free()
 
 # --- Spore Burst ---
 
@@ -565,25 +567,27 @@ func _spawn_eruption_pool(pos: Vector2) -> void:
 	var tick_count = int(ERUPTION_POOL_DURATION / 0.5)
 	_run_eruption_ticks(pool, vis, tick_count)
 
-func _run_eruption_ticks(pool: Area2D, vis: Node2D, ticks_left: int) -> void:
-	if ticks_left <= 0 or not is_instance_valid(pool):
-		if is_instance_valid(pool):
-			pool.queue_free()
-		return
-	if not is_instance_valid(self) or not is_inside_tree():
-		if is_instance_valid(pool): pool.queue_free()
-		return
-	await get_tree().create_timer(0.5).timeout
-	if not is_inside_tree() or not is_instance_valid(pool):
-		return
-	var bodies = pool.get_overlapping_bodies()
-	for body in bodies:
-		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(POISON_DPS, self)
-	# Fade visual
-	if is_instance_valid(vis):
-		vis.modulate.a = float(ticks_left) / (ERUPTION_POOL_DURATION / 0.5)
-	_run_eruption_ticks(pool, vis, ticks_left - 1)
+func _run_eruption_ticks(pool: Area2D, vis: Node2D, total_ticks: int) -> void:
+	for tick in range(total_ticks):
+		if not is_instance_valid(pool):
+			return
+		if not is_instance_valid(self) or not is_inside_tree():
+			if is_instance_valid(pool): pool.queue_free()
+			return
+		await get_tree().create_timer(0.5).timeout
+		if not is_inside_tree() or not is_instance_valid(pool):
+			return
+		if not is_stunned and is_instance_valid(pool):
+			var bodies = pool.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					body.take_damage(POISON_DPS, self)
+		# Fade visual
+		var ticks_remaining = total_ticks - tick - 1
+		if is_instance_valid(vis):
+			vis.modulate.a = float(ticks_remaining) / (ERUPTION_POOL_DURATION / 0.5)
+	if is_instance_valid(pool):
+		pool.queue_free()
 
 func _die() -> void:
 	_laser_sweep_active = false

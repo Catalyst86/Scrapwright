@@ -78,19 +78,19 @@ func _create_dark_zone() -> void:
 	# Run damage ticks
 	_run_zone_ticks(zone, 0, int(ZONE_DURATION / ZONE_TICK))
 
-func _run_zone_ticks(zone: Area2D, tick: int, max_ticks: int) -> void:
-	if tick >= max_ticks or not is_instance_valid(zone):
-		if is_instance_valid(zone):
-			zone.queue_free()
-		return
-	if not is_instance_valid(self) or not is_inside_tree():
-		if is_instance_valid(zone): zone.queue_free()
-		return
+func _run_zone_ticks(zone: Area2D, _tick: int, max_ticks: int) -> void:
+	for tick in range(max_ticks):
+		if not is_instance_valid(zone):
+			return
+		if not is_instance_valid(self) or not is_inside_tree():
+			if is_instance_valid(zone): zone.queue_free()
+			return
+		if not is_stunned and is_instance_valid(zone):
+			var bodies = zone.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					body.take_damage(ZONE_DPS, self)
+		if not is_inside_tree(): return
+		await get_tree().create_timer(ZONE_TICK).timeout
 	if is_instance_valid(zone):
-		var bodies = zone.get_overlapping_bodies()
-		for body in bodies:
-			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(ZONE_DPS, self)
-	if not is_inside_tree(): return
-	await get_tree().create_timer(ZONE_TICK).timeout
-	_run_zone_ticks(zone, tick + 1, max_ticks)
+		zone.queue_free()

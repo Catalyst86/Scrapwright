@@ -41,7 +41,7 @@ const ASSEMBLY_COOLDOWN_P3 = 20.0
 
 func _ready() -> void:
 	enemy_type       = "piston_crusher"
-	max_health       = 1100
+	max_health       = 1400
 	move_speed       = 35.0
 	damage           = 25
 	xp_value         = 250

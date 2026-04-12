@@ -99,14 +99,8 @@ const MUSIC_VOLUME = -20.0
 
 # --- Track pools ---
 
-# Stage-specific "first entry" tracks (played on wave 1 of that stage)
-const STAGE_FIRST_TRACKS = {
-	0: "scrapyard_first.wav",
-	1: "fungal_depths_first.wav",
-	3: "frozen_caverns_first.wav",
-	4: "clockwork_factory_first.wav",
-	5: "the_abyss_first.wav",
-}
+# Stage-specific "first entry" tracks — TODO: create these tracks
+const STAGE_FIRST_TRACKS = {}
 
 # General battle pool — randomized after the first song, or for stages without a "First" track
 const BATTLE_POOL_FILES = [
@@ -134,7 +128,7 @@ const HUB_POOL_FILES = [
 ]
 
 const MENU_TRACK = "main_menu_song.ogg"
-const BOSS_TRACK = "boss_battle.ogg"
+const BOSS_TRACK = ""  # TODO: create boss_battle.ogg
 const VICTORY_TRACK = "victory_theme.ogg"
 const GAME_OVER_TRACK = "game_over.ogg"
 

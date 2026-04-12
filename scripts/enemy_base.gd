@@ -2,6 +2,17 @@ class_name EnemyBase extends CharacterBody2D
 
 signal died(xp_reward)
 
+const BOSS_TYPES = [
+	"scrap_sentinel", "spore_mother", "ember_drake",
+	"frost_warden", "piston_crusher", "the_devourer",
+	"junkyard_mech", "fungal_titan", "molten_wyrm",
+	"crystal_colossus", "the_architect", "scrap_king",
+]
+const FINAL_BOSS_TYPES = [
+	"junkyard_mech", "fungal_titan", "molten_wyrm",
+	"crystal_colossus", "the_architect", "scrap_king",
+]
+
 @export var enemy_type: String      = "rusher"
 @export var max_health: int         = 30
 @export var move_speed: float       = 55.0
@@ -765,20 +776,21 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 		_hit_retreat_timer = HIT_RETREAT_DURATION
 		_hit_retreat_dir = -velocity.normalized()
 	_show_damage_number(amount)
-	# Boss phase transitions — use sequential ifs (not elif) so burst damage
-	# that skips past both thresholds triggers both phases in order.
+	# Boss phase transitions — sequential ifs so burst damage that skips
+	# past both thresholds triggers phases in order, one per frame.
 	if _is_boss and not _phase_transitioning:
 		var hp_pct = float(health) / float(max_health)
 		if _boss_phase < 2 and hp_pct <= _phase_2_threshold:
 			_boss_phase = 2
 			_phase_transitioning = true
 			_on_phase_change(2)
-			_phase_transitioning = false
-		if _boss_phase < 3 and hp_pct <= _phase_3_threshold:
+			# Defer flag reset so phase 3 can't trigger same frame
+			get_tree().process_frame.connect(func(): _phase_transitioning = false, CONNECT_ONE_SHOT)
+		elif _boss_phase < 3 and hp_pct <= _phase_3_threshold:
 			_boss_phase = 3
 			_phase_transitioning = true
 			_on_phase_change(3)
-			_phase_transitioning = false
+			get_tree().process_frame.connect(func(): _phase_transitioning = false, CONNECT_ONE_SHOT)
 	if health <= 0:
 		# Skip damage flash on killing blow — go straight to death
 		if sprite: sprite.modulate = Color.WHITE
@@ -906,7 +918,7 @@ func _die() -> void:
 		ach.increment_stat("kills_this_run")
 		ach.increment_stat("total_kills")
 		# Boss slayer — only awarded when an actual boss enemy dies
-		if enemy_type in ["junkyard_mech", "fungal_titan", "molten_wyrm", "scrap_sentinel", "spore_mother", "ember_drake", "frost_warden", "crystal_colossus", "piston_crusher", "the_architect", "the_devourer", "scrap_king"]:
+		if enemy_type in BOSS_TYPES:
 			ach.check_and_unlock("boss_slayer")
 	# Boss skin drop — bosses have a chance to drop an armor unlock
 	_try_drop_skin()
@@ -981,7 +993,7 @@ func _drop_key() -> void:
 	# Boss enemies don't drop keys
 	# Stage-end bosses (wave 14 of each stage) drop a guaranteed secret key
 	var sd = get_node_or_null("/root/StageData")
-	if enemy_type in ["junkyard_mech", "fungal_titan", "molten_wyrm", "scrap_sentinel", "spore_mother", "ember_drake", "frost_warden", "crystal_colossus", "piston_crusher", "the_architect", "the_devourer", "scrap_king"]:
+	if enemy_type in BOSS_TYPES:
 		if sd and sd.has_method("get_stage_wave") and sd.get_stage_wave(GameState.current_wave) == 14:
 			call_deferred("_deferred_spawn_key", "secret")
 		return
@@ -1016,13 +1028,7 @@ func _deferred_spawn_key(tier: String) -> void:
 
 func _try_drop_skin() -> void:
 	# Only bosses can drop skins
-	var boss_types = [
-		"junkyard_mech", "fungal_titan", "molten_wyrm",
-		"scrap_sentinel", "spore_mother", "ember_drake",
-		"frost_warden", "crystal_colossus", "piston_crusher",
-		"the_architect", "the_devourer", "scrap_king",
-	]
-	if enemy_type not in boss_types:
+	if enemy_type not in BOSS_TYPES:
 		return
 
 	# Boss-specific skin drops (guaranteed from certain bosses, chance from others)
@@ -1051,7 +1057,7 @@ func _try_drop_skin() -> void:
 		return
 
 	# 40% chance to drop a skin (60% for final bosses)
-	var drop_chance = 0.6 if enemy_type in ["junkyard_mech", "fungal_titan", "molten_wyrm", "crystal_colossus", "the_architect", "scrap_king"] else 0.4
+	var drop_chance = 0.6 if enemy_type in FINAL_BOSS_TYPES else 0.4
 	if randf() > drop_chance:
 		return
 

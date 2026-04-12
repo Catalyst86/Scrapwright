@@ -1,0 +1,31 @@
+SCRAPWRIGHT — Credits & Asset Attribution
+==========================================
+
+Game Design, Programming, Art Direction:
+  Daniel (Catalyst86)
+
+Engine:
+  Godot 4.6 (https://godotengine.org) — MIT License
+
+Music:
+  All music tracks generated via Suno AI (https://suno.com)
+  — Pro Plan (commercial use licensed)
+
+Sound Effects:
+  All SFX generated via Suno AI (https://suno.com)
+  — Pro Plan (commercial use licensed)
+
+Pixel Art & Sprites:
+  Character sprites generated via PixelLab API (https://pixellab.ai)
+  — Tier 3 Pixel Architect subscription
+  All other sprites: Original work
+
+3D Models (Hub UI):
+  Generated via Meshy AI (https://meshy.ai)
+  Enter Dungeon, Junkyard, Wardrobe buttons
+  Hatch panel models, Ring Shield model
+
+Tools Used:
+  Claude Code (Anthropic) — Programming assistance
+  PixelLab — Sprite generation
+  Meshy AI — 3D model generation

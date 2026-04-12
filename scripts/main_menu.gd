@@ -665,6 +665,7 @@ func _close_options() -> void:
 		tw.tween_callback(func(): _options_panel.visible = false)
 
 func _on_quit() -> void:
+	SaveManager.save_game()
 	get_tree().quit()
 
 func _on_switch_profile() -> void:

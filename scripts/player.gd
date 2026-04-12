@@ -419,9 +419,11 @@ func _physics_process(delta: float) -> void:
 			_is_collecting = false
 			_finish_collect()
 
-	# Freeze movement while fall animation plays
+	# Freeze movement and block ALL input while fall/death animation plays
 	if _is_falling:
 		velocity = Vector2.ZERO
+		_dodge_pressed_this_frame = false
+		_collect_pressed_this_frame = false
 		move_and_slide()
 		_update_animation()
 		return
@@ -502,8 +504,7 @@ func _handle_dodge_input() -> void:
 		_sneak_ambush_ready = false
 
 func _handle_sneak_input() -> void:
-	# Check Ctrl directly as a modifier key (more reliable than input action for modifiers)
-	var wants_sneak = Input.is_key_pressed(KEY_CTRL)
+	var wants_sneak = Input.is_action_pressed("sneak")
 	if wants_sneak and not _is_sneaking and _sneak_cooldown <= 0:
 		# Start sneaking
 		_is_sneaking = true

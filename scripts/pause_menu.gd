@@ -137,7 +137,10 @@ func _build_menu() -> void:
 	_add_button(vbox, "QUIT TO MENU", func(): _quit_to_menu(), Color(0.9, 0.7, 0.3))
 
 	# QUIT TO DESKTOP
-	_add_button(vbox, "QUIT TO DESKTOP", func(): get_tree().quit(), Color(0.8, 0.3, 0.3))
+	_add_button(vbox, "QUIT TO DESKTOP", func():
+		SaveManager.save_game()
+		get_tree().quit()
+	, Color(0.8, 0.3, 0.3))
 
 func _build_inventory(_parent: VBoxContainer) -> void:
 	# Build a separate side panel to the left of the main pause menu

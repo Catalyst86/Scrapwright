@@ -1148,12 +1148,15 @@ func _create_upgrade_card(upgrade_id: String, accent: Color, cat_id: String) -> 
 		var uid = upgrade_id
 		var cid = cat_id
 		btn.pressed.connect(func():
+			btn.disabled = true
 			if _udb.purchase_upgrade(uid):
 				Achievements.increment_stat("buildings_upgraded")
 				Achievements.check_building_achievements()
 				_refresh_top_bar()
 				_refresh_category_nodes()
 				_show_detail_panel(cid)
+			else:
+				btn.disabled = false
 		)
 		cv.add_child(btn)
 

@@ -430,25 +430,27 @@ func _make_circle_poly(radius: float, segments: int = 12, jitter: float = 0.0) -
 	poly.polygon = pts
 	return poly
 
-func _run_lava_ticks(pool: Area2D, ticks_left: int) -> void:
-	if ticks_left <= 0 or not is_instance_valid(pool):
-		if is_instance_valid(pool):
-			pool.queue_free()
-		return
-	if not is_instance_valid(self) or not is_inside_tree():
-		if is_instance_valid(pool): pool.queue_free()
-		return
-	await get_tree().create_timer(0.5).timeout
-	if not is_inside_tree() or not is_instance_valid(pool):
-		return
-	var bodies = pool.get_overlapping_bodies()
-	for body in bodies:
-		if body.is_in_group("player") and body.has_method("take_damage"):
-			body.take_damage(LAVA_DPS, self)
-	var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
-	if vis:
-		vis.modulate.a = float(ticks_left) / (LAVA_POOL_DURATION / 0.5)
-	_run_lava_ticks(pool, ticks_left - 1)
+func _run_lava_ticks(pool: Area2D, total_ticks: int) -> void:
+	for tick in range(total_ticks):
+		if not is_instance_valid(pool):
+			return
+		if not is_instance_valid(self) or not is_inside_tree():
+			if is_instance_valid(pool): pool.queue_free()
+			return
+		await get_tree().create_timer(0.5).timeout
+		if not is_inside_tree() or not is_instance_valid(pool):
+			return
+		if not is_stunned and is_instance_valid(pool):
+			var bodies = pool.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					body.take_damage(LAVA_DPS, self)
+		var ticks_remaining = total_ticks - tick - 1
+		var vis = pool.get_child(1) if pool.get_child_count() > 1 else null
+		if vis:
+			vis.modulate.a = float(ticks_remaining) / (LAVA_POOL_DURATION / 0.5)
+	if is_instance_valid(pool):
+		pool.queue_free()
 
 func _lava_spread() -> void:
 	if not player_ref or not is_instance_valid(player_ref):

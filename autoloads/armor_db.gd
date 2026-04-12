@@ -217,7 +217,7 @@ func _define_armors() -> void:
 # --- Public API ---
 
 func get_all_armors() -> Array:
-	return _armors.duplicate()
+	return _armors.filter(func(a): return a.id not in DISABLED_ARMORS)
 
 
 func get_armor(id: String) -> Dictionary:
@@ -233,7 +233,11 @@ func unlock_armor(id: String) -> void:
 		SaveManager.save_game()
 
 
+const DISABLED_ARMORS = ["iron_mail", "rusty_plate", "crystal_vest", "scrap_shield", "fungal_hide", "steam_harness", "junkyard_crown", "obsidian_shell"]
+
 func is_unlocked(id: String) -> bool:
+	if id in DISABLED_ARMORS:
+		return false
 	return id in GameState.unlocked_armors
 
 

@@ -268,10 +268,16 @@ func save_game() -> void:
 	if card_db:
 		config.set_value("cards", "collected", card_db.collected)
 
-	var err = config.save(path)
+	var tmp_path = path + ".tmp"
+	var err = config.save(tmp_path)
 	if err != OK:
 		push_warning("SaveManager: save failed — " + str(err))
 	else:
+		# Atomic rename — prevents corruption if crash during write
+		var global_tmp = ProjectSettings.globalize_path(tmp_path)
+		var global_path = ProjectSettings.globalize_path(path)
+		if FileAccess.file_exists(tmp_path):
+			DirAccess.rename_absolute(global_tmp, global_path)
 		update_profile_summary()
 
 func load_game() -> void:

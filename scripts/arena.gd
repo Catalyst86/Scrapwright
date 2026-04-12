@@ -40,6 +40,12 @@ var _pause_menu: CanvasLayer = null
 var _card_popup: CanvasLayer = null
 var _wave_complete_pending: bool = false  # Re-entrancy guard for async _on_wave_complete
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		if arena_phase == ArenaPhase.COMBAT and not get_tree().paused:
+			if _pause_menu and not _pause_menu.is_open:
+				_pause_menu.open()
+
 func _ready() -> void:
 	# Sync level tracker with actual player level to prevent false level-up popups
 	last_player_level = GameState.player_level
@@ -308,6 +314,12 @@ func _start_chest_phase(count: int, _is_boss: bool) -> void:
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_chest_event_ui(count)
+	if not _chest_event_ui:
+		push_warning("Chest UI build failed, skipping chest phase")
+		arena_phase = ArenaPhase.TRANSITION
+		get_tree().paused = false
+		process_mode = Node.PROCESS_MODE_INHERIT
+		return
 
 func _wait_for_chest_phase() -> void:
 	while arena_phase == ArenaPhase.CHEST_PHASE:

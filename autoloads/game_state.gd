@@ -203,7 +203,7 @@ func restore_wave_start() -> void:
 # --- Armor / Equipment ---
 var equipped_armor_stat: String = "leather_vest"
 var equipped_armor_visual: String = "bandana_red"
-var unlocked_armors: Array = ["bandana_red", "leather_vest"]
+var unlocked_armors: Array = ["bandana_red", "bandana_blue", "leather_vest", "flower_crown", "pirate_patch", "golden_collar", "void_cloak", "phoenix_mantle", "party_hat", "goggles", "rusty_plate", "iron_mail", "crystal_vest", "scrap_shield", "fungal_hide", "steam_harness", "junkyard_crown", "obsidian_shell"]
 
 func set_phase(new_phase: Phase) -> void:
 	current_phase = new_phase

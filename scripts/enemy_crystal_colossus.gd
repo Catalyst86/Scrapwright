@@ -38,6 +38,8 @@ const PILLAR_HP = 8
 
 var _proj_scene: PackedScene = null
 
+var _active_prison_walls: Array = []
+
 func _ready() -> void:
 	enemy_type       = "crystal_colossus"
 	max_health       = 1800
@@ -102,16 +104,16 @@ func _start_crystal_prison() -> void:
 		return
 
 	# Spawn 8 breakable crystal wall obstacles in a circle around the player
-	var prison_walls: Array = []
+	_active_prison_walls.clear()
 	for i in PRISON_WALL_COUNT:
 		var angle = TAU * i / float(PRISON_WALL_COUNT)
 		var pos = player_pos + Vector2(cos(angle), sin(angle)) * PRISON_RADIUS
 		var wall = _spawn_breakable_wall(pos, parent)
 		if wall:
-			prison_walls.append(wall)
+			_active_prison_walls.append(wall)
 
 	# Start escape timer
-	_run_prison_timer(prison_walls, player_pos)
+	_run_prison_timer(_active_prison_walls, player_pos)
 
 func _run_prison_timer(prison_walls: Array, center_pos: Vector2) -> void:
 	await get_tree().create_timer(PRISON_ESCAPE_TIME).timeout
@@ -379,6 +381,11 @@ func _do_shard_burst() -> void:
 
 func _die() -> void:
 	_prison_active = false
+	# Clean up any active prison walls so they don't persist after boss death
+	for wall in _active_prison_walls:
+		if is_instance_valid(wall):
+			wall.queue_free()
+	_active_prison_walls.clear()
 	super._die()
 
 func _get_arena_center() -> Vector2:

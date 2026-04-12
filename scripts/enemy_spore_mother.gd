@@ -142,41 +142,40 @@ func _release_toxic_cloud() -> void:
 	# Run poison ticks
 	_run_cloud_ticks(cloud, visual, 0, 10)
 
-func _run_cloud_ticks(cloud: Area2D, visual: Node2D, tick: int, max_ticks: int) -> void:
-	if tick >= max_ticks or not is_instance_valid(cloud):
-		if is_instance_valid(cloud):
-			cloud.queue_free()
-		return
-	if not is_instance_valid(self) or not is_inside_tree():
-		if is_instance_valid(cloud): cloud.queue_free()
-		return
+func _run_cloud_ticks(cloud: Area2D, visual: Node2D, _tick: int, max_ticks: int) -> void:
+	for tick in range(max_ticks):
+		if not is_instance_valid(cloud):
+			return
+		if not is_instance_valid(self) or not is_inside_tree():
+			if is_instance_valid(cloud): cloud.queue_free()
+			return
 
-	# Draw expanding/fading green circles
-	if is_instance_valid(visual):
-		var ring = Polygon2D.new()
-		var pts: PackedVector2Array = []
-		for i in 16:
-			var angle = TAU * i / 16.0
-			var r = _toxic_cloud_radius * (0.5 + tick * 0.05)
-			pts.append(Vector2(cos(angle), sin(angle)) * r)
-		ring.polygon = pts
-		ring.color = Color(0.2, 0.7, 0.3, 0.25 - tick * 0.02)
-		visual.add_child(ring)
-		var tw_r = ring.create_tween()
-		tw_r.tween_property(ring, "modulate:a", 0.0, 0.5)
-		tw_r.tween_callback(ring.queue_free)
+		# Draw expanding/fading green circles
+		if is_instance_valid(visual):
+			var ring = Polygon2D.new()
+			var pts: PackedVector2Array = []
+			for i in 16:
+				var angle = TAU * i / 16.0
+				var r = _toxic_cloud_radius * (0.5 + tick * 0.05)
+				pts.append(Vector2(cos(angle), sin(angle)) * r)
+			ring.polygon = pts
+			ring.color = Color(0.2, 0.7, 0.3, 0.25 - tick * 0.02)
+			visual.add_child(ring)
+			var tw_r = ring.create_tween()
+			tw_r.tween_property(ring, "modulate:a", 0.0, 0.5)
+			tw_r.tween_callback(ring.queue_free)
 
-	# Damage player if in cloud
+		# Damage player if in cloud (skip if stunned)
+		if not is_stunned and is_instance_valid(cloud):
+			var bodies = cloud.get_overlapping_bodies()
+			for body in bodies:
+				if body.is_in_group("player") and body.has_method("take_damage"):
+					body.take_damage(TOXIC_CLOUD_DAMAGE, self)
+
+		if not is_inside_tree(): return
+		await get_tree().create_timer(0.5).timeout
 	if is_instance_valid(cloud):
-		var bodies = cloud.get_overlapping_bodies()
-		for body in bodies:
-			if body.is_in_group("player") and body.has_method("take_damage"):
-				body.take_damage(TOXIC_CLOUD_DAMAGE, self)
-
-	# Next tick
-	if not is_inside_tree(): return
-	await get_tree().create_timer(0.5).timeout
-	_run_cloud_ticks(cloud, visual, tick + 1, max_ticks)
+		cloud.queue_free()
 
 # --- Spawn Children ---
 
