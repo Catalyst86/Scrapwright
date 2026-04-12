@@ -12,7 +12,7 @@ var sfx_volume: float = 0.7
 const SFX_REGISTRY = {
 	# UI sounds
 	"button_click": ["res://assets/audio/sfx/ui/button_click.wav", -14.0],
-	"button_hover": ["res://assets/audio/sfx/ui/A Short Quick Dull _bloop_ 32 Bit 2.wav", -18.0],
+	"button_hover": ["res://assets/audio/sfx/ui/button_bloop.wav", -18.0],
 	"menu_transition": ["res://assets/audio/sfx/ui/menu_transition.wav", -12.0],
 	"level_up": ["res://assets/audio/sfx/ui/level_up.wav", -10.0],
 	"card_select": ["res://assets/audio/sfx/ui/card_select.wav", -12.0],
@@ -104,10 +104,10 @@ const STAGE_FIRST_TRACKS = {}
 
 # General battle pool — randomized after the first song, or for stages without a "First" track
 const BATTLE_POOL_FILES = [
-	"Aluminum Thunder.ogg",
-	"Aluminum Thunder 2.ogg",
-	"Arcade Iron.ogg",
-	"Arcade Iron 2.ogg",
+	"aluminum_thunder.ogg",
+	"aluminum_thunder_2.ogg",
+	"arcade_iron.ogg",
+	"arcade_iron_2.ogg",
 	"metal_01.ogg",
 	"metal_02.ogg",
 	"metal_03.ogg",
@@ -116,10 +116,10 @@ const BATTLE_POOL_FILES = [
 	"metal_06.ogg",
 	"metal_07.ogg",
 	"metal_08.ogg",
-	"Pixel Guillotine.ogg",
-	"Pixel Guillotine 2.ogg",
-	"Pixel Iron Heartbeat.ogg",
-	"Pixel Iron Heartbeat (1).ogg",
+	"pixel_guillotine.ogg",
+	"pixel_guillotine_2.ogg",
+	"pixel_iron_heartbeat.ogg",
+	"pixel_iron_heartbeat_2.ogg",
 ]
 
 const HUB_POOL_FILES = [
