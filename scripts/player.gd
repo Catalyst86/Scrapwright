@@ -29,6 +29,8 @@ var _leap_cooldown: float   = 0.0
 const LEAP_DURATION         = 0.3
 var LEAP_COOLDOWN: float    = 1.5  # Modified by Quick Paws perk
 const LEAP_SPEED            = 280.0
+var _flame_trail_timer: float = 0.0
+const FLAME_TRAIL_INTERVAL    = 0.05
 
 # --- Sneak Mode ---
 var _is_sneaking: bool      = false
@@ -64,8 +66,6 @@ var _sfx_dig: AudioStreamPlayer2D = null
 var _sfx_salvage: AudioStreamPlayer2D = null
 var _sfx_sneak: AudioStreamPlayer2D = null
 var _sfx_hurt: AudioStreamPlayer2D = null
-@warning_ignore("unused_private_class_variable")
-var _sfx_death: AudioStreamPlayer2D = null  # Assigned via set() in _setup_audio; play() currently disabled
 var _footstep_timer: float = 0.0
 const FOOTSTEP_INTERVAL = 0.3
 
@@ -81,15 +81,25 @@ const DIR_FOLDERS = {
 	"n": "north", "nw": "north-west", "w": "west", "sw": "south-west",
 }
 
-# Sprite sizes per tier (base/bandana=64 PixelLab, armor=128)
-const TIER_SIZES = {"base": 64, "bandana": 64, "armor": 128,
-	"blue_bandana": 48, "leather_vest": 48, "flower_crown": 48,
-	"pirate_patch": 48, "golden_collar": 48, "void_cloak": 48, "phoenix_mantle": 48}
+# All armor tiers are now 64x64 (standardized via PixelLab Scrapwright Standard)
+const TIER_SIZES = {
+	"base": 64, "bandana": 64, "bandana_red": 64,
+	"bandana_blue": 64, "leather_vest": 64, "flower_crown": 64,
+	"pirate_patch": 64, "golden_collar": 64, "void_cloak": 64, "phoenix_mantle": 64,
+	"party_hat": 64, "goggles": 64, "rusty_plate": 64, "iron_mail": 64,
+	"crystal_vest": 64, "scrap_shield": 64, "fungal_hide": 64,
+	"steam_harness": 64, "junkyard_crown": 64, "obsidian_shell": 64,
+}
 
-# Scale to get sprite to ~36px on screen
-const TIER_SCALES = {"base": 0.56, "bandana": 0.56, "armor": 0.30,
-	"blue_bandana": 0.75, "leather_vest": 0.75, "flower_crown": 0.75,
-	"pirate_patch": 0.75, "golden_collar": 0.75, "void_cloak": 0.75, "phoenix_mantle": 0.75}
+# Scale to get sprite to ~36px on screen (64 * 0.56 ≈ 36)
+const TIER_SCALES = {
+	"base": 0.56, "bandana": 0.56, "bandana_red": 0.56,
+	"bandana_blue": 0.56, "leather_vest": 0.56, "flower_crown": 0.56,
+	"pirate_patch": 0.56, "golden_collar": 0.56, "void_cloak": 0.56, "phoenix_mantle": 0.56,
+	"party_hat": 0.56, "goggles": 0.56, "rusty_plate": 0.56, "iron_mail": 0.56,
+	"crystal_vest": 0.56, "scrap_shield": 0.56, "fungal_hide": 0.56,
+	"steam_harness": 0.56, "junkyard_crown": 0.56, "obsidian_shell": 0.56,
+}
 
 func _ready() -> void:
 	add_to_group("player")
@@ -135,7 +145,6 @@ func _setup_audio() -> void:
 		["salvage.wav", "_sfx_salvage", -14.0],
 		["sneak.wav", "_sfx_sneak", -14.0],
 		["hurt.wav", "_sfx_hurt", -10.0],
-		["death.wav", "_sfx_death", -8.0],
 	]
 	for entry in sfx_list:
 		var path = sfx_base + entry[0]
@@ -196,37 +205,35 @@ func _determine_tier() -> void:
 	# Map equipped visual armor to sprite tier folder
 	var visual = GameState.equipped_armor_visual
 	var tier_map = {
-		"bandana_red": "bandana",
-		"bandana_blue": "blue_bandana",
+		"bandana_red": "bandana_red",
+		"bandana_blue": "bandana_blue",
 		"leather_vest": "leather_vest",
 		"flower_crown": "flower_crown",
 		"pirate_patch": "pirate_patch",
 		"golden_collar": "golden_collar",
 		"void_cloak": "void_cloak",
 		"phoenix_mantle": "phoenix_mantle",
-		"rusty_plate": "leather_vest",
-		"iron_plate": "armor",
-		"steel_plate": "armor",
-		"party_hat": "flower_crown",
-		"goggles": "pirate_patch",
-		"iron_mail": "armor",
-		"crystal_vest": "armor",
-		"scrap_shield": "armor",
-		"fungal_hide": "leather_vest",
-		"steam_harness": "leather_vest",
-		"junkyard_crown": "golden_collar",
-		"obsidian_shell": "armor",
+		"party_hat": "party_hat",
+		"goggles": "goggles",
+		"rusty_plate": "rusty_plate",
+		"iron_mail": "iron_mail",
+		"crystal_vest": "crystal_vest",
+		"scrap_shield": "scrap_shield",
+		"fungal_hide": "fungal_hide",
+		"steam_harness": "steam_harness",
+		"junkyard_crown": "junkyard_crown",
+		"obsidian_shell": "obsidian_shell",
 	}
-	_current_tier = tier_map.get(visual, "bandana")
+	_current_tier = tier_map.get(visual, "bandana_red")
 
 	# Verify the tier folder exists by checking for a known file inside it.
 	# DirAccess cannot browse .pck archives on export, so use ResourceLoader instead.
 	var _test_path = PUPPY_BASE + "%s/idle/south/frame_000.png" % _current_tier
 	if not ResourceLoader.exists(_test_path):
-		var _bandana_test = PUPPY_BASE + "bandana/idle/south/frame_000.png"
+		var _bandana_test = PUPPY_BASE + "bandana_red/idle/south/frame_000.png"
 		var _base_test = PUPPY_BASE + "base/idle/south/frame_000.png"
 		if ResourceLoader.exists(_bandana_test):
-			_current_tier = "bandana"
+			_current_tier = "bandana_red"
 		elif ResourceLoader.exists(_base_test):
 			_current_tier = "base"
 
@@ -388,8 +395,13 @@ func _physics_process(delta: float) -> void:
 	# Tick dodge leap
 	if _is_leaping:
 		_leap_timer -= delta
+		_flame_trail_timer += delta
+		if _flame_trail_timer >= FLAME_TRAIL_INTERVAL:
+			_flame_trail_timer = 0.0
+			_spawn_flame_trail_dot()
 		if _leap_timer <= 0:
 			_is_leaping = false
+			_flame_trail_timer = 0.0
 
 	# Tick dig channel
 	if _is_digging:
@@ -522,6 +534,14 @@ func _handle_dig_input() -> void:
 				_sfx_dig.play()
 			# Exit sneak when digging
 			if _is_sneaking: _end_sneak()
+
+func _spawn_flame_trail_dot() -> void:
+	var scene = load("res://scenes/flame_trail_dot.tscn")
+	if not scene: return
+	var dot = scene.instantiate()
+	dot.global_position = global_position
+	if get_parent():
+		get_parent().add_child(dot)
 
 func _spawn_dig_hole() -> void:
 	# Only consume charge when the hole actually spawns (not on channel start)
@@ -852,11 +872,9 @@ func take_damage(amount: int, from_enemy: Node = null) -> void:
 		_collect_timer = 0.0
 	if _is_sneaking: _end_sneak()
 	_sneak_ambush_ready = false
-	# Thick Skin — damage reduction
-	var reduced = amount
-	if GameState.perk_damage_reduction > 0.0:
-		reduced = int(maxf(1.0, amount * (1.0 - GameState.perk_damage_reduction)))
-	GameState.take_damage(reduced)
+	# All damage reduction (Thick Skin perk + Tough Coat upgrade + Shield Drone)
+	# is handled centrally in GameState.take_damage()
+	GameState.take_damage(amount)
 	# Thorns — reflect damage back to attacker
 	if GameState.perk_thorns_damage > 0 and from_enemy and is_instance_valid(from_enemy):
 		if from_enemy.has_method("take_damage"):
@@ -906,9 +924,6 @@ func _die() -> void:
 	set_physics_process(false)
 	attack_timer.stop()
 	hurt_timer.stop()  # Stop hurt flash from overriding
-	# death sound disabled — needs replacement
-	#if _sfx_death:
-	#	_sfx_death.play()
 	# Reset hurt flash immediately so death animation shows properly
 	if sprite:
 		sprite.modulate = Color.WHITE
