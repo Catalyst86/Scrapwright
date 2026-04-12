@@ -1,6 +1,5 @@
 extends Node
 
-signal card_collected(card: Dictionary)  # NOTE: Currently unconnected — deck progress read via polling
 
 # All 40 cards across 4 decks
 var cards: Array[Dictionary] = []
@@ -80,7 +79,6 @@ func roll_card() -> Dictionary:
 func collect_card(card: Dictionary) -> bool:
 	var is_new = not collected.has(card.id)
 	collected[card.id] = collected.get(card.id, 0) + 1
-	card_collected.emit(card)
 	return is_new
 
 func get_deck_progress(deck_name: String) -> Dictionary:

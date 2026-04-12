@@ -153,11 +153,9 @@ func _spawn_crawlers(count: int) -> void:
 		minion.died.connect(func(_xp: int = 0):
 			if not WaveManager.wave_active: return
 			WaveManager.enemies_alive = maxi(0, WaveManager.enemies_alive - 1)
-			WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 		)
 		parent.add_child(minion)
 		WaveManager.enemies_alive += 1
-		WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 
 # ---- Void Rift ----
 func _start_void_rift() -> void:

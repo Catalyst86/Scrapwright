@@ -257,11 +257,9 @@ func _spawn_frost_sprites() -> void:
 		minion.died.connect(func(_xp: int = 0):
 			if not WaveManager.wave_active: return
 			WaveManager.enemies_alive = maxi(0, WaveManager.enemies_alive - 1)
-			WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 		)
 		parent.add_child(minion)
 		WaveManager.enemies_alive += 1
-		WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 
 func _ice_blast() -> void:
 	if not player_ref or not is_instance_valid(player_ref): return

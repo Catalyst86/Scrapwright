@@ -110,10 +110,10 @@ const STAGE_FIRST_TRACKS = {
 
 # General battle pool — randomized after the first song, or for stages without a "First" track
 const BATTLE_POOL_FILES = [
-	"Aluminum Thunder.wav",
-	"Aluminum Thunder 2.wav",
-	"Arcade Iron.wav",
-	"Arcade Iron 2.wav",
+	"Aluminum Thunder.ogg",
+	"Aluminum Thunder 2.ogg",
+	"Arcade Iron.ogg",
+	"Arcade Iron 2.ogg",
 	"metal_01.ogg",
 	"metal_02.ogg",
 	"metal_03.ogg",
@@ -122,18 +122,18 @@ const BATTLE_POOL_FILES = [
 	"metal_06.ogg",
 	"metal_07.ogg",
 	"metal_08.ogg",
-	"Pixel Guillotine.wav",
-	"Pixel Guillotine 2.wav",
-	"Pixel Iron Heartbeat.wav",
-	"Pixel Iron Heartbeat (1).wav",
+	"Pixel Guillotine.ogg",
+	"Pixel Guillotine 2.ogg",
+	"Pixel Iron Heartbeat.ogg",
+	"Pixel Iron Heartbeat (1).ogg",
 ]
 
 const HUB_POOL_FILES = [
-	"hub_song_1.wav",
-	"hub_song_2.wav",
+	"hub_song_1.ogg",
+	"hub_song_2.ogg",
 ]
 
-const MENU_TRACK = "main_menu_song.wav"
+const MENU_TRACK = "main_menu_song.ogg"
 const BOSS_TRACK = "boss_battle.ogg"
 const VICTORY_TRACK = "victory_theme.ogg"
 const GAME_OVER_TRACK = "game_over.ogg"

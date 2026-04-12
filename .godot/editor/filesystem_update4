@@ -1,2 +1,2 @@
-res://autoloads/audio_manager.gd
-res://scripts/base_hub.gd
+res://scripts/player.gd
+res://scripts/dig_hole.gd

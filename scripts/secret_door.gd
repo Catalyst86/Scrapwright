@@ -5,7 +5,6 @@ extends Area2D
 # Consumes a secret key and teleports player to bonus room
 # ============================================================
 
-signal door_used  # NOTE: Currently unconnected — arena monitors _secret_door ref directly
 
 const DOOR_W = 36.0
 const DOOR_H = 48.0
@@ -180,7 +179,6 @@ func _on_body_entered(body: Node) -> void:
 
 func _use_door() -> void:
 	_used = true
-	emit_signal("door_used")
 
 	# Flash bright
 	modulate = Color(2.0, 2.0, 2.0, 1.0)

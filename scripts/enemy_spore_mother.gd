@@ -192,11 +192,9 @@ func _spawn_children() -> void:
 		minion.died.connect(func(_xp: int = 0):
 			if not WaveManager.wave_active: return
 			WaveManager.enemies_alive = maxi(0, WaveManager.enemies_alive - 1)
-			WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 		)
 		parent.add_child(minion)
 		WaveManager.enemies_alive += 1
-		WaveManager.emit_signal("enemies_remaining_changed", WaveManager.get_wave_enemy_count())
 
 	# Spawn visual
 	if sprite:

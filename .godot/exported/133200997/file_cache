@@ -34,7 +34,7 @@ res://scenes/enemies/enemy_the_architect.tscn::f7ab15588ed287932d2f4a963f631a84:
 res://scenes/enemies/enemy_the_devourer.tscn::2718355f50e14674cffca4761951ee80::1774190531::res://.godot/exported/133200997/export-d97e1a0eb28cba2094be782760bdcda9-enemy_the_devourer.scn
 res://scenes/enemies/enemy_void_weaver.tscn::0529ce33d4046001f81db3751cdb2461::1774190520::res://.godot/exported/133200997/export-b7678bfd397a3176ad4204727e565780-enemy_void_weaver.scn
 res://scenes/arena.tscn::e5fbd1f344feb10aecdaa1ff120d2b34::1774702028::res://.godot/exported/133200997/export-a4de5e1f3ea5bccc0e835cc4a2e40ae5-arena.scn
-res://scenes/base_hub.tscn::3f2593a5bfabd7a716021584544993d1::1775277999::res://.godot/exported/133200997/export-a7924023e74b2a6dad2ced18b265689f-base_hub.scn
+res://scenes/base_hub.tscn::1f77ef050f90c090b73ec8a41b932f64::1775609603::res://.godot/exported/133200997/export-a7924023e74b2a6dad2ced18b265689f-base_hub.scn
 res://scenes/card_popup.tscn::efa4e16ab4e79aefec84cbcd717e3bf9::1774656719::res://.godot/exported/133200997/export-61d64810b75ee07b3876ba721f75d592-card_popup.scn
 res://scenes/chest.tscn::f45353da594d1e6ec8de9df3957bfa82::1773763749::res://.godot/exported/133200997/export-2ee8af5ae826349826a7d542e10ad760-chest.scn
 res://scenes/debug_boot.tscn::c748af9071a8d7d1bbf52b704c0f559b::1773444685::res://.godot/exported/133200997/export-356bf91178626363c94624dd4d2f8985-debug_boot.scn
@@ -51,6 +51,7 @@ res://scenes/material_pickup.tscn::27f6fe3092aaab18eb95ffd688b605ab::1773444749:
 res://scenes/player.tscn::5b9bb1d3391acceb50b391a8f611574b::1775011724::res://.godot/exported/133200997/export-234fb6894ec6226e856ab7f825500d3d-player.scn
 res://scenes/secret_door.tscn::11d7ef2495e9ca962253ee3980a9342d::1774124112::res://.godot/exported/133200997/export-e3f277ff9c0c6505165b91ce8750b09f-secret_door.scn
 res://scenes/secret_room.tscn::dd88f7e387d8bcaac7cea43030e16d83::1773764615::res://.godot/exported/133200997/export-a38c80bbf68e35466b46a9fce41f3ff8-secret_room.scn
-res://default_bus_layout.tres::52b8e7104c0ecfd80de0744cc4899ed6::1775339971::res://.godot/exported/133200997/export-19246414aa9fb561ced4b8dce477acec-default_bus_layout.res
+res://default_bus_layout.tres::52b8e7104c0ecfd80de0744cc4899ed6::1775676900::res://.godot/exported/133200997/export-19246414aa9fb561ced4b8dce477acec-default_bus_layout.res
 res://assets/default_theme.tres::cf75bd64860192def0e11bb21799b50f::1774889667::res://.godot/exported/133200997/export-f52dc9441cb81ffa87433113e31411d4-default_theme.res
 res://scenes/xp_pickup.tscn::9f9a0555651652fc12eb64968a5ff2bd::1775166711::res://.godot/exported/133200997/export-4b47d0cd2c8c42ccedaf748caa068f02-xp_pickup.scn
+res://scenes/credits.tscn::2f08e9cfa1ce05991fd1d6921f8cd5ba::1775681142::res://.godot/exported/133200997/export-5458de4021be8c034221a84b705724a2-credits.scn

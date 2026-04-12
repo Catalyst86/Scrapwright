@@ -42,7 +42,6 @@ var wave_panel: NinePatchRect
 var phase_banner: Label
 var banner_shadow: Label
 var prep_timer_label: Label
-var material_float_container: Control
 
 var _banner_tween: Tween = null
 var _banner_cache: Dictionary = {}
@@ -261,12 +260,6 @@ void fragment() {
 	prep_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prep_timer_label.visible = false
 	add_child(prep_timer_label)
-
-	# Floating text container
-	material_float_container = Control.new()
-	material_float_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	material_float_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(material_float_container)
 
 
 # ─── Health bar update ───────────────────────────────────────

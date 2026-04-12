@@ -125,7 +125,6 @@ var _bust_next_anim_time: float = 6.0
 var _puppy_base_y: float = 224.0
 var _bust_playing_oneshot: bool = false
 var _overlay_panel: Control = null
-var _confirm_building: String = ""
 var _current_tab: String = "den_upgrades"
 var _detail_panel: Control = null
 var _category_nodes: Dictionary = {}
@@ -1801,7 +1800,6 @@ func _create_overlay(title: String, panel_w: int = 640, panel_h: int = 420) -> D
 	if _overlay_panel and is_instance_valid(_overlay_panel):
 		_overlay_panel.queue_free()
 		_overlay_panel = null
-	_confirm_building = ""
 	var dim = ColorRect.new()
 	dim.color = Color(0.0, 0.0, 0.0, 0.55)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)

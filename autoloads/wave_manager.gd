@@ -4,11 +4,8 @@ extends Node
 # WaveManager — Spawning logic, wave progression (multi-stage)
 # ============================================================
 
-signal wave_started(wave_num)  # NOTE: Currently unconnected — available for HUD/mod hooks
 signal wave_complete(wave_num)
 signal all_waves_complete
-signal enemy_spawned(enemy)  # NOTE: Currently unconnected — available for HUD/mod hooks
-signal enemies_remaining_changed(count)
 
 var current_wave: int = 0
 var enemies_alive: int = 0
@@ -128,8 +125,8 @@ func start_wave(wave_num: int) -> void:
 	spawn_queue.shuffle()
 	spawn_queue.reverse()  # So we can pop_back() in O(1) instead of pop_front()
 
-	emit_signal("wave_started", wave_num)
-	emit_signal("enemies_remaining_changed", spawn_queue.size())
+
+
 
 func _spawn_next() -> void:
 	if spawn_queue.is_empty():
@@ -141,7 +138,7 @@ func _spawn_next() -> void:
 		# Enemy type couldn't spawn (missing scene) — skip it
 		# Check if wave is complete after skipping
 		_check_wave_complete()
-	emit_signal("enemies_remaining_changed", spawn_queue.size() + enemies_alive)
+
 
 func _spawn_enemy(type: String) -> bool:
 	if not type in ENEMY_SCENES:
@@ -169,14 +166,14 @@ func _spawn_enemy(type: String) -> bool:
 	enemy.died.connect(_on_enemy_died)
 	arena_node.add_child(enemy)
 	enemies_alive += 1
-	emit_signal("enemy_spawned", enemy)
+
 	return true
 
 func _on_enemy_died(_xp_reward: int = 0) -> void:
 	enemies_alive = maxi(0, enemies_alive - 1)
 	if not is_instance_valid(arena_node):
 		return
-	emit_signal("enemies_remaining_changed", spawn_queue.size() + enemies_alive)
+
 	_check_wave_complete()
 
 func _check_wave_complete() -> void:
@@ -215,5 +212,3 @@ func start_custom_wave(wave_num: int, enemy_queue: Array, interval: float) -> vo
 	enemies_alive = 0
 	spawn_interval = interval
 	spawn_timer = 0.5
-	emit_signal("wave_started", wave_num)
-	emit_signal("enemies_remaining_changed", spawn_queue.size())

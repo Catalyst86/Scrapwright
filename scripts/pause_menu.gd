@@ -4,8 +4,6 @@ extends CanvasLayer
 # PauseMenu — In-game pause with save, options, quit
 # ============================================================
 
-signal resumed
-
 const CLR_GOLD    = Color(0.95, 0.82, 0.35)
 const CLR_DIM     = Color(0.55, 0.55, 0.55)
 const CLR_BG      = Color(0.05, 0.04, 0.08, 0.92)
@@ -41,7 +39,6 @@ func close() -> void:
 	# Clean up children
 	for child in get_children():
 		child.queue_free()
-	emit_signal("resumed")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and is_open:

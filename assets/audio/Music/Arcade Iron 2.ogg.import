@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bhlrr2wdu3fk4"
+path="res://.godot/imported/Arcade Iron 2.ogg-9c3dcda9b1481d2eeb82710147b5afad.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/Music/Arcade Iron 2.ogg"
+dest_files=["res://.godot/imported/Arcade Iron 2.ogg-9c3dcda9b1481d2eeb82710147b5afad.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

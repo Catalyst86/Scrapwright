@@ -23,7 +23,6 @@ const DEFAULT_PERM = {
 var current_profile_slot: int = -1
 var current_profile_name: String = ""
 
-signal profile_changed(slot: int, profile_name: String)
 
 func _ready() -> void:
 	_ensure_profiles_dir()
@@ -143,7 +142,6 @@ func select_profile(slot: int) -> void:
 	var ach = get_node_or_null("/root/Achievements")
 	if ach and ach.has_method("load_achievements"):
 		ach.load_achievements()
-	emit_signal("profile_changed", slot, current_profile_name)
 
 func delete_profile(slot: int) -> void:
 	if slot < 1 or slot > MAX_PROFILES:
@@ -184,6 +182,7 @@ func _migrate_save(config: ConfigFile, from_version: int, path: String) -> void:
 	config.save(path)
 
 func _reset_game_state() -> void:
+	GameState.tutorial_completed = false
 	GameState.run_in_progress = false
 	GameState.current_wave = 0
 	GameState.permanent = DEFAULT_PERM.duplicate()
@@ -210,6 +209,7 @@ func save_game() -> void:
 		push_warning("SaveManager: existing save may be corrupted, starting fresh")
 		config = ConfigFile.new()
 	config.set_value("meta", "version", SAVE_VERSION)
+	config.set_value("meta", "tutorial_completed", GameState.tutorial_completed)
 
 	# Permanent upgrades
 	var p = GameState.permanent
@@ -277,6 +277,7 @@ func save_game() -> void:
 func load_game() -> void:
 	# Reset ALL state to defaults so nothing bleeds across profiles
 	GameState.permanent = DEFAULT_PERM.duplicate()
+	GameState.tutorial_completed = false
 	GameState.run_in_progress = false
 	GameState.materials = {
 		"iron_scrap": 0, "timber": 0, "fuel": 0,
@@ -303,6 +304,8 @@ func load_game() -> void:
 	var err = config.load(path)
 	if err != OK:
 		return
+
+	GameState.tutorial_completed = config.get_value("meta", "tutorial_completed", false)
 
 	var p = GameState.permanent
 	for key in p:

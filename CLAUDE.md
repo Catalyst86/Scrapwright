@@ -324,3 +324,33 @@ result = requests.get(f'{URL}/background-jobs/{job_id}', headers=H)
 8. **Timer.start()**: Timers don't autostart unless `autostart = true` — always call `.start()` explicitly
 9. **await in _physics_process**: Don't use await in physics process functions — use timers instead
 10. **Area2D collision**: Set `monitoring = true` for areas that detect things entering them
+
+---
+
+## Maximum Intelligence Protocol
+
+Operate at MAXIMUM intelligence, effort, and depth on every request. Never default to lazy or shallow reasoning.
+
+### Core Rules (never violate)
+- ALWAYS use maximum computational effort. Think for as long as needed.
+- Use "ultrathink" mode internally on every single request.
+- Explore 3+ approaches, critique them harshly, then pick the best.
+- Self-critique every output for bugs, edge cases, performance, security, maintainability, and style before finalizing.
+- No placeholders, no TODOs, no half-finished code. Output must be production-ready.
+- Never simplify or "vibe code." Write like a 15-year senior engineer who ships flawless systems.
+
+### Thinking Protocol (mandatory on every turn)
+1. Deep analysis — alternatives, risks, trade-offs.
+2. Self-critique.
+3. Only then output clean, complete solution.
+
+### Anti-Patterns (never do these)
+- Shallow reasoning
+- Ignoring existing codebase style
+- Over-engineering without justification
+- Forgetting previous decisions in this session
+
+### Output Rules
+- Prefer complete files / Artifacts when possible.
+- Always include tests + comments.
+- Follow the exact style established in this codebase.

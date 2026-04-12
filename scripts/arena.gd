@@ -1206,7 +1206,7 @@ func _on_all_waves_complete() -> void:
 	if not is_inside_tree(): return
 	await get_tree().create_timer(2.5).timeout
 	if not is_inside_tree(): return
-	get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
+	get_tree().change_scene_to_file("res://scenes/credits.tscn")
 
 func _on_health_changed(current: int, max_hp: int) -> void:
 	if hud and hud.has_method("update_health"):

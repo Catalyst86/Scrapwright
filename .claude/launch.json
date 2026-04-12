@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "card-preview",
+      "name": "scrapwright-browser",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "3456", "--directory", "C:/Users/danie/Desktop/roguelite/.claude/preview"],
+      "runtimeArgs": ["-m", "http.server", "3456", "--directory", "C:/Users/danie/Desktop/Scrapwright Safe copy/browser"],
       "port": 3456
     }
   ]

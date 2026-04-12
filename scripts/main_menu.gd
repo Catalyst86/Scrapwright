@@ -636,11 +636,19 @@ func _execute_new_game() -> void:
 		card_db.reset()
 	GameState.start_new_run()
 	SaveManager.save_game()
+	# Route to tutorial on first ever launch, otherwise straight to hub
+	var target_scene := "res://scenes/base_hub.tscn"
+	if not GameState.tutorial_completed:
+		target_scene = "res://scenes/tutorial_arena.tscn"
 	var tw = create_tween()
 	tw.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.3).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func():
-		GameState.set_phase(GameState.Phase.BASE_HUB)
-		get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
+		if target_scene == "res://scenes/tutorial_arena.tscn":
+			# Tutorial handles its own phase management
+			pass
+		else:
+			GameState.set_phase(GameState.Phase.BASE_HUB)
+		get_tree().change_scene_to_file(target_scene)
 	)
 
 func _on_options() -> void:

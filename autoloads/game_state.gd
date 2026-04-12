@@ -8,7 +8,6 @@ signal phase_changed(new_phase)
 signal materials_changed
 signal health_changed(current, max_hp)
 signal keys_changed
-signal abilities_changed  # NOTE: Currently unconnected — HUD polls dig_charges directly
 enum Phase {
 	MAIN_MENU,
 	BASE_HUB,
@@ -114,6 +113,9 @@ var perk_chest_upgrade_chance: float = 0.0    # Lucky Find — chest tier upgrad
 var is_player_sneaking: bool = false
 var dig_charges: int = 2
 var dig_charges_max: int = 2
+
+# --- Tutorial (persists across runs, saved per profile) ---
+var tutorial_completed: bool = false
 
 # --- Death screen display (not wiped by end_run) ---
 var last_death_wave: int = 0
@@ -475,20 +477,20 @@ func reapply_permanent_bonuses() -> void:
 	# 2. Re-apply level-up perk bonuses from active_perks with diminishing returns
 	# Diminishing formula: base * 0.7^pick_index (matching level_up.gd)
 	const DIMINISH = 0.7
-	const FLOORS = {"hp_up": 1.0, "speed_up": 3.0, "damage_up": 1.0, "attack_speed": 3.0, "xp_boost": 5.0, "thick_skin": 2.0, "iron_jaws": 1.0, "quick_paws": 3.0, "scavenger_nose": 5.0, "bloodlust": 1.0, "bark_blast": 5.0, "shadow_step": 0.3, "thorns": 1.0, "lucky_find": 3.0}
+	const FLOORS = {"hp_up": 1.0, "speed_up": 3.0, "damage_up": 2.0, "attack_speed": 3.0, "xp_boost": 5.0, "thick_skin": 2.0, "iron_jaws": 1.0, "quick_paws": 3.0, "scavenger_nose": 5.0, "bloodlust": 1.0, "bark_blast": 5.0, "shadow_step": 0.3, "thorns": 3.0, "lucky_find": 3.0}
 	var perk_counts := {}  # Track how many times each perk has been applied
 	for perk_id in active_perks:
 		var pick_idx = perk_counts.get(perk_id, 0)
 		perk_counts[perk_id] = pick_idx + 1
 		match perk_id:
 			"damage_up":
-				var val = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("damage_up", 1.0)))
+				var val = int(maxf(8.0 * pow(DIMINISH, pick_idx), FLOORS.get("damage_up", 2.0)))
 				perk_damage_bonus += val
 			"speed_up":
 				var pct = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("speed_up", 3.0))
 				perk_speed_multiplier *= (1.0 + pct / 100.0)
 			"attack_speed":
-				var pct = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("attack_speed", 3.0))
+				var pct = maxf(12.0 * pow(DIMINISH, pick_idx), FLOORS.get("attack_speed", 3.0))
 				perk_attack_speed_multiplier *= (1.0 - pct / 100.0)
 			"hp_up":
 				var val = int(maxf(25.0 * pow(DIMINISH, pick_idx), FLOORS.get("hp_up", 1.0)))
@@ -513,7 +515,7 @@ func reapply_permanent_bonuses() -> void:
 			"second_wind":
 				perk_second_wind = true
 			"bloodlust":
-				var val_bl = int(maxf(2.0 * pow(DIMINISH, pick_idx), FLOORS.get("bloodlust", 1.0)))
+				var val_bl = int(maxf(3.0 * pow(DIMINISH, pick_idx), FLOORS.get("bloodlust", 1.0)))
 				perk_lifesteal += val_bl
 			"bark_blast":
 				var pct_bb = maxf(35.0 * pow(DIMINISH, pick_idx), FLOORS.get("bark_blast", 5.0))
@@ -523,7 +525,7 @@ func reapply_permanent_bonuses() -> void:
 				perk_sneak_duration_bonus += dur_ss
 				perk_sneak_cooldown_mult *= 0.8
 			"thorns":
-				var val_th = int(maxf(5.0 * pow(DIMINISH, pick_idx), FLOORS.get("thorns", 1.0)))
+				var val_th = int(maxf(12.0 * pow(DIMINISH, pick_idx), FLOORS.get("thorns", 3.0)))
 				perk_thorns_damage += val_th
 			"lucky_find":
 				var pct_lf = maxf(15.0 * pow(DIMINISH, pick_idx), FLOORS.get("lucky_find", 3.0))
@@ -635,7 +637,7 @@ func reset_dig_charges() -> void:
 		dig_lvl = permanent.get("scrapheap_level", 0)
 	dig_charges_max = 2 + dig_lvl
 	dig_charges = dig_charges_max
-	emit_signal("abilities_changed")
+
 
 func _apply_chimera_buff() -> void:
 	var udb = get_node_or_null("/root/UpgradeDB")
@@ -662,6 +664,6 @@ func _apply_chimera_buff() -> void:
 func use_dig_charge() -> bool:
 	if dig_charges > 0:
 		dig_charges -= 1
-		emit_signal("abilities_changed")
+	
 		return true
 	return false

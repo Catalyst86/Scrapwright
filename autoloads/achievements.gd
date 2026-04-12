@@ -4,7 +4,6 @@ extends Node
 # Achievements — Tracks and unlocks achievements, persists via SaveManager
 # ============================================================
 
-signal achievement_unlocked(id)
 
 const ACHIEVEMENTS = {
 	# --- Combat ---
@@ -64,7 +63,6 @@ func check_and_unlock(id: String) -> void:
 	if is_unlocked(id):
 		return
 	unlocked[id] = true
-	emit_signal("achievement_unlocked", id)
 	_show_toast(id)
 	_save()
 

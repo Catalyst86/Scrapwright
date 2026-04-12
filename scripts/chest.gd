@@ -7,7 +7,6 @@ extends Area2D
 #   Frames 0-2: idle/closed, 3-5: opening, 6-8: fully open + magic burst
 # ============================================================
 
-signal chest_opened  # NOTE: Currently unconnected — arena tracks via _chest_opened_count
 
 const TIER_COLORS = {
 	"bronze": Color(0.72, 0.45, 0.20),
@@ -386,7 +385,6 @@ func _generate_loot() -> void:
 	tw.tween_interval(3.5)
 	tw.tween_property(self, "modulate:a", 0.0, 0.5)
 	tw.tween_callback(func():
-		emit_signal("chest_opened")
 		if is_inside_tree():
 			queue_free()
 	)

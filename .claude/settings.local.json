@@ -36,7 +36,8 @@
       "Bash(grep -r \"add_scrap\\\\|junkyard_scrap\" /c/Users/danie/Desktop/roguelite --include=*.gd)",
       "Bash(grep -r \"add_material\\\\|materials\\\\[\" /c/Users/danie/Desktop/roguelite/scripts --include=*.gd)",
       "Bash(grep -r \"interact\\\\|destructible\" /c/Users/danie/Desktop/roguelite/scripts/player --include=*.gd)",
-      "Bash(grep -r \"CardDB\\\\|card_db\\\\|card_collection\" /c/Users/danie/Desktop/roguelite --include=*.gd)"
+      "Bash(grep -r \"CardDB\\\\|card_db\\\\|card_collection\" /c/Users/danie/Desktop/roguelite --include=*.gd)",
+      "Bash(pip show:*)"
     ]
   }
 }

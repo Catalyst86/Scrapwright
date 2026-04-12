@@ -5,8 +5,6 @@ extends Control
 # Perks stored in GameState so they persist between scenes
 # ============================================================
 
-signal perk_chosen(perk_id)
-
 const CLR_BG_DARK     = Color(0.08, 0.06, 0.04, 0.92)
 const CLR_PANEL_BG    = Color(0.12, 0.09, 0.06, 0.95)
 const CLR_BORDER      = Color(0.55, 0.42, 0.22, 1.0)
@@ -574,7 +572,6 @@ func _on_chosen(perk: Dictionary) -> void:
 			GameState.active_perks.append(perk.id)
 			_apply(perk.id)
 		SaveManager.save_game()
-		perk_chosen.emit(perk.id)
 	)
 
 func _apply_orbital(wid: String) -> void:
@@ -600,13 +597,13 @@ func _apply(id: String) -> void:
 			if player and "SPEED" in player:
 				player.SPEED = maxf(10.0, 90.0 * GameState.perk_speed_multiplier)
 		"damage_up":
-			var base = 5.0
-			var val = int(maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("damage_up", 1.0)))
+			var base = 8.0
+			var val = int(maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("damage_up", 2.0)))
 			GameState.perk_damage_bonus += val
 			if player and "AUTO_ATTACK_DAMAGE" in player:
 				player.AUTO_ATTACK_DAMAGE = 8 + GameState.perk_damage_bonus
 		"attack_speed":
-			var base = 15.0
+			var base = 12.0
 			var pct = maxf(base * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("attack_speed", 3.0))
 			GameState.perk_attack_speed_multiplier *= (1.0 - pct / 100.0)
 			var t = player.get_node_or_null("AttackTimer") as Timer if player else null
@@ -653,7 +650,7 @@ func _apply(id: String) -> void:
 		"second_wind":
 			GameState.perk_second_wind = true
 		"bloodlust":
-			var val_bl = int(maxf(2.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bloodlust", 1.0)))
+			var val_bl = int(maxf(3.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bloodlust", 1.0)))
 			GameState.perk_lifesteal += val_bl
 		"bark_blast":
 			var pct_bb = maxf(35.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("bark_blast", 5.0))
@@ -665,7 +662,7 @@ func _apply(id: String) -> void:
 			if player and "SNEAK_MAX_DURATION" in player:
 				player.SNEAK_MAX_DURATION = 3.0 + GameState.perk_sneak_duration_bonus
 		"thorns":
-			var val_th = int(maxf(5.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("thorns", 1.0)))
+			var val_th = int(maxf(12.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("thorns", 3.0)))
 			GameState.perk_thorns_damage += val_th
 		"lucky_find":
 			var pct_lf = maxf(15.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("lucky_find", 3.0))
