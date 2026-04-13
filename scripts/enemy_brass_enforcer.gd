@@ -9,6 +9,7 @@ func _ready() -> void:
 	damage           = 15
 	xp_value         = 30
 	contact_cooldown = 1.2
+	knockback_resistance = 0.70  # Armored — takes only 30% knockback
 	super._ready()
 
 func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:

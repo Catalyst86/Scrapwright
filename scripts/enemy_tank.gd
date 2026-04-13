@@ -9,4 +9,5 @@ func _ready() -> void:
 	damage           = 28
 	xp_value         = 30
 	contact_cooldown = 1.6
+	knockback_resistance = 0.75  # Heavy — takes only 25% knockback
 	super._ready()

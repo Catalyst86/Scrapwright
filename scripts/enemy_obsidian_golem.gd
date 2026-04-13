@@ -11,6 +11,7 @@ func _ready() -> void:
 	damage           = 40
 	xp_value         = 45
 	contact_cooldown = 1.6
+	knockback_resistance = 1.0  # Immune — made of stone, doesn't flinch
 	super._ready()
 
 func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:

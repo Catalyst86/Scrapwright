@@ -15,6 +15,7 @@ func _ready() -> void:
 	damage           = 18
 	xp_value         = 35
 	contact_cooldown = 1.5
+	knockback_resistance = 0.70  # Heavy — takes only 30% knockback
 	super._ready()
 
 func _physics_process(delta: float) -> void:

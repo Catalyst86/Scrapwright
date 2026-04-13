@@ -25,6 +25,7 @@ var is_dead: bool       = false
 var player_ref: Node    = null
 var contact_timer: float = 0.0
 var knockback: Vector2  = Vector2.ZERO
+var knockback_resistance: float = 0.0  # 0.0 = full knockback, 1.0 = immune
 var is_stunned: bool    = false
 var _stun_timer: float  = 0.0
 var _base_move_speed: float = 0.0  # Stored after scaling, used for safe speed restoration
@@ -768,7 +769,7 @@ func take_damage(amount: int, from_pos: Vector2 = Vector2.ZERO) -> void:
 		health_bar.visible = true
 		health_bar.value   = health
 	if from_pos != Vector2.ZERO:
-		knockback = (global_position - from_pos).normalized() * 140.0
+		knockback = (global_position - from_pos).normalized() * 140.0 * (1.0 - knockback_resistance)
 		# Layer 4: Hit retreat — briefly steer away after taking damage
 		_hit_retreat_timer = HIT_RETREAT_DURATION
 		_hit_retreat_dir = (global_position - from_pos).normalized()
