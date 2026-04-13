@@ -1,0 +1,97 @@
+====================================
+ITCH.IO PAGE SETUP GUIDE
+====================================
+
+TITLE: Scrapwright
+
+SHORT DESCRIPTION (for the subtitle):
+A scrappy puppy fights through 84 waves of junkyard monsters with orbital weapons, bite attacks, and sheer determination.
+
+------------------------------------
+FULL DESCRIPTION (paste into page body):
+------------------------------------
+
+# Scrapwright
+
+You are a scrappy golden puppy with a red bandana, fighting for survival across 84 waves of increasingly dangerous enemies in a junkyard underworld.
+
+## What is it?
+
+A top-down arena survivors/bullet-heaven roguelite where you:
+
+- **Bite enemies** with auto-attacks and collect **orbital weapons** that orbit around you
+- **Dodge** through danger with a flame-trail dash that damages enemies in your path
+- **Dig traps** that stun and damage enemies who walk over them
+- **Sneak** for ambush attacks that deal double damage
+- Collect **materials and keys** to open chests between waves
+- Return to your **Den** between stages to spend materials on permanent upgrades
+
+## Features
+
+- **84 waves** across 6 unique biomes (Scrapyard, Fungal Depths, Molten Core, Frozen Caverns, Clockwork Factory, The Abyss)
+- **12 boss fights** with multi-phase attack patterns
+- **12 orbital weapons** that orbit and auto-fire (lightning, fire, frost, poison, blades, and more)
+- **16 perks** with diminishing returns — every run plays differently
+- **11 wearable armors** with unique pixel art animations
+- **15 permanent upgrades** across 5 categories
+- **Card collection** system with deck completion bonuses
+- **16 achievements** to unlock
+- **Full keybinding customization**
+- **Gamepad support**
+
+## Controls
+
+| Action | Keyboard | Gamepad |
+|--------|----------|---------|
+| Move | WASD | Left Stick |
+| Dodge | Space | A |
+| Bark | E | X |
+| Dig/Salvage | F | Y |
+| Sneak | Ctrl | LB |
+| Collect | Shift | RB |
+| Pause | ESC | Start |
+
+All keybindings are rebindable from the pause menu.
+
+## Early Access
+
+This is an active development build. Feedback welcome! More armors, balance tweaks, and features are in progress.
+
+------------------------------------
+ITCH.IO PAGE SETTINGS:
+------------------------------------
+
+Classification: Game
+Kind of project: Downloadable
+Release status: In development
+Pricing: $0.00+ (pay what you want)
+Genre: Action
+Tags: Roguelite, Survivors, Bullet Hell, Pixel Art, Top-Down, Dogs, Arena, Indie
+Viewport size: 960x540
+
+Upload: ZIP file containing the .exe + .pck file
+
+------------------------------------
+EXPORT STEPS (do these in Godot):
+------------------------------------
+
+1. File > Export Project
+2. Select "Windows Desktop" preset
+3. Click "Export Project..."
+4. Save as "Scrapwright.exe" to a new empty folder
+5. Make sure "Scrapwright.pck" is also generated in the same folder
+6. ZIP both files together: Scrapwright.zip
+7. Upload that ZIP to Itch.io
+
+------------------------------------
+SCREENSHOTS TO TAKE (3-5):
+------------------------------------
+
+1. Arena combat — puppy fighting wave of enemies with orbitals firing
+2. Base Hub — the radial upgrade wheel with dog bust in center
+3. Wardrobe — showing the armor selection grid
+4. Boss fight — any mid-boss or final boss with phase effects
+5. Level-up — perk selection cards showing
+
+Take these at 1920x1080 if possible (set window size in Godot before screenshot).
+Use Windows Snipping Tool or Print Screen.

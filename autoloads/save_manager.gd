@@ -367,6 +367,9 @@ func load_game() -> void:
 	GameState.equipped_armor_stat = config.get_value("armor", "equipped_stat", "leather_vest")
 	GameState.equipped_armor_visual = config.get_value("armor", "equipped_visual", "bandana_red")
 	GameState.unlocked_armors = config.get_value("armor", "unlocked", ["bandana_red", "leather_vest"])
+	# Strip any disabled armors from the unlock list (cleanup from dev testing)
+	var disabled = ArmorDB.DISABLED_ARMORS if get_node_or_null("/root/ArmorDB") else []
+	GameState.unlocked_armors = GameState.unlocked_armors.filter(func(a): return a not in disabled)
 
 	# Card collection
 	var card_db = get_node_or_null("/root/CardDB")

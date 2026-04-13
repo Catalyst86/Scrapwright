@@ -15,6 +15,10 @@ var _overlay: ColorRect
 var _panel: PanelContainer
 var _options_visible: bool = false
 var _options_container: VBoxContainer
+var _keybinds_visible: bool = false
+var _keybinds_container: VBoxContainer
+var _listening_action: String = ""
+var _listening_btn: Button = null
 var _save_feedback: Label
 var is_open: bool = false
 
@@ -123,6 +127,15 @@ func _build_menu() -> void:
 	_options_container.visible = false
 	vbox.add_child(_options_container)
 	_build_options()
+
+	# KEYBINDINGS toggle
+	_add_button(vbox, "KEYBINDINGS", func(): _toggle_keybinds())
+
+	_keybinds_container = VBoxContainer.new()
+	_keybinds_container.add_theme_constant_override("separation", 4)
+	_keybinds_container.visible = false
+	vbox.add_child(_keybinds_container)
+	_build_keybinds()
 
 	# Separator
 	var sep2 = ColorRect.new()
@@ -584,10 +597,174 @@ func _return_to_hub() -> void:
 func _quit_to_menu() -> void:
 	get_tree().paused = false
 	is_open = false
-	# Preserve run progress — stop wave cleanly
 	WaveManager.abort_wave()
 	GameState.restore_wave_start()
 	if WaveManager.current_wave > 0 and GameState.current_wave >= WaveManager.current_wave:
 		GameState.current_wave = WaveManager.current_wave - 1
 	SaveManager.save_game()
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/main_menu.tscn")
+
+# ─── Keybinding Rebind UI ─────────────────────────────────
+
+func _toggle_keybinds() -> void:
+	_keybinds_visible = not _keybinds_visible
+	_keybinds_container.visible = _keybinds_visible
+	# Close options if keybinds opened
+	if _keybinds_visible and _options_visible:
+		_options_visible = false
+		_options_container.visible = false
+	# Cancel any active listening
+	_cancel_listening()
+
+
+func _build_keybinds() -> void:
+	var km = get_node_or_null("/root/KeybindManager")
+	if not km:
+		return
+
+	# Title
+	var title = Label.new()
+	title.text = "KEYBINDINGS"
+	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", CLR_GOLD)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_keybinds_container.add_child(title)
+
+	# Separator
+	var sep = ColorRect.new()
+	sep.color = CLR_BORDER.darkened(0.5)
+	sep.custom_minimum_size = Vector2(0, 1)
+	_keybinds_container.add_child(sep)
+
+	# One row per rebindable action
+	for action in km.REBINDABLE_ACTIONS:
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+
+		# Action label
+		var lbl = Label.new()
+		lbl.text = km.get_action_label(action)
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", Color(0.85, 0.85, 0.80))
+		lbl.custom_minimum_size = Vector2(110, 0)
+		row.add_child(lbl)
+
+		# Current key display
+		var key_lbl = Label.new()
+		key_lbl.text = "[%s]" % km.get_key_name(action)
+		key_lbl.add_theme_font_size_override("font_size", 12)
+		key_lbl.add_theme_color_override("font_color", CLR_GOLD)
+		key_lbl.custom_minimum_size = Vector2(70, 0)
+		key_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		row.add_child(key_lbl)
+
+		# Rebind button
+		var rebind_btn = Button.new()
+		rebind_btn.text = "REBIND"
+		rebind_btn.add_theme_font_size_override("font_size", 10)
+		rebind_btn.custom_minimum_size = Vector2(60, 24)
+
+		var btn_sb = StyleBoxFlat.new()
+		btn_sb.bg_color = CLR_BTN
+		btn_sb.border_color = CLR_BORDER
+		btn_sb.set_border_width_all(1)
+		btn_sb.set_corner_radius_all(3)
+		btn_sb.content_margin_left = 4
+		btn_sb.content_margin_right = 4
+		rebind_btn.add_theme_stylebox_override("normal", btn_sb)
+
+		var btn_hov = btn_sb.duplicate()
+		btn_hov.bg_color = CLR_BTN_HOV
+		rebind_btn.add_theme_stylebox_override("hover", btn_hov)
+
+		rebind_btn.pressed.connect(_start_listening.bind(action, rebind_btn, key_lbl))
+		row.add_child(rebind_btn)
+
+		_keybinds_container.add_child(row)
+
+	# Reset defaults button
+	var reset_row = HBoxContainer.new()
+	reset_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var reset_btn = Button.new()
+	reset_btn.text = "RESET DEFAULTS"
+	reset_btn.add_theme_font_size_override("font_size", 11)
+	reset_btn.add_theme_color_override("font_color", Color(0.9, 0.5, 0.3))
+	reset_btn.custom_minimum_size = Vector2(140, 28)
+
+	var reset_sb = StyleBoxFlat.new()
+	reset_sb.bg_color = CLR_BTN
+	reset_sb.border_color = Color(0.9, 0.5, 0.3, 0.5)
+	reset_sb.set_border_width_all(1)
+	reset_sb.set_corner_radius_all(3)
+	reset_btn.add_theme_stylebox_override("normal", reset_sb)
+
+	reset_btn.pressed.connect(func():
+		var _km = get_node_or_null("/root/KeybindManager")
+		if _km:
+			_km.reset_defaults()
+			_refresh_keybinds()
+	)
+	reset_row.add_child(reset_btn)
+	_keybinds_container.add_child(reset_row)
+
+
+func _start_listening(action: String, btn: Button, key_lbl: Label) -> void:
+	# Cancel any existing listen
+	_cancel_listening()
+	_listening_action = action
+	_listening_btn = btn
+	btn.text = "Press key..."
+	btn.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+	key_lbl.text = "[...]"
+	key_lbl.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+	# Store key_lbl reference on the button for later
+	btn.set_meta("key_lbl", key_lbl)
+
+
+func _cancel_listening() -> void:
+	if _listening_btn and is_instance_valid(_listening_btn):
+		_listening_btn.text = "REBIND"
+		_listening_btn.remove_theme_color_override("font_color")
+		var key_lbl = _listening_btn.get_meta("key_lbl", null)
+		if key_lbl and is_instance_valid(key_lbl):
+			key_lbl.add_theme_color_override("font_color", CLR_GOLD)
+			var km = get_node_or_null("/root/KeybindManager")
+			if km:
+				key_lbl.text = "[%s]" % km.get_key_name(_listening_action)
+	_listening_action = ""
+	_listening_btn = null
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not is_open or _listening_action == "":
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		# Don't allow ESC as a binding (it's for pause menu)
+		if event.keycode == KEY_ESCAPE:
+			_cancel_listening()
+			get_viewport().set_input_as_handled()
+			return
+		# Apply the new binding
+		var km = get_node_or_null("/root/KeybindManager")
+		if km:
+			var new_ev = InputEventKey.new()
+			new_ev.physical_keycode = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+			km.rebind_action(_listening_action, new_ev)
+		# Update the display
+		if _listening_btn and is_instance_valid(_listening_btn):
+			_listening_btn.text = "REBIND"
+			_listening_btn.remove_theme_color_override("font_color")
+			var key_lbl = _listening_btn.get_meta("key_lbl", null)
+			if key_lbl and is_instance_valid(key_lbl) and km:
+				key_lbl.text = "[%s]" % km.get_key_name(_listening_action)
+				key_lbl.add_theme_color_override("font_color", CLR_GOLD)
+		_listening_action = ""
+		_listening_btn = null
+		get_viewport().set_input_as_handled()
+
+
+func _refresh_keybinds() -> void:
+	# Rebuild the keybinds section to reflect current bindings
+	for child in _keybinds_container.get_children():
+		child.queue_free()
+	_build_keybinds()

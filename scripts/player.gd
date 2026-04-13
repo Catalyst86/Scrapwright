@@ -371,10 +371,8 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("dodge"):
 		_dodge_pressed_this_frame = true
 		get_viewport().set_input_as_handled()
-	# Shift = collect scrap (capture raw keycode since Shift is a modifier key)
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_SHIFT or event.physical_keycode == KEY_SHIFT:
-			_collect_pressed_this_frame = true
+	if event.is_action_pressed("collect"):
+		_collect_pressed_this_frame = true
 
 var _dodge_pressed_this_frame: bool = false
 var _collect_pressed_this_frame: bool = false
