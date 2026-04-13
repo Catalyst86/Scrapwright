@@ -4,7 +4,7 @@ extends Node2D
 # Arena — Main combat scene
 # ============================================================
 
-const DEBUG_ENABLED := true  # Set to true during development only
+const DEBUG_ENABLED := false  # Set to true during development only
 
 enum ArenaPhase { PREP, COMBAT, CHEST_PHASE, TRANSITION }
 
