@@ -128,7 +128,7 @@ const HUB_POOL_FILES = [
 ]
 
 const MENU_TRACK = "main_menu_song.ogg"
-const BOSS_TRACK = ""  # TODO: create boss_battle.ogg
+# Boss waves use the regular combat pool until a dedicated boss theme ships.
 const VICTORY_TRACK = "victory_theme.ogg"
 const GAME_OVER_TRACK = "game_over.ogg"
 
@@ -219,8 +219,7 @@ func _resolve_music_path(track_name: String) -> String:
 		"arena_combat":
 			return _pick_combat_track()
 		"boss_battle":
-			var p = _get_single_track(BOSS_TRACK)
-			return p if p != "" else _pick_from_pool(_build_pool(BATTLE_POOL_FILES), "combat")
+			return _pick_from_pool(_build_pool(BATTLE_POOL_FILES), "combat")
 		"victory_theme":
 			return _get_single_track(VICTORY_TRACK)
 		"game_over":

@@ -333,7 +333,8 @@ func _show_deny() -> void:
 # ═══════════════════════════════════════════════════════════════
 
 func _generate_loot() -> void:
-	if not is_inside_tree(): return
+	# Audit FP-14: guard against deferred fire after free / mid-scene-change
+	if not is_instance_valid(self) or not is_inside_tree(): return
 	var loot_summary: Array = []
 
 	var xp_rewards = {"bronze": 15, "silver": 30, "gold": 60, "secret": 100}

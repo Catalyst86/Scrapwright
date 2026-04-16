@@ -9,11 +9,16 @@ const SAVE_PATH = "user://keybinds.cfg"
 
 # Actions players can rebind (action_name -> display label)
 const REBINDABLE_ACTIONS = {
+	"ui_up": "Move Up",
+	"ui_down": "Move Down",
+	"ui_left": "Move Left",
+	"ui_right": "Move Right",
 	"dodge": "Dodge",
 	"bark": "Bark",
 	"salvage": "Dig / Salvage",
 	"sneak": "Sneak",
 	"collect": "Collect Scrap",
+	"ui_cancel": "Pause / Back",
 }
 
 # Stores project.godot defaults so we can restore them

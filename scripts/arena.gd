@@ -246,11 +246,16 @@ func _on_wave_complete(wave_num: int) -> void:
 			ach.check_and_unlock("untouchable")
 		# Reset wave damage tracker for next wave
 		ach.stats["damage_taken_this_wave"] = 0
-	if not is_inside_tree(): return
+	if not is_inside_tree():
+		_wave_complete_pending = false
+		return
 	await get_tree().create_timer(1.3).timeout
-	if not is_inside_tree(): return
+	if not is_inside_tree():
+		_wave_complete_pending = false
+		return
 
 	if wave_num >= GameState.total_waves:
+		_wave_complete_pending = false
 		return
 
 	var stage_wave = StageData.get_stage_wave(wave_num)
@@ -260,20 +265,30 @@ func _on_wave_complete(wave_num: int) -> void:
 		# Boss: 2 pairs of chests, one after the other
 		_start_chest_phase(2, true)
 		await _wait_for_chest_phase()
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
 		_start_chest_phase(2, true)
 		await _wait_for_chest_phase()
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
 		if GameState.get_key_count("secret") > 0:
 			await _spawn_secret_door()
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
 		arena_phase = ArenaPhase.TRANSITION
 		GameState.set_phase(GameState.Phase.BASE_HUB)
 		SaveManager.save_game()
 		_show_banner("RETURNING TO DEN...", Color(0.8, 0.7, 0.4), 1.5)
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
 		await get_tree().create_timer(1.5).timeout
-		if not is_inside_tree(): return
+		if not is_inside_tree():
+			_wave_complete_pending = false
+			return
 		_wave_complete_pending = false
 		get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
 	else:
@@ -1296,107 +1311,16 @@ func _make_anim_sprite(sheet_path: String, frame_count: int, fps: float, node_na
 	return spr
 
 func _restore_card_perks() -> void:
-	# Restore card deck perks (Bug Swarm / Vine Snare) if active
-	if "bug_swarm" in GameState.active_perks and not has_node("BugSwarmTimer"):
-		var p = player
-		# Animated visual
-		if p and not p.has_node("BugSwarmVFX"):
-			var sheet_path = "res://assets/sprites/effects/bug_swarm_anim_sheet.png"
-			if ResourceLoader.exists(sheet_path):
-				var spr = _make_anim_sprite(sheet_path, 9, 10.0, "BugSwarmVFX", 0.6, Color(1, 1, 1, 0.7), 5)
-				if spr: p.add_child(spr)
-			else:
-				# Static sprite with rotation animation
-				var swarm_tex = load("res://assets/sprites/effects/bug_swarm.png") if ResourceLoader.exists("res://assets/sprites/effects/bug_swarm.png") else null
-				if swarm_tex:
-					var swarm_spr = Sprite2D.new()
-					swarm_spr.name = "BugSwarmVFX"
-					swarm_spr.texture = swarm_tex
-					swarm_spr.scale = Vector2(0.6, 0.6)
-					swarm_spr.modulate = Color(1, 1, 1, 0.7)
-					swarm_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-					swarm_spr.z_index = 5
-					p.add_child(swarm_spr)
-					# Rotate continuously
-					var rot_timer = Timer.new()
-					rot_timer.name = "BugSwarmRotate"
-					rot_timer.wait_time = 0.03
-					rot_timer.autostart = true
-					rot_timer.process_mode = Node.PROCESS_MODE_INHERIT
-					rot_timer.timeout.connect(func():
-						if is_instance_valid(swarm_spr):
-							swarm_spr.rotation += 0.06
-					)
-					p.add_child(rot_timer)
-		# Damage
-		var bug_timer = Timer.new()
-		bug_timer.name = "BugSwarmTimer"
-		bug_timer.wait_time = 1.0
-		bug_timer.autostart = true
-		bug_timer.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
-		bug_timer.timeout.connect(func():
-			if not p or not is_instance_valid(p): return
-			for enemy in get_tree().get_nodes_in_group("enemies"):
-				if not is_instance_valid(enemy) or enemy.is_dead: continue
-				if p.global_position.distance_to(enemy.global_position) < 80.0:
-					if enemy.has_method("take_damage"):
-						enemy.take_damage(3, p.global_position)
-		)
-		add_child(bug_timer)
-
-	if "vine_snare" in GameState.active_perks and not has_node("VineSnareTimer"):
-		var p2 = player
-		# Animated visual
-		if p2 and not p2.has_node("VineSnareVFX"):
-			var sheet_path = "res://assets/sprites/effects/vine_snare_anim_sheet.png"
-			if ResourceLoader.exists(sheet_path):
-				var spr = _make_anim_sprite(sheet_path, 9, 8.0, "VineSnareVFX", 0.8, Color(0.6, 1.0, 0.5, 0.5), -1)
-				if spr: p2.add_child(spr)
-			else:
-				var vine_tex = load("res://assets/sprites/effects/vine_snare.png") if ResourceLoader.exists("res://assets/sprites/effects/vine_snare.png") else null
-				if vine_tex:
-					var vine_spr = Sprite2D.new()
-					vine_spr.name = "VineSnareVFX"
-					vine_spr.texture = vine_tex
-					vine_spr.scale = Vector2(0.8, 0.8)
-					vine_spr.modulate = Color(0.6, 1.0, 0.5, 0.5)
-					vine_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-					vine_spr.z_index = -1
-					p2.add_child(vine_spr)
-					# Pulse animation
-					var pulse_tw = p2.create_tween().set_loops()
-					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.9, 0.9), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.7, 0.7), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-		# Slow
-		var vine_timer = Timer.new()
-		vine_timer.name = "VineSnareTimer"
-		vine_timer.wait_time = 0.5
-		vine_timer.autostart = true
-		vine_timer.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
-		vine_timer.timeout.connect(func():
-			if not p2 or not is_instance_valid(p2): return
-			for enemy in get_tree().get_nodes_in_group("enemies"):
-				if not is_instance_valid(enemy) or enemy.is_dead: continue
-				if p2.global_position.distance_to(enemy.global_position) < 100.0:
-					if "move_speed" in enemy and "_base_move_speed" in enemy:
-						enemy.move_speed = enemy._base_move_speed * 0.6
-				else:
-					if "move_speed" in enemy and "_base_move_speed" in enemy:
-						enemy.move_speed = enemy._base_move_speed
-		)
-		add_child(vine_timer)
+	# Restore card deck perks (Bug Swarm / Vine Snare) if active (audit FP-17)
+	if "bug_swarm" in GameState.active_perks:
+		PerkEffects.install_bug_swarm(self, player)
+	if "vine_snare" in GameState.active_perks:
+		PerkEffects.install_vine_snare(self, player)
 
 func _restore_regen_perk() -> void:
-	# Perk regen: 1% max HP every 3 seconds (scales with HP pool)
+	# Perk regen: 1% max HP every 3 seconds (audit FP-17)
 	if GameState.perk_regen_active:
-		if not has_node("PerkRegenTimer"):
-			var regen_t = Timer.new()
-			regen_t.name = "PerkRegenTimer"
-			regen_t.wait_time = 3.0
-			regen_t.autostart = true
-			regen_t.process_mode = Node.PROCESS_MODE_INHERIT  # Respect pause
-			regen_t.timeout.connect(func(): GameState.heal(maxi(1, int(GameState.player_max_health * 0.01))))
-			add_child(regen_t)
+		PerkEffects.install_perk_regen(self)
 	# Health regen: new system (health_regen_level) with fallback to legacy (armory_level)
 	var regen_lvl = GameState.permanent.get("health_regen_level", 0)
 	if regen_lvl == 0:

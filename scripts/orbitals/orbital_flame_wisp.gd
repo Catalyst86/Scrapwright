@@ -44,12 +44,16 @@ func _fire(target: Node) -> void:
 	var duration = clampf(dist / 120.0, 0.1, 1.5)
 	var target_ref = weakref(target)
 
-	# Spawn trailing embers during flight
+	# Spawn trailing embers during flight — capped to prevent VFX spam (audit FP-4)
+	const EMBER_LIMIT := 10
+	var ember_count := [0]  # Wrap in array so lambda can mutate
 	var trail_timer = Timer.new()
-	trail_timer.wait_time = 0.05
+	trail_timer.wait_time = 0.08
 	trail_timer.autostart = true
 	trail_timer.timeout.connect(func():
 		if not is_instance_valid(fireball) or not is_instance_valid(arena): return
+		if ember_count[0] >= EMBER_LIMIT: return
+		ember_count[0] += 1
 		var ember = Polygon2D.new()
 		var epts: PackedVector2Array = []
 		for ei in 5:
@@ -63,7 +67,11 @@ func _fire(target: Node) -> void:
 		var tw2 = ember.create_tween()
 		tw2.tween_property(ember, "modulate:a", 0.0, 0.25)
 		tw2.parallel().tween_property(ember, "scale", Vector2(0.3, 0.3), 0.25)
-		tw2.tween_callback(ember.queue_free)
+		tw2.tween_callback(func():
+			ember_count[0] -= 1
+			if is_instance_valid(ember):
+				ember.queue_free()
+		)
 	)
 	fireball.add_child(trail_timer)
 

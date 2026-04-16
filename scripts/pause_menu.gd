@@ -368,13 +368,24 @@ func _build_controls_panel() -> void:
 	sep.custom_minimum_size = Vector2(0, 1)
 	vbox.add_child(sep)
 
+	# Audit FP-27: read live bindings so the summary reflects rebinds.
+	var km = get_node_or_null("/root/KeybindManager")
+	var move_str = "WASD"
+	if km:
+		var parts: Array[String] = []
+		for a in ["ui_up", "ui_left", "ui_down", "ui_right"]:
+			var k: String = km.get_key_name(a)
+			if k != "" and not k in parts:
+				parts.append(k)
+		if not parts.is_empty():
+			move_str = "/".join(parts)
 	var controls = [
-		["WASD", "Move", Color(0.8, 0.8, 0.8)],
-		["SPACE", "Dodge", Color(0.6, 0.9, 1.0)],
-		["CTRL", "Sneak", Color(0.7, 0.7, 0.7)],
-		["F", "Dig Trap", Color(0.85, 0.65, 0.3)],
-		["SHIFT", "Collect", Color(0.6, 0.85, 0.5)],
-		["ESC", "Pause", Color(0.9, 0.9, 0.9)],
+		[move_str, "Move", Color(0.8, 0.8, 0.8)],
+		[km.get_key_name("dodge") if km else "SPACE", "Dodge", Color(0.6, 0.9, 1.0)],
+		[km.get_key_name("sneak") if km else "CTRL", "Sneak", Color(0.7, 0.7, 0.7)],
+		[km.get_key_name("salvage") if km else "F", "Dig Trap", Color(0.85, 0.65, 0.3)],
+		[km.get_key_name("collect") if km else "SHIFT", "Collect", Color(0.6, 0.85, 0.5)],
+		[km.get_key_name("ui_cancel") if km else "ESC", "Pause", Color(0.9, 0.9, 0.9)],
 	]
 
 	for entry in controls:
@@ -480,10 +491,12 @@ func _build_options() -> void:
 	vol_slider.min_value = 0.0
 	vol_slider.max_value = 1.0
 	vol_slider.step = 0.05
-	vol_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	# Audit FP-16: look up Master bus by name (index 0 is fragile if buses get reordered)
+	var master_idx = maxi(0, AudioServer.get_bus_index("Master"))
+	vol_slider.value = db_to_linear(AudioServer.get_bus_volume_db(master_idx))
 	vol_slider.custom_minimum_size = Vector2(120, 20)
 	vol_slider.value_changed.connect(func(val):
-		AudioServer.set_bus_volume_db(0, linear_to_db(val))
+		AudioServer.set_bus_volume_db(master_idx, linear_to_db(val))
 	)
 	vol_row.add_child(vol_slider)
 

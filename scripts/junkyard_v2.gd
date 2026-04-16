@@ -130,6 +130,7 @@ func _ready() -> void:
 	GameState.health_changed.connect(_on_health_changed)
 	if player:
 		player.died.connect(_on_player_died)
+	tree_exiting.connect(_on_tree_exiting)
 
 	# Pickups container group for chest/drop systems
 	if pickups_container and not pickups_container.is_in_group("pickups_container"):
@@ -980,6 +981,16 @@ func _start_next_wave() -> void:
 
 	WaveManager.start_custom_wave(wave_num, wave_data.enemies, wave_data.spawn_interval)
 	_update_hud()
+
+func _on_tree_exiting() -> void:
+	# Audit FP-15: match the signal connects in _ready() with explicit disconnects so
+	# a reset-in-place (without full scene reload) doesn't double-fire handlers.
+	if WaveManager and WaveManager.wave_complete.is_connected(_on_wave_complete):
+		WaveManager.wave_complete.disconnect(_on_wave_complete)
+	if GameState and GameState.health_changed.is_connected(_on_health_changed):
+		GameState.health_changed.disconnect(_on_health_changed)
+	if player and is_instance_valid(player) and player.died.is_connected(_on_player_died):
+		player.died.disconnect(_on_player_died)
 
 func _on_wave_complete(wave_num: int) -> void:
 	if phase == JYPhase.GAME_OVER:

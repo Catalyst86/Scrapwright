@@ -31,7 +31,7 @@ const ACHIEVEMENTS = {
 	"home_improvement": {"name": "Home Improvement", "desc": "Upgrade any building", "category": "Base Building", "icon_color": Color(0.9, 0.6, 0.2), "stat": "buildings_upgraded", "target": 1},
 	"master_builder": {"name": "Master Builder", "desc": "Max out any building (level 3)", "category": "Base Building", "icon_color": Color(0.95, 0.75, 0.2), "stat": "", "target": 0},
 	"fully_upgraded": {"name": "Fully Upgraded", "desc": "Max out ALL buildings", "category": "Base Building", "icon_color": Color(1.0, 0.85, 0.3), "stat": "", "target": 0},
-	"first_craft": {"name": "First Craft", "desc": "Craft your first item", "category": "Base Building", "icon_color": Color(0.7, 0.5, 0.3), "stat": "items_crafted", "target": 1},
+	"first_craft": {"name": "First Craft", "desc": "Spend your first materials on an upgrade", "category": "Base Building", "icon_color": Color(0.7, 0.5, 0.3), "stat": "items_crafted", "target": 1},
 
 	# --- Misc ---
 	"puppy_power": {"name": "Puppy Power", "desc": "Reach player level 10 in a single run", "category": "Misc", "icon_color": Color(0.9, 0.6, 0.8), "stat": "", "target": 0},

@@ -223,9 +223,9 @@ const ALL_STAGE_WAVES = [STAGE_1_WAVES, STAGE_2_WAVES, STAGE_3_WAVES, STAGE_4_WA
 # ─── Arena Themes ───────────────────────────────────────────
 
 const THEMES = [
-	# Stage 1: Steampunk Caverns
+	# Stage 1: The Scrapyard (audit FP-30: match STAGE_NAMES)
 	{
-		"name": "Steampunk Caverns",
+		"name": "The Scrapyard",
 		"floor_base": Color(0.18, 0.14, 0.10),
 		"floor_alt": Color(0.20, 0.16, 0.12),
 		"wall_base": Color(0.12, 0.09, 0.06),

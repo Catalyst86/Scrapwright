@@ -159,7 +159,6 @@ const CARD_PERKS = [
 	{"id":"vine_snare",  "name":"Vine Snare",  "desc":"Roots sprout around you, slowing nearby enemies by 40%", "deck":"Overgrowth", "icon":"res://assets/sprites/ui/icon_vine_snare.png"},
 ]
 
-var regen_timer: Timer = null
 var _choice_box: HBoxContainer
 var _title_label: Label
 var _time: float = 0.0
@@ -611,24 +610,11 @@ func _apply(id: String) -> void:
 				t.wait_time = maxf(0.18, 0.6 * GameState.perk_attack_speed_multiplier)
 		"regen":
 			GameState.perk_regen_active = true
-			# Create regen timer on the arena (not on LevelUp node) to avoid duplication
-			if not is_instance_valid(regen_timer):
-				var arena = get_tree().current_scene
-				if arena:
-					# Check if arena already has a perk regen timer
-					var has_regen = false
-					for child in arena.get_children():
-						if child is Timer and child.name == "PerkRegenTimer":
-							has_regen = true
-							break
-					if not has_regen:
-						regen_timer = Timer.new()
-						regen_timer.name = "PerkRegenTimer"
-						regen_timer.wait_time = 5.0
-						regen_timer.autostart = true
-						regen_timer.process_mode = Node.PROCESS_MODE_INHERIT
-						regen_timer.timeout.connect(func(): GameState.heal(2))
-						arena.add_child(regen_timer)
+			# Audit FP-17: delegate install to shared helper so arena + level-up
+			# share one perk-regen install path (3s, 1% HP).
+			var regen_arena = get_tree().current_scene
+			if regen_arena:
+				PerkEffects.install_perk_regen(regen_arena)
 		"xp_boost":
 			var base_xp = 25.0
 			var pct_xp = maxf(base_xp * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("xp_boost", 5.0))
@@ -668,84 +654,15 @@ func _apply(id: String) -> void:
 			var pct_lf = maxf(15.0 * pow(DIMINISH_FACTOR, picks_before), DIMINISH_FLOORS.get("lucky_find", 3.0))
 			GameState.perk_chest_upgrade_chance += pct_lf / 100.0
 		"bug_swarm":
-			# Critter deck bonus: summon bugs that deal 3 damage/sec to nearby enemies
-			var arena = get_tree().current_scene
-			if arena and not arena.has_node("BugSwarmTimer"):
-				# Visual: rotating bug swarm sprite on player
-				var swarm_tex = load("res://assets/sprites/effects/bug_swarm.png") if ResourceLoader.exists("res://assets/sprites/effects/bug_swarm.png") else null
-				if swarm_tex and player:
-					var swarm_spr = Sprite2D.new()
-					swarm_spr.name = "BugSwarmVFX"
-					swarm_spr.texture = swarm_tex
-					swarm_spr.scale = Vector2(0.6, 0.6)
-					swarm_spr.modulate = Color(1, 1, 1, 0.7)
-					swarm_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-					swarm_spr.z_index = 5
-					player.add_child(swarm_spr)
-					# Rotate the swarm continuously
-					var rot_timer = Timer.new()
-					rot_timer.name = "BugSwarmRotate"
-					rot_timer.wait_time = 0.03
-					rot_timer.autostart = true
-					rot_timer.process_mode = Node.PROCESS_MODE_INHERIT
-					rot_timer.timeout.connect(func():
-						if is_instance_valid(swarm_spr):
-							swarm_spr.rotation += 0.06
-					)
-					player.add_child(rot_timer)
-				# Damage timer
-				var bug_timer = Timer.new()
-				bug_timer.name = "BugSwarmTimer"
-				bug_timer.wait_time = 1.0
-				bug_timer.autostart = true
-				bug_timer.process_mode = Node.PROCESS_MODE_INHERIT
-				bug_timer.timeout.connect(func():
-					if not player or not is_instance_valid(player): return
-					for enemy in get_tree().get_nodes_in_group("enemies"):
-						if not is_instance_valid(enemy) or enemy.is_dead: continue
-						if player.global_position.distance_to(enemy.global_position) < 80.0:
-							if enemy.has_method("take_damage"):
-								enemy.take_damage(3, player.global_position)
-				)
-				arena.add_child(bug_timer)
+			# Critter deck bonus (audit FP-17): shared installer
+			var bs_arena = get_tree().current_scene
+			if bs_arena:
+				PerkEffects.install_bug_swarm(bs_arena, player)
 		"vine_snare":
-			# Overgrowth deck bonus: slow nearby enemies by 40%
-			var arena2 = get_tree().current_scene
-			if arena2 and not arena2.has_node("VineSnareTimer"):
-				# Visual: vine snare sprite on player feet
-				var vine_tex = load("res://assets/sprites/effects/vine_snare.png") if ResourceLoader.exists("res://assets/sprites/effects/vine_snare.png") else null
-				if vine_tex and player:
-					var vine_spr = Sprite2D.new()
-					vine_spr.name = "VineSnareVFX"
-					vine_spr.texture = vine_tex
-					vine_spr.scale = Vector2(0.8, 0.8)
-					vine_spr.modulate = Color(0.6, 1.0, 0.5, 0.5)
-					vine_spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-					vine_spr.z_index = -1
-					player.add_child(vine_spr)
-					# Pulse the vines
-					var pulse_tw = player.create_tween().set_loops()
-					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.9, 0.9), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-					pulse_tw.tween_property(vine_spr, "scale", Vector2(0.7, 0.7), 0.8).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-				# Slow timer
-				var vine_timer = Timer.new()
-				vine_timer.name = "VineSnareTimer"
-				vine_timer.wait_time = 0.5
-				vine_timer.autostart = true
-				vine_timer.process_mode = Node.PROCESS_MODE_INHERIT
-				vine_timer.timeout.connect(func():
-					if not player or not is_instance_valid(player): return
-					for enemy in get_tree().get_nodes_in_group("enemies"):
-						if not is_instance_valid(enemy) or enemy.is_dead: continue
-						if player.global_position.distance_to(enemy.global_position) < 100.0:
-							if "move_speed" in enemy and "_base_move_speed" in enemy:
-								enemy.move_speed = enemy._base_move_speed * 0.6
-						else:
-							if "move_speed" in enemy and "_base_move_speed" in enemy:
-								enemy.move_speed = enemy._base_move_speed
-				)
-				arena2.add_child(vine_timer)
-
+			# Overgrowth deck bonus (audit FP-17): shared installer
+			var vs_arena = get_tree().current_scene
+			if vs_arena:
+				PerkEffects.install_vine_snare(vs_arena, player)
 
 func _add_panel_borders(offset: Vector2, sz: Vector2) -> void:
 	for data in [

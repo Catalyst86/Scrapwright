@@ -514,6 +514,9 @@ func _switch_tab(tab_id: String) -> void:
 	for tid in _tab_containers:
 		if _tab_containers[tid] and is_instance_valid(_tab_containers[tid]):
 			_tab_containers[tid].visible = (tid == tab_id)
+	# Audit FP-9: give gamepad users a starting focus on the radial wheel
+	if tab_id == "den_upgrades" and _left_card and is_instance_valid(_left_card):
+		_left_card.call_deferred("grab_focus")
 	# Bottom buttons always visible in new radial layout
 	for tid in _tab_buttons:
 		var btn: Button = _tab_buttons[tid]
@@ -870,11 +873,12 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 	prog_lbl.add_theme_constant_override("outline_size", 2)
 	vbox.add_child(prog_lbl)
 
-	# Hover — scale from center, render on top
+	# Hover / focus — scale from center, render on top (audit FP-9: gamepad parity)
 	var p = slot
 	var asp = anim_sprite
 	slot.pivot_offset = slot.size / 2.0
-	slot.mouse_entered.connect(func():
+	slot.focus_mode = Control.FOCUS_ALL
+	var on_activate = func():
 		p.pivot_offset = p.size / 2.0
 		p.z_index = 25
 		var tw = p.create_tween()
@@ -882,18 +886,24 @@ func _populate_card_slot(slot: PanelContainer, cat_id: String) -> void:
 		if asp and is_instance_valid(asp):
 			asp.play("hover")
 		AudioManager.play("button_hover")
-	)
-	slot.mouse_exited.connect(func():
+	var on_deactivate = func():
 		var tw = p.create_tween()
 		tw.tween_property(p, "scale", Vector2(1.0, 1.0), 0.08).set_ease(Tween.EASE_IN)
 		tw.finished.connect(func(): p.z_index = 20)
 		if asp and is_instance_valid(asp):
 			asp.play("idle")
-	)
-	# Click
+	slot.mouse_entered.connect(on_activate)
+	slot.focus_entered.connect(on_activate)
+	slot.mouse_exited.connect(on_deactivate)
+	slot.focus_exited.connect(on_deactivate)
+	# Click / keyboard-enter / gamepad-A
 	var cid = cat_id
 	slot.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_show_detail_panel(cid)
+		elif event is InputEventKey and event.pressed and event.keycode in [KEY_ENTER, KEY_SPACE, KEY_KP_ENTER]:
+			_show_detail_panel(cid)
+		elif event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A:
 			_show_detail_panel(cid)
 	)
 
@@ -914,10 +924,39 @@ func _refresh_category_nodes() -> void:
 			slot.mouse_entered.disconnect(conn.callable)
 		for conn in slot.mouse_exited.get_connections():
 			slot.mouse_exited.disconnect(conn.callable)
+		for conn in slot.focus_entered.get_connections():
+			slot.focus_entered.disconnect(conn.callable)
+		for conn in slot.focus_exited.get_connections():
+			slot.focus_exited.disconnect(conn.callable)
 		for conn in slot.gui_input.get_connections():
 			slot.gui_input.disconnect(conn.callable)
 		_populate_card_slot(slot, cat_id)
 		_category_nodes[cat_id] = slot
+	_wire_slot_focus_neighbors()
+
+func _wire_slot_focus_neighbors() -> void:
+	# Gamepad-friendly focus traversal (audit FP-9)
+	# Layout: _left_card (left) ↔ _right_card (right)
+	#         _bottom_card1/2/3 in a row along the bottom
+	var L = _left_card
+	var R = _right_card
+	var B1 = _bottom_card1
+	var B2 = _bottom_card2
+	var B3 = _bottom_card3
+	var valid := func(n): return n and is_instance_valid(n)
+	var link := func(from: Control, dir: String, to: Control):
+		if not valid.call(from) or not valid.call(to):
+			return
+		match dir:
+			"left":  from.focus_neighbor_left  = from.get_path_to(to)
+			"right": from.focus_neighbor_right = from.get_path_to(to)
+			"top":   from.focus_neighbor_top   = from.get_path_to(to)
+			"bottom":from.focus_neighbor_bottom= from.get_path_to(to)
+	link.call(L, "right", R); link.call(L, "bottom", B1)
+	link.call(R, "left", L); link.call(R, "bottom", B3)
+	link.call(B1, "right", B2); link.call(B1, "top", L)
+	link.call(B2, "left", B1); link.call(B2, "right", B3); link.call(B2, "top", L)
+	link.call(B3, "left", B2); link.call(B3, "top", R)
 
 # ===================================================================
 # DETAIL PANEL
@@ -1151,6 +1190,8 @@ func _create_upgrade_card(upgrade_id: String, accent: Color, cat_id: String) -> 
 			btn.disabled = true
 			if _udb.purchase_upgrade(uid):
 				Achievements.increment_stat("buildings_upgraded")
+				# Audit FP-18: first upgrade purchase also counts as "crafting"
+				Achievements.increment_stat("items_crafted")
 				Achievements.check_building_achievements()
 				_refresh_top_bar()
 				_refresh_category_nodes()

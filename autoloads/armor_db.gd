@@ -127,6 +127,10 @@ func _define_armors() -> void:
 			"unlock_method": "chest",
 		},
 		# --- Additional Stat Gear ---
+		# (Audit FP-32) The following armors are in DISABLED_ARMORS and filtered
+		# out by get_all_armors(). Kept in the list because boss drop tables
+		# (enemy_base.gd:1108) and player sprite scale config (player.gd:89-101)
+		# still reference their ids. Treat as "quarantined but intact".
 		{
 			"id": "rusty_plate",
 			"name": "Rusty Plate",

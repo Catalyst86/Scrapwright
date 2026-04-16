@@ -366,10 +366,12 @@ func _build_options_panel() -> void:
 	vol_slider.min_value = 0.0
 	vol_slider.max_value = 1.0
 	vol_slider.step = 0.05
-	vol_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	# Audit FP-16: look up Master bus by name
+	var master_idx = maxi(0, AudioServer.get_bus_index("Master"))
+	vol_slider.value = db_to_linear(AudioServer.get_bus_volume_db(master_idx))
 	vol_slider.custom_minimum_size = Vector2(120, 20)
 	vol_slider.value_changed.connect(func(val):
-		AudioServer.set_bus_volume_db(0, linear_to_db(val))
+		AudioServer.set_bus_volume_db(master_idx, linear_to_db(val))
 	)
 	vol_hbox.add_child(vol_slider)
 
@@ -948,41 +950,57 @@ func _show_create_popup(slot: int) -> void:
 	input.call_deferred("grab_focus")
 
 func _confirm_delete_profile(slot: int, profile_name: String) -> void:
+	# Audit FP-12: modal dialog that requires typing the profile name to enable delete.
 	var popup = Control.new()
 	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
 	popup.z_index = 20
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP  # Eat clicks on background
 	_profile_layer.add_child(popup)
 
 	var bg = ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.6)
+	bg.color = Color(0, 0, 0, 0.7)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	popup.add_child(bg)
 
 	var panel = PanelContainer.new()
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.06, 0.06, 0.95)
+	style.bg_color = Color(0.12, 0.06, 0.06, 0.98)
 	style.border_color = CLR_RED
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(16)
 	panel.add_theme_stylebox_override("panel", style)
 	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -130
-	panel.offset_right = 130
-	panel.offset_top = -50
-	panel.offset_bottom = 50
+	panel.offset_left = -170
+	panel.offset_right = 170
+	panel.offset_top = -90
+	panel.offset_bottom = 90
 	popup.add_child(panel)
 
 	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", 8)
 	panel.add_child(vbox)
 
 	var warn = Label.new()
-	warn.text = "Delete '%s'?\nAll progress will be lost!" % profile_name
+	warn.text = "Delete '%s'?\nAll progress will be lost." % profile_name
 	warn.add_theme_font_size_override("font_size", 13)
 	warn.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3))
 	warn.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(warn)
+
+	var hint = Label.new()
+	hint.text = "Type the profile name to confirm:"
+	hint.add_theme_font_size_override("font_size", 11)
+	hint.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
+
+	var confirm_input = LineEdit.new()
+	confirm_input.placeholder_text = profile_name
+	confirm_input.custom_minimum_size = Vector2(220, 26)
+	confirm_input.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(confirm_input)
 
 	var btn_row = HBoxContainer.new()
 	btn_row.add_theme_constant_override("separation", 16)
@@ -993,20 +1011,28 @@ func _confirm_delete_profile(slot: int, profile_name: String) -> void:
 	yes_btn.text = "DELETE"
 	yes_btn.add_theme_font_size_override("font_size", 13)
 	yes_btn.add_theme_color_override("font_color", CLR_RED)
-	yes_btn.custom_minimum_size = Vector2(80, 26)
+	yes_btn.custom_minimum_size = Vector2(90, 28)
+	yes_btn.disabled = true
 	yes_btn.pressed.connect(func():
-		SaveManager.delete_profile(slot)
-		popup.queue_free()
-		_refresh_profile_cards()
+		if confirm_input.text == profile_name:
+			SaveManager.delete_profile(slot)
+			popup.queue_free()
+			_refresh_profile_cards()
 	)
 	btn_row.add_child(yes_btn)
 
 	var no_btn = Button.new()
 	no_btn.text = "CANCEL"
 	no_btn.add_theme_font_size_override("font_size", 13)
-	no_btn.custom_minimum_size = Vector2(80, 26)
+	no_btn.custom_minimum_size = Vector2(90, 28)
 	no_btn.pressed.connect(func(): popup.queue_free())
 	btn_row.add_child(no_btn)
+
+	# Enable the DELETE button only when the typed text matches exactly.
+	confirm_input.text_changed.connect(func(t: String):
+		yes_btn.disabled = (t != profile_name)
+	)
+	confirm_input.call_deferred("grab_focus")
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and _options_panel and _options_panel.visible:

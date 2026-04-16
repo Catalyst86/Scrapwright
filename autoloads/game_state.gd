@@ -4,7 +4,6 @@ extends Node
 # GameState — Central run data, phase management
 # ============================================================
 
-signal phase_changed(new_phase)
 signal materials_changed
 signal health_changed(current, max_hp)
 signal keys_changed
@@ -207,7 +206,6 @@ var unlocked_armors: Array = ["bandana_red", "bandana_blue", "leather_vest", "fl
 
 func set_phase(new_phase: Phase) -> void:
 	current_phase = new_phase
-	emit_signal("phase_changed", new_phase)
 
 func add_material(type: String, amount: int) -> void:
 	if type in materials:
@@ -246,7 +244,7 @@ func take_damage(amount: int) -> void:
 		if ow.get("id", "") == "shield_drone":
 			dr_pct += 5
 			break
-	dr_pct = mini(dr_pct, 75)  # Hard cap at 75% to prevent near-immunity
+	dr_pct = mini(dr_pct, 70)  # Hard cap at 70% to prevent near-immunity (audit FP-3)
 	var reduced = amount
 	if dr_pct > 0:
 		reduced = maxi(1, int(amount * (1.0 - dr_pct / 100.0)))

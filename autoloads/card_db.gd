@@ -8,6 +8,19 @@ var collected: Dictionary = {}
 
 func _ready() -> void:
 	_define_cards()
+	_verify_card_assets()
+
+# Audit FP-31: one-time sanity check that every card's PNG actually exists.
+# A missing asset renders as Godot's magenta-checker at runtime, which is hard
+# to trace. Log a warning at boot so missing art is caught during QA.
+func _verify_card_assets() -> void:
+	var missing: Array[String] = []
+	for card in cards:
+		var path: String = card.get("texture_path", "")
+		if path != "" and not ResourceLoader.exists(path):
+			missing.append(path)
+	if not missing.is_empty():
+		push_warning("[CardDB] %d card asset(s) missing:\n  %s" % [missing.size(), "\n  ".join(missing)])
 
 func _define_cards() -> void:
 	var decks = {

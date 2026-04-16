@@ -194,8 +194,13 @@ func _show_lightning(from: Vector2, to: Vector2, color: Color, width: float = 2.
 	var direction = (to - from).normalized()
 	var perp = Vector2(-direction.y, direction.x)
 
-	# Main jagged bolt
-	var bolt = Line2D.new()
+	# Audit FP-6: reuse Line2D nodes from the VFX pool instead of allocating per shot.
+	# NOTE: use runtime lookup rather than identifier reference — class_name scripts
+	# are parsed before autoloads are resolved in the global scope.
+	var pool = get_node_or_null("/root/VFXPool")
+
+	var bolt: Line2D = pool.acquire_line2d(arena) if pool else Line2D.new()
+	if not pool: arena.add_child(bolt)
 	bolt.width = width
 	bolt.default_color = color
 	bolt.z_index = 10
@@ -205,20 +210,18 @@ func _show_lightning(from: Vector2, to: Vector2, color: Color, width: float = 2.
 		var jitter = perp * randf_range(-6.0, 6.0) * (1.0 - abs(t - 0.5) * 2.0)
 		bolt.add_point(from.lerp(to, t) + jitter)
 	bolt.add_point(to)
-	arena.add_child(bolt)
 
-	# Bright white core
-	var core = Line2D.new()
+	var core: Line2D = pool.acquire_line2d(arena) if pool else Line2D.new()
+	if not pool: arena.add_child(core)
 	core.width = maxf(width * 0.4, 1.0)
 	core.default_color = Color(1.0, 1.0, 1.0, 0.9)
 	core.z_index = 11
 	for i in bolt.get_point_count():
 		core.add_point(bolt.get_point_position(i))
-	arena.add_child(core)
 
-	# Branch fork
 	if segments > 4 and randf() < 0.6:
-		var fork = Line2D.new()
+		var fork: Line2D = pool.acquire_line2d(arena) if pool else Line2D.new()
+		if not pool: arena.add_child(fork)
 		fork.width = maxf(width * 0.5, 1.0)
 		fork.default_color = color * Color(1, 1, 1, 0.6)
 		fork.z_index = 10
@@ -226,17 +229,19 @@ func _show_lightning(from: Vector2, to: Vector2, color: Color, width: float = 2.
 		var fp = bolt.get_point_position(fi)
 		fork.add_point(fp)
 		fork.add_point(fp + perp * randf_range(-15, 15) + direction * randf_range(5, 15))
-		arena.add_child(fork)
-		var twf = fork.create_tween()
-		twf.tween_property(fork, "modulate:a", 0.0, 0.15)
-		twf.tween_callback(fork.queue_free)
+		_retire_line(fork, 0.15, pool)
 
-	var tw1 = bolt.create_tween()
-	tw1.tween_property(bolt, "modulate:a", 0.0, 0.15)
-	tw1.tween_callback(bolt.queue_free)
-	var tw2 = core.create_tween()
-	tw2.tween_property(core, "modulate:a", 0.0, 0.1)
-	tw2.tween_callback(core.queue_free)
+	_retire_line(bolt, 0.15, pool)
+	_retire_line(core, 0.1, pool)
+
+# Release or free a Line2D, preferring the pool when available. (Audit FP-6)
+func _retire_line(node: Line2D, fade: float, pool) -> void:
+	if pool and pool.has_method("release_line2d"):
+		pool.release_line2d(node, fade)
+		return
+	var tw = node.create_tween()
+	tw.tween_property(node, "modulate:a", 0.0, fade)
+	tw.tween_callback(node.queue_free)
 
 func _show_ice_spike(from: Vector2, to: Vector2) -> void:
 	var arena = _get_arena()
@@ -246,8 +251,12 @@ func _show_ice_spike(from: Vector2, to: Vector2) -> void:
 	var dist = from.distance_to(to)
 	var segs = clampi(int(dist / 10.0), 3, 10)
 
-	# Sharp angular ice beam
-	var beam = Line2D.new()
+	# Audit FP-6: pool Line2D nodes. Reduced shard count (3 -> 2) and
+	# frost-particle count (5 -> 3) to trim late-game VFX load.
+	var pool = get_node_or_null("/root/VFXPool")
+
+	var beam: Line2D = pool.acquire_line2d(arena) if pool else Line2D.new()
+	if not pool: arena.add_child(beam)
 	beam.width = 3.0
 	beam.default_color = Color(0.4, 0.8, 1.0)
 	beam.z_index = 10
@@ -256,26 +265,21 @@ func _show_ice_spike(from: Vector2, to: Vector2) -> void:
 		var t = float(i) / segs
 		beam.add_point(from.lerp(to, t) + perp * (4.0 if i % 2 == 0 else -4.0))
 	beam.add_point(to)
-	arena.add_child(beam)
 
-	# Crystal shards
-	for i in range(3):
+	for i in range(2):
 		var t = randf_range(0.2, 0.8)
 		var sp = from.lerp(to, t)
-		var shard = Line2D.new()
+		var shard: Line2D = pool.acquire_line2d(arena) if pool else Line2D.new()
+		if not pool: arena.add_child(shard)
 		shard.width = 2.0
 		shard.default_color = Color(0.7, 0.95, 1.0, 0.8)
 		shard.z_index = 11
 		var sd = perp * (8.0 if randf() > 0.5 else -8.0)
 		shard.add_point(sp - sd * 0.3)
 		shard.add_point(sp + sd)
-		arena.add_child(shard)
-		var tws = shard.create_tween()
-		tws.tween_property(shard, "modulate:a", 0.0, 0.3)
-		tws.tween_callback(shard.queue_free)
+		_retire_line(shard, 0.3, pool)
 
-	# Frost particles at impact
-	for i in range(5):
+	for i in range(3):
 		var p = _make_circle(1.5, Color(0.6, 0.9, 1.0, 0.7))
 		p.position = to + Vector2(randf_range(-6, 6), randf_range(-6, 6))
 		p.z_index = 11
@@ -285,9 +289,7 @@ func _show_ice_spike(from: Vector2, to: Vector2) -> void:
 		twp.parallel().tween_property(p, "modulate:a", 0.0, 0.3)
 		twp.tween_callback(p.queue_free)
 
-	var tw = beam.create_tween()
-	tw.tween_property(beam, "modulate:a", 0.0, 0.25)
-	tw.tween_callback(beam.queue_free)
+	_retire_line(beam, 0.25, pool)
 
 func _show_poison_cloud(pos: Vector2, radius: float = 12.0) -> void:
 	var arena = _get_arena()

@@ -166,6 +166,9 @@ func _spawn_enemy(type: String) -> bool:
 	enemy.died.connect(_on_enemy_died)
 	arena_node.add_child(enemy)
 	enemies_alive += 1
+	# Populate cache immediately so enemies see each other on their first physics
+	# tick instead of after the next CACHE_REFRESH_INTERVAL (audit FP-7)
+	_cached_enemies.append(enemy)
 
 	return true
 

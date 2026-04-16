@@ -313,10 +313,14 @@ func load_game() -> void:
 
 	GameState.tutorial_completed = config.get_value("meta", "tutorial_completed", false)
 
+	# Audit FP-23: permanent[*] values are integer levels. Cast defensively so a
+	# hand-edited or corrupted save cannot poison the dict with a wrong type.
 	var p = GameState.permanent
 	for key in p:
 		if config.has_section_key("permanent", key):
-			p[key] = config.get_value("permanent", key)
+			var raw = config.get_value("permanent", key)
+			if typeof(raw) in [TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING]:
+				p[key] = int(raw)
 
 	# Materials are ALWAYS loaded (stockpile persists between runs)
 	for mat in GameState.materials:
@@ -382,10 +386,14 @@ func reload_permanent() -> void:
 	var config = ConfigFile.new()
 	if config.load(get_save_path()) != OK:
 		return
+	# Audit FP-23: permanent[*] values are integer levels. Cast defensively so a
+	# hand-edited or corrupted save cannot poison the dict with a wrong type.
 	var p = GameState.permanent
 	for key in p:
 		if config.has_section_key("permanent", key):
-			p[key] = config.get_value("permanent", key)
+			var raw = config.get_value("permanent", key)
+			if typeof(raw) in [TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STRING]:
+				p[key] = int(raw)
 
 func delete_save() -> void:
 	var path = get_save_path()

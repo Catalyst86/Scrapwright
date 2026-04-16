@@ -26,11 +26,12 @@ WaveManager="*res://autoloads/wave_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 Achievements="*res://autoloads/achievements.gd"
 ArmorDB="*res://autoloads/armor_db.gd"
-JunkyardState="*res://scripts/junkyard_state.gd"
+JunkyardState="*res://autoloads/junkyard_state.gd"
 CardDB="*res://autoloads/card_db.gd"
 AudioManager="*res://autoloads/audio_manager.gd"
 KeybindManager="*res://autoloads/keybind_manager.gd"
 UpgradeDB="*res://autoloads/upgrade_db.gd"
+VFXPool="*res://autoloads/vfx_pool.gd"
 
 [display]
 
