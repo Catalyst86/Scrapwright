@@ -29,7 +29,7 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
 | C1 | Rebinding any key kills Esc + arrow keys after restart | CRIT | [RT] |
 | C2 | Hub → Quit to Menu rolls the save back (purchases undone, boss replay) | CRIT | [RT] |
 | C3 | …and writes one profile's progress into another profile | CRIT | [RT] |
-| C4 | Entering the Junkyard writes an empty stockpile + no run to disk | CRIT | [RT] |
+| C4 | Junkyard: entering writes an empty stockpile to disk; leaving via pause rewinds the run | CRIT | [RT] |
 | C5 | Esc after dying (or dying right after wave clear) freezes Game Over | CRIT | [RT] |
 | C6 | 2+ queued level-ups → invisible popup, game frozen | CRIT | [RT] |
 | C7 | Controllers can't move/pause/confirm — but the store page promises gamepad support | CRIT | [RT] |
@@ -38,7 +38,7 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
 | H3 | You take damage while paused (37 timers ignore pause) | HIGH | [RT] |
 | H4 | Hub return deletes the Chimera buff and chest max-HP; heal depends on armor | HIGH | [RT] |
 | H5 | Perk picks lost/buried around wave clears and boss chests | HIGH | [RT] |
-| H6 | Stage boss's "guaranteed" secret key usually doesn't drop | HIGH | [CODE] |
+| H6 | Stage boss's "guaranteed" secret key usually doesn't drop; keys are never auto-collected | HIGH | [RT] |
 | H7 | Lava Lobber puddles never expire (invisible stacking damage) | HIGH | [ENG] |
 | H8 | Boss "arena center" is the player's position | HIGH | [CODE] |
 | H9 | Spore rings hit every frame; blizzard steals movement 10 s; prison unescapable | HIGH | [CODE] |
@@ -120,9 +120,19 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
   - Your real stockpile and in-progress run exist **only in RAM** (`JunkyardState._snapshot`).
   - A crash, Alt-F4, or QUIT TO DESKTOP from the Junkyard loses both.
 - **Proof:** mid-run with 60 of each material, click Junkyard. Disk immediately shows **0 materials, `run_in_progress=false`**, while the snapshot in RAM still holds the 60s.
+  - The sandbox state is saved again on every Junkyard wave clear (`junkyard_v2.gd:999`) and every perk pick (`level_up.gd:573`).
+  - The systems reviewer reproduced the full loss on Godot 4.6.1: materials 200/150/40/60/90/12 and a wave-21 run → Quit to Desktop from the Junkyard → relaunch → **3/0/0/0/0/0, no run**.
+- **Leaving via the pause menu is worse** [RT, reviewer]:
+  - RETURN TO HUB (`pause_menu.gd:599-606`) calls `exit_junkyard()`, then `restore_wave_start()`. It then sets `current_wave = WaveManager.current_wave - 1`, but `WaveManager.current_wave` holds the *Junkyard* wave. A wave-21 main run became **wave 2**.
+  - With a stale snapshot, the same path also reverts hub purchases (C2), and then it saves.
+  - QUIT TO MENU never calls `exit_junkyard()`. `JunkyardState.is_active` stays true for the rest of the session. After that:
+    - main-arena deaths skip the material penalty (`game_state.gd:580-581`);
+    - arena props drop cards;
+    - kills count toward Junkyard stats.
 - **Fix:**
   - While `JunkyardState.is_active`, `save_game()` must write the snapshot's values, not the sandbox's.
-  - Call `exit_junkyard()` on every exit path.
+  - Call `exit_junkyard()` on every exit path, including `NOTIFICATION_WM_CLOSE_REQUEST`.
+  - In Junkyard mode, return to the hub right after `exit_junkyard()` without restoring or rewinding.
   - Snapshot the full run state, not a subset (see §3).
 
 ### C5 · Esc after dying freezes the Game Over screen — [RT]
@@ -207,19 +217,31 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
 ### H5 · Perk picks lost or buried around wave clears — [RT]
 - **Boss waves:** chest XP levels you up during `CHEST_PHASE`, where no level check runs. The next arena's `_ready()` then resets `last_player_level` (`arena.gd:51`), so **that perk is never offered.**
 - **Normal waves:** the XP vacuum's level-up popup gets covered by the chest screen, because the 1.3 s timer ignores pause. The popup then stays open into the next wave.
-- **Proof:** a boss-chest level 2→3 was never offered after the hub (`popup shown=false`).
+- **Proof:**
+  - A boss-chest level 2→3 was never offered after the hub (`popup shown=false`).
+  - The systems reviewer separately reproduced the next wave running with the perk screen still open.
+  - Levels from secret-room chest XP (+100 each) are dropped the same way.
 - **Fix:**
   - Keep a pending-level counter instead of resyncing.
   - Wait for the level-up to close before starting the chest phase and before leaving for the hub.
 
-### H6 · The stage boss's "guaranteed" secret key usually doesn't drop — [CODE]
+### H6 · The stage boss's "guaranteed" secret key usually doesn't drop, and keys are never auto-collected — [RT]
 - During wave N, `GameState.current_wave` is still N−1; it only updates on wave complete (`arena.gd:230`).
 - `_drop_key()` checks `get_stage_wave(current_wave) == 14` (`enemy_base.gd:998`). That only passes if the boss is the **last** enemy killed, because only then has the wave-complete handler already run inside the `died` emit.
+- Reproduced by the systems reviewer: boss killed with one rusher still alive → **0 keys**.
 - The same off-by-one causes three more problems:
   - the boss key table lands on the wave **after** each boss (8, 15, 22…);
   - stage scaling is shifted by one wave;
-  - the final kill's XP orb and key spawn after the vacuum has already run.
-- **Fix:** use `WaveManager.current_wave` in `enemy_base.gd`, and drop loot before emitting `died`.
+  - the final kill's XP orb spawns after the vacuum has already run.
+- **Even a dropped key is usually lost.**
+  - Keys are added to the scene root, not `PickupsContainer`: `_get_pickup_container()` (`enemy_base.gd:1096-1101`) looks for it under the enemy's parent and falls back.
+  - So the wave-clear vacuum never collects *any* key.
+  - On boss waves the scene changes to the hub after the chest screens. That destroys the boss's 80–500 XP orb and the secret key unless the player walked over them.
+- **Fix:**
+  - Use `WaveManager.current_wave` in `enemy_base.gd`.
+  - Drop loot before emitting `died`.
+  - Spawn keys into `PickupsContainer`.
+  - Vacuum XP and keys again right before the chest phase starts.
 
 ### H7 · Lava Lobber puddles never expire — [ENG]
 - The damage-tick counter is an `int` captured by a lambda (`enemy_lava_lobber.gd:145-152`). GDScript lambdas capture **by value**, so the counter resets on every call and never reaches 6.
@@ -294,6 +316,17 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
 - Cards drop only in Junkyard mode (`destructible_prop.gd:181-187`). Nothing tells the player, and the arena's card hookup is dead code.
 - Achievement stats (runs, kills, keys) are saved only when *some* achievement unlocks. Multi-session goals (Veteran, Thousand Bones) lose progress in any session where nothing unlocks.
 
+**Secret room and chests**
+- **Secret-room loot is left on the floor and lost.** [RT, reviewer]
+  - Secret chests spawn 6–10 material *pickups* instead of granting them (`chest.gd:474-489`).
+  - The room starts its exit as soon as the last chest is marked opened (`secret_room.gd:49-51`), and nothing auto-collects.
+  - Reproduced: stepping 12 px past the chest lost 4 of 7 pickups; walking on lost 9 of 10.
+  - Fix: grant the loot directly, as the arena chests do.
+- **You can be forced to spend the secret key on an ordinary chest.** [CODE]
+  - Skip/Collect stays hidden while *any* key is held and a chest is unopened (`arena.gd:976-977`).
+  - A boss wave has 4 chests before the secret-door check (`arena.gd:276`). With fewer than 4 other keys, the secret key must be burned, and then no door appears.
+  - Fix: leave `secret` out of `can_open_more`, or always show Skip.
+
 **Run-state edge cases** [CODE]
 - A mid-run Junkyard visit refunds Bad Dog lives and Second Wind, and a revival used inside the Junkyard stays consumed. `exit_junkyard()` restores none of these.
 - QUIT TO DESKTOP mid-wave saves that wave's loot, and Continue replays the wave. That's a farm loop, and QUIT TO MENU behaves differently.
@@ -343,6 +376,7 @@ Numbers come from the code plus the autoplay telemetry.
    - → Auto-open normal-wave chests with a non-pausing loot toast, and keep the ceremony for boss waves.
 4. **Game feel is flat.**
    - There's no screen shake, no hit-stop, no particles in the main arena, and no post-hit invulnerability.
+   - **Eight sound effects are registered in `AudioManager` but never played:** `item_pickup`, `wave_clear`, `wave_start`, `chest_phase`, `death_sting`, `menu_transition`, `craft_success`, `save`. That's why pickups and wave clears are silent; wiring them up takes minutes.
    - → A juice pass:
      - camera shake on hurt and boss slams
      - 40–60 ms hit-stop on crits
@@ -386,6 +420,13 @@ Numbers come from the code plus the autoplay telemetry.
   - The 84-wave run showed no leaks.
   - Measured headless, so rendering is excluded; GL Compatibility has no trouble with ~2k sprites.
 - **Spawn hitches:** each enemy spawn costs ~1.5 ms (150 in one frame = 218 ms), because its `SpriteFrames` is rebuilt every time. Cache it per type; boss summons will stop hitching.
+- **Frame spikes the systems reviewer measured** (Godot 4.6.1, 2.1 GHz Xeon, CPU only):
+  - **Every kill re-parses the XP orb scene.** `load("res://scenes/xp_pickup.tscn")` in `enemy_base.gd:978` costs ~100 µs, because nothing keeps the scene cached; key drops cost ~300 µs (`:1021`). That's ~0.7 ms per kill, so a 25-kill AoE costs ~17 ms over two frames. Fix: `preload` both scenes as constants.
+  - **The first spawn of each enemy type hitches 20–52 ms** from synchronous sprite and audio loads. It happens once per type, clustered at stage starts. Fix: `ResourceLoader.load_threaded_request` the next wave's types during the chest phase.
+  - **Music `load()` blocks 12–15 ms** on arena entry and whenever a track ends mid-fight (`audio_manager.gd:269`). Fix: threaded load.
+  - **Enemy separation is O(n²)** (`enemy_base.gd:503-527`): 1–5 ms per physics frame at 80–120 enemies, and it counts corpses. Fix: a coarse spatial grid.
+  - **Damage-number labels** cost ~50 µs each to create. Fix: pool them.
+- **Junkyard rendering is unmeasured.** The level builds ~7,900 decorative border `Sprite2D`s (8,162 nodes). Headless runs can't measure that, so profile it on a low-end GPU.
 - **Install size is the real problem:**
   - **Intro:** 552 PNG frames at 960×540 = **192 MB**, played at 10 fps with a synchronous `load()` per frame. → A 5–15 MB `.ogv` in a `VideoStreamPlayer`.
   - **Hub 3D buttons:** **eight GLBs of 16–25 MB each (~155 MB)**. → Decimate and compress the textures, or pre-render them to sprite sheets.
@@ -402,6 +443,10 @@ Numbers come from the code plus the autoplay telemetry.
 - **Docs drift:**
   - CLAUDE.md still describes Feral Howl as a stun.
   - BALANCE_AUDIT.md lists boss HP without the wave multiplier. The Scrap King has 11,902 HP at wave 84, not 2,200.
+  - BALANCE_AUDIT.md and the April audit took chest loot odds from `chest.gd` (40% / 5% blueprint), but that file only runs in the secret room.
+    - Arena chests use `arena.gd:989-1025`: gold gets a 25% bonus blueprint; silver has no blueprint chance.
+    - The blueprint-grind estimate was built on the wrong table.
+    - Dig holes give no materials, though BALANCE_AUDIT lists them as a source.
   - FIXES_APPLIED.md claims FP-11 (H12).
 
 ---
@@ -416,6 +461,8 @@ Numbers come from the code plus the autoplay telemetry.
   - **FP-2:** Holy Lantern heals more than the plan targeted.
   - **FP-32:** disabled armors are still dropped by bosses.
   - Commit 7e5e7fde's Lava Lobber fix doesn't stop the puddles (→ H7).
+  - **FP-4 is harmless but ineffective.** Embers live 0.25 s and spawn every 0.08 s, so no more than ~4 exist per fireball and the 10-ember cap never triggers; only the slower tick helped. Arcane Tome has the same trail with no cap at all.
+  - **FP-17's reason for skipping the Junkyard was wrong.** The Junkyard spawns the same enemy scenes, and its own Vine Snare writes a `speed` property that doesn't exist. So Vine Snare does nothing in the Junkyard.
 - ❌ **Never applied:** **FP-11** (→ H12).
 
 ---
