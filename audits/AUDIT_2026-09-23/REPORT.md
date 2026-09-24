@@ -46,6 +46,28 @@ After that, the biggest win isn't more content, it's **pacing** (§4):
 | H11 | Settings never saved; NEW GAME wipes without confirmation | HIGH | [CODE] |
 | H12 | April's colorblind fix (FP-11) was never applied | HIGH | [CODE] |
 
+### Fix status (branch `claude/confident-brahmagupta-jniktg`, 2026-09-24)
+
+Everything marked fixed was re-verified in Godot 4.6.3 with the `harness/` scenarios. The 84-wave run still passes with 0 softlocks.
+
+| ID | Status | Verified by |
+|---|---|---|
+| S1 | Key removed from the tracked files; the script now reads `PIXELLAB_API_KEY`. **The key is still in git history: rotate it.** | — |
+| C1 | Fixed. Only rebound keys are saved; arrow keys, Esc and pad bindings always survive; old files are migrated. | `kb_probe` (all 5 modes) |
+| C2, C3 | Fixed. Every exit settles through one path; the wave-start snapshot never outlives its run or profile. | `hub_quit`, `profile_bleed` |
+| C4 | Fixed. Saves during the Junkyard write the main run plus earnings; the Junkyard snapshots every run field. | `junkyard_save`, `junkyard_return`, `junkyard_desktop` |
+| C5 | Fixed. No pausing during scene transitions; Game Over, the hub and credits always start unpaused. | `death_esc`, `clear_window_death` |
+| C6 + H1 | Fixed. One pick per popup; the perk is applied at once; a newer popup cancels the old fade. | `levelup_race` (`chain_ok=true`), `double_click` |
+| H2 | Fixed. Collect is re-entrancy guarded; a death can't be ignored. | `double_collect` |
+| C7 | Fixed. Stick/D-pad/A/B/Start/LB/RB are mapped, every screen and popup takes focus, and the hub is fully navigable. | `pad_probe`, `pad_tour` (101 checks, gamepad input only) |
+
+Behaviour changes players may notice:
+- Quit to Desktop mid-wave now rewinds to the start of that wave, the same as Quit to Menu. It used to save the half-played wave.
+- The pause menu opened from the hub no longer shows RETURN TO HUB.
+- Esc / Start is ignored while the game is changing scene: death, victory, and the boss-wave exit. The boss exit includes the up-to-10 s secret-door window when you hold a secret key.
+- The new-profile name is pre-filled ("Player N"); pad A accepts it.
+- Level-up cards can't be clicked for their first 0.35 s, so mashing A/Space can't pick blindly.
+
 ---
 
 ## 0 · Do today

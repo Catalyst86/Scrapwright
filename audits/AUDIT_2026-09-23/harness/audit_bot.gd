@@ -144,7 +144,7 @@ func _begin() -> void:
 			p["xp_gain_level"] = 2
 		"hub_return":
 			p["mutation_junkyard_chimera"] = 1
-		"hub_quit", "junkyard_save", "profile_bleed":
+		"hub_quit", "junkyard_save", "profile_bleed", "junkyard_return", "junkyard_desktop":
 			for m in GameState.materials:
 				GameState.materials[m] = 60
 			if scenario == "profile_bleed":
@@ -205,6 +205,26 @@ func _process(delta: float) -> void:
 				_: _drive_arena(cs, delta)
 		"res://scenes/game_over.tscn":
 			_drive_game_over(cs)
+		"res://scenes/junkyard.tscn":
+			if scenario in ["junkyard_return", "junkyard_desktop"] and t - _scene_entered_at > 6.0 and not _scratch.has("jy_left"):
+				_scratch["jy_left"] = true
+				get_tree().paused = false
+				GameState.add_material("iron_scrap", 7)   # simulate Junkyard earnings
+				SaveManager.save_game()                     # mid-Junkyard save (like junkyard_v2 wave clear)
+				print("BOT[%s]: disk after a mid-Junkyard save with +7 iron earned: %s" % [scenario, _disk()])
+				var gained := {}
+				for m in GameState.materials:
+					gained[m] = GameState.materials[m]
+				print("BOT[%s]: in Junkyard: WaveManager.current_wave=%d, sandbox materials (earnings)=%s" % [scenario, WaveManager.current_wave, gained])
+				var pm = cs.get("_pause_menu")
+				pm.open()
+				if scenario == "junkyard_return":
+					pm._return_to_hub()
+				else:
+					pm._settle_and_save()   # exactly what QUIT TO DESKTOP does before get_tree().quit()
+					print("BOT[junkyard_desktop]: disk after QUIT TO DESKTOP path: %s" % [_disk()])
+					print("BOT[junkyard_desktop]: RESULT stockpile_plus_earnings=%s run_kept=%s" % [int(_disk().materials.get("iron_scrap", 0)) == 67, _disk().run_in_progress == true])
+					_finish("junkyard_desktop done")
 		"res://scenes/main_menu.tscn":
 			if scenario == "profile_bleed" and t - _scene_entered_at > 1.0 and not _scratch.has("mm_%d" % int(_scene_entered_at)):
 				_scratch["mm_%d" % int(_scene_entered_at)] = true
@@ -251,6 +271,14 @@ func _mem() -> Dictionary:
 func _drive_hub(hub: Node) -> void:
 	if _hub_started or t - _scene_entered_at < 1.0:
 		return
+	if scenario == "junkyard_return" and hub_visits == 2 and _scratch.has("jy_left"):
+		_hub_started = true
+		var b: Dictionary = _scratch["before"]
+		print("BOT[junkyard_return]: hub after pause->RETURN TO HUB: wave=%d mats=%s extra_lives=%d second_wind_used=%s run=%s" % [GameState.current_wave, GameState.materials, GameState.extra_lives, GameState.perk_second_wind_used, GameState.run_in_progress])
+		print("BOT[junkyard_return]: disk: %s" % [_disk()])
+		print("BOT[junkyard_return]: RESULT wave_kept=%s stockpile_kept_plus_earnings=%s lives_not_refunded=%s second_wind_not_refunded=%s" % [GameState.current_wave == b.wave, int(GameState.materials.get("iron_scrap", 0)) == int(b.mats.iron_scrap) + 7, GameState.extra_lives == b.extra_lives, GameState.perk_second_wind_used == b.sw_used])
+		_finish("junkyard_return done")
+		return
 	if scenario == "profile_bleed" and hub_visits == 1:
 		_hub_started = true
 		hub_visits += 1
@@ -259,6 +287,17 @@ func _drive_hub(hub: Node) -> void:
 		hub.add_child(pz)
 		pz.open()
 		pz._quit_to_menu()
+		return
+	if scenario in ["junkyard_return", "junkyard_desktop"] and hub_visits == 1:
+		_hub_started = true
+		hub_visits += 1
+		GameState.extra_lives = 1
+		GameState.perk_second_wind_used = true
+		_scratch["before"] = {"wave": GameState.current_wave, "mats": GameState.materials.duplicate(),
+			"extra_lives": GameState.extra_lives, "sw_used": GameState.perk_second_wind_used, "run": GameState.run_in_progress}
+		print("BOT[%s]: hub before Junkyard: %s" % [scenario, _scratch["before"]])
+		hub._enter_junkyard()
+		print("BOT[%s]: disk right after entering Junkyard: %s" % [scenario, _disk()])
 		return
 	if scenario in ["hub_quit", "junkyard_save"] and hub_visits == 1:
 		_hub_started = true
@@ -298,7 +337,7 @@ func _drive_hub(hub: Node) -> void:
 			_diff_stats("run #1 start -> run #2 start (after death + new run)", _scratch["run1_start"], after)
 			print("BOT[death]: run2 start: ", after)
 			call_deferred("_finish", "death_cycle done")
-	if scenario in ["hub_quit", "junkyard_save"] and hub_visits == 1:
+	if scenario in ["hub_quit", "junkyard_save", "junkyard_return", "junkyard_desktop"] and hub_visits == 1:
 		GameState.current_wave = 6
 	if scenario == "stress" and hub_visits == 1:
 		GameState.current_wave = 79
@@ -487,6 +526,15 @@ func _press_levelup_card(lu: Control, force_idx: int) -> bool:
 	return false
 
 
+
+# Level-up picks so far: stat perks plus orbital levels (an upgrade to an owned
+# orbital raises its level without growing orbital_weapons).
+func _perk_picks() -> int:
+	var n := GameState.active_perks.size()
+	for ow in GameState.orbital_weapons:
+		n += int(ow.get("level", 1))
+	return n
+
 func _find_select_button(n: Node) -> Button:
 	if n is Button and (n as Button).text == "SELECT":
 		return n
@@ -593,7 +641,7 @@ func _scenario_levelup_race(arena: Node) -> void:
 					x = int(x * 1.4)
 				GameState.gain_xp(int(ceil(need / GameState.perk_xp_multiplier)) + 1)
 				print("BOT[race]: granted XP for 3 levels -> player_level=%d arena.last=%d" % [GameState.player_level, arena.get("last_player_level")])
-				_scratch["perks0"] = GameState.active_perks.size() + GameState.orbital_weapons.size()
+				_scratch["perks0"] = _perk_picks()
 				_step = 1; _step_t = t
 		1:
 			if lu.visible and el > 0.8:
@@ -606,7 +654,7 @@ func _scenario_levelup_race(arena: Node) -> void:
 				var r := {"tree_paused": get_tree().paused, "levelup_visible": lu.visible,
 					"levelup_alpha": snappedf(lu.modulate.a, 0.01),
 					"player_level": GameState.player_level, "arena_last_level": arena.get("last_player_level"),
-					"perks_gained": GameState.active_perks.size() + GameState.orbital_weapons.size() - int(_scratch["perks0"]),
+					"perks_gained": _perk_picks() - int(_scratch["perks0"]),
 					"pause_menu_open": arena.get("_pause_menu").is_open}
 				print("BOT[race]: 1.5s after first pick: ", r)
 				var softlock: bool = r.tree_paused and not r.levelup_visible and not r.pause_menu_open
@@ -620,6 +668,15 @@ func _scenario_levelup_race(arena: Node) -> void:
 		3:
 			if el > 0.5:
 				print("BOT[race]: after pressing Esc: paused=%s pause_menu_open=%s levelup_visible=%s" % [get_tree().paused, arena.get("_pause_menu").is_open, lu.visible])
+				_step = 4; _step_t = t
+		4:
+			# Pick every remaining queued popup, like a player would
+			if lu.visible:
+				_press_levelup_card(lu, 0)
+			if el > 4.0:
+				var n := _perk_picks() - int(_scratch["perks0"])
+				print("BOT[race]: chain done: perks granted=%d (want 3) paused=%s levelup_visible=%s arena.last=%d player_level=%d" % [n, get_tree().paused, lu.visible, arena.get("last_player_level"), GameState.player_level])
+				print("BOT[race]: RESULT chain_ok=%s" % (n == 3 and not get_tree().paused and not lu.visible))
 				_finish("levelup_race done")
 
 
@@ -630,7 +687,7 @@ func _scenario_double_click(arena: Node) -> void:
 		0:
 			if el > 1.5:
 				GameState.gain_xp(int(ceil(GameState.xp_to_next_level / GameState.perk_xp_multiplier)) + 1)
-				_scratch["n0"] = GameState.active_perks.size() + GameState.orbital_weapons.size()
+				_scratch["n0"] = _perk_picks()
 				_scratch["perks0"] = GameState.active_perks.duplicate()
 				_step = 1; _step_t = t
 		1:
@@ -650,7 +707,7 @@ func _scenario_double_click(arena: Node) -> void:
 			_step = 3; _step_t = t
 		3:
 			if el > 1.5:
-				var n1 := GameState.active_perks.size() + GameState.orbital_weapons.size()
+				var n1 := _perk_picks()
 				print("BOT[dbl]: offered=%s" % [_scratch["names"]])
 				print("BOT[dbl]: perks/orbitals before=%d after=%d  (1 level-up gained)  perks now=%s orbitals=%s" % [_scratch["n0"], n1, GameState.active_perks, GameState.orbital_weapons])
 				print("BOT[dbl]: RESULT double_grant=%s" % (n1 - int(_scratch["n0"]) >= 2))
