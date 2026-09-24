@@ -20,7 +20,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Configuration
 # ============================================================
 
-API_KEY = "033683bf-7368-465f-81a8-6e01192d8a1b"
+# Never hardcode the key: this repo is public. Set it in your shell instead,
+# e.g. `export PIXELLAB_API_KEY=...` (PowerShell: `$env:PIXELLAB_API_KEY="..."`).
+API_KEY = os.environ.get("PIXELLAB_API_KEY", "").strip()
 HEADERS = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 BASE_URL = "https://api.pixellab.ai/v2"
 
@@ -670,6 +672,10 @@ def main():
     if args.list:
         show_status()
         return
+
+    if not API_KEY:
+        sys.exit("PIXELLAB_API_KEY is not set. Export your PixelLab key in this shell "
+                 "before generating (never commit it to the repo).")
 
     progress = load_progress()
 

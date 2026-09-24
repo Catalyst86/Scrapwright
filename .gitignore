@@ -14,3 +14,7 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Python bytecode (may embed secrets from the source it was compiled from)
+__pycache__/
+*.pyc

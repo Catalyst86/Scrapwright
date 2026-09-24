@@ -269,7 +269,7 @@ intro_video.tscn → main_menu.tscn → base_hub.tscn → arena.tscn
 
 ## PixelLab API v2
 
-- **Key**: `033683bf-7368-465f-81a8-6e01192d8a1b`
+- **Key**: read from the `PIXELLAB_API_KEY` environment variable. Never write the key into this file or any tracked file — the repo is public.
 - **Base URL**: `https://api.pixellab.ai/v2`
 - **Full reference**: See `memory/reference_pixellab_api.md`
 
