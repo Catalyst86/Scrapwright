@@ -3,9 +3,20 @@ extends Node
 # ============================================================
 # KeybindManager — Runtime keybinding rebind + persistence
 # Saves custom bindings to user://keybinds.cfg
+#
+# Each rebindable action has one "primary" keyboard key the player can change.
+# Everything else in the action's project.godot defaults (alternate keys such as
+# the arrow keys, and all gamepad events) is always kept, so rebinding Move Left
+# can never break arrow-key menu navigation or controller input.
+# Only actions the player actually changed are written to disk.
 # ============================================================
 
 const SAVE_PATH = "user://keybinds.cfg"
+const SAVE_SECTION = "keybinds_v2"
+# Pre-2026-09 format: "<action>_keycode" = physical_keycode for EVERY action.
+# It stored 0 for keycode-only defaults (Esc, arrow keys), which erased them on
+# the next launch. Read once for migration, then rewritten in SAVE_SECTION.
+const LEGACY_SECTION = "keybinds"
 
 # Actions players can rebind (action_name -> display label)
 const REBINDABLE_ACTIONS = {
@@ -23,6 +34,8 @@ const REBINDABLE_ACTIONS = {
 
 # Stores project.godot defaults so we can restore them
 var _defaults: Dictionary = {}
+# action -> InputEventKey chosen as that action's primary key (customised actions only)
+var _custom_primary: Dictionary = {}
 
 func _ready() -> void:
 	_cache_defaults()
@@ -38,58 +51,67 @@ func _cache_defaults() -> void:
 func rebind_action(action: String, new_event: InputEvent) -> void:
 	if action not in REBINDABLE_ACTIONS:
 		return
-	# Remove existing keyboard events (keep gamepad bindings)
-	var events = InputMap.action_get_events(action)
-	for ev in events:
-		if ev is InputEventKey:
-			InputMap.action_erase_event(action, ev)
-	# Add the new keyboard binding
-	InputMap.action_add_event(action, new_event)
+	if not (new_event is InputEventKey) or _key_code(new_event) == 0:
+		return
+	if _same_key(new_event, _default_primary(action)):
+		_custom_primary.erase(action)  # Back to the default — nothing to persist
+	else:
+		_custom_primary[action] = new_event
+	_apply_action(action)
 	save_keybinds()
 
 
 func reset_defaults() -> void:
+	_custom_primary.clear()
 	for action in REBINDABLE_ACTIONS:
-		# Clear all events
-		InputMap.action_erase_events(action)
-		# Restore defaults
-		if action in _defaults:
-			for ev in _defaults[action]:
-				InputMap.action_add_event(action, ev)
+		_apply_action(action)
 	# Delete saved config
 	if FileAccess.file_exists(SAVE_PATH):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 
 
 func save_keybinds() -> void:
+	if _custom_primary.is_empty():
+		if FileAccess.file_exists(SAVE_PATH):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+		return
 	var config = ConfigFile.new()
-	for action in REBINDABLE_ACTIONS:
-		var events = InputMap.action_get_events(action)
-		for ev in events:
-			if ev is InputEventKey:
-				config.set_value("keybinds", action + "_keycode", ev.physical_keycode)
-				break  # Only save the first keyboard binding
+	for action in _custom_primary:
+		var ev: InputEventKey = _custom_primary[action]
+		config.set_value(SAVE_SECTION, action, {
+			"keycode": int(ev.keycode),
+			"physical_keycode": int(ev.physical_keycode),
+		})
 	config.save(SAVE_PATH)
 
 
 func load_keybinds() -> void:
+	_custom_primary.clear()
 	var config = ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return  # No custom bindings, use defaults
+	var migrated := false
 	for action in REBINDABLE_ACTIONS:
-		var key = action + "_keycode"
-		if config.has_section_key("keybinds", key):
-			var keycode = config.get_value("keybinds", key)
-			# Build a new InputEventKey from the saved keycode
-			var ev = InputEventKey.new()
-			ev.physical_keycode = keycode
-			# Remove existing keyboard events
-			var events = InputMap.action_get_events(action)
-			for old_ev in events:
-				if old_ev is InputEventKey:
-					InputMap.action_erase_event(action, old_ev)
-			# Add saved binding
-			InputMap.action_add_event(action, ev)
+		var ev: InputEventKey = null
+		if config.has_section_key(SAVE_SECTION, action):
+			var data = config.get_value(SAVE_SECTION, action)
+			if data is Dictionary:
+				ev = InputEventKey.new()
+				ev.keycode = int(data.get("keycode", 0))
+				ev.physical_keycode = int(data.get("physical_keycode", 0))
+		elif config.has_section_key(LEGACY_SECTION, action + "_keycode"):
+			migrated = true
+			var code := int(config.get_value(LEGACY_SECTION, action + "_keycode", 0))
+			if code != 0:  # 0 = a keycode-only default the old format couldn't store
+				ev = InputEventKey.new()
+				ev.physical_keycode = code
+		# Skip unusable keys and entries that merely repeat the default
+		if ev == null or _key_code(ev) == 0 or _same_key(ev, _default_primary(action)):
+			continue
+		_custom_primary[action] = ev
+		_apply_action(action)
+	if migrated:
+		save_keybinds()  # Rewrite in the current format (drops the legacy section)
 
 
 func get_key_name(action: String) -> String:
@@ -106,3 +128,33 @@ func get_key_name(action: String) -> String:
 
 func get_action_label(action: String) -> String:
 	return REBINDABLE_ACTIONS.get(action, action)
+
+
+# Rebuilds an action as: [primary key, default alternate keys..., default non-key events].
+func _apply_action(action: String) -> void:
+	var default_primary := _default_primary(action)
+	var primary: InputEventKey = _custom_primary.get(action, default_primary)
+	InputMap.action_erase_events(action)
+	if primary:
+		InputMap.action_add_event(action, primary)
+	for ev in _defaults.get(action, []):
+		if ev is InputEventKey and (ev == default_primary or _same_key(ev, primary)):
+			continue  # The primary slot is already filled; don't add duplicates
+		InputMap.action_add_event(action, ev)
+
+
+# The first keyboard event in the action's project.godot defaults.
+func _default_primary(action: String) -> InputEventKey:
+	for ev in _defaults.get(action, []):
+		if ev is InputEventKey:
+			return ev
+	return null
+
+
+# The code an event matches on: physical key when set, otherwise the keycode.
+static func _key_code(ev: InputEventKey) -> int:
+	return int(ev.physical_keycode) if ev.physical_keycode != 0 else int(ev.keycode)
+
+
+static func _same_key(a: InputEventKey, b: InputEventKey) -> bool:
+	return a != null and b != null and _key_code(a) != 0 and _key_code(a) == _key_code(b)
