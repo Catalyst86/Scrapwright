@@ -369,6 +369,11 @@ func _input(event: InputEvent) -> void:
 	# BEFORE any focused UI control can consume it as ui_accept.
 	# This fixes dodge not working during chest phase when UI elements have focus.
 	if event.is_action_pressed("dodge"):
+		# Gamepad A is also ui_accept. When a UI button has focus (chest screen),
+		# let the UI have it, or a controller could never open chests / Collect.
+		# Keyboard Space keeps dodging, so it can't accidentally spend a key.
+		if event is InputEventJoypadButton and get_viewport().gui_get_focus_owner() != null:
+			return
 		_dodge_pressed_this_frame = true
 		get_viewport().set_input_as_handled()
 	if event.is_action_pressed("collect"):

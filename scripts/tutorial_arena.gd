@@ -805,7 +805,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Salvage step ESC handling
 	if _current_step == Step.SALVAGE and _step_active and not _step_completed:
-		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		# ui_cancel rather than KEY_ESCAPE: honours rebinds and gamepad B / Start
+		if event.is_action_pressed("ui_cancel"):
 			if _salvage_phase == 1:
 				_show_inventory_overlay()
 				get_viewport().set_input_as_handled()
@@ -816,11 +817,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 
-	# Complete step — any key
+	# Complete step — any key, mouse button or gamepad button
 	if _current_step == Step.COMPLETE and _step_active and not _step_completed:
-		if event is InputEventKey and event.pressed:
-			_complete_current_step()
-		elif event is InputEventMouseButton and event.pressed:
+		if (event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton) and event.pressed:
 			_complete_current_step()
 
 # ════════════════════════════════════════════════════════════

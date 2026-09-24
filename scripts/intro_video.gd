@@ -16,6 +16,7 @@ var _bg: ColorRect
 var _skippable := false
 var _current_frame := 0
 var _total_frames := 0
+var _leaving := false  # Scene change already requested
 var _timer: Timer
 var _showing_logo := true
 
@@ -119,12 +120,19 @@ func _next_frame() -> void:
 	_display.texture = tex
 	tween.tween_property(_display, "modulate:a", 1.0, 0.3)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not _skippable:
+# _input, not _unhandled_input: the full-screen root Control consumes mouse clicks
+# before they reach _unhandled_input, so click-to-skip never fired. Any key,
+# mouse button or gamepad button skips.
+func _input(event: InputEvent) -> void:
+	if not _skippable or _leaving:
 		return
-	if event is InputEventKey or event is InputEventMouseButton:
-		if event.pressed:
-			_go_to_menu()
+	var is_press := event is InputEventKey or event is InputEventMouseButton or event is InputEventJoypadButton
+	if is_press and event.pressed:
+		get_viewport().set_input_as_handled()
+		_go_to_menu()
 
 func _go_to_menu() -> void:
+	if _leaving:
+		return
+	_leaving = true
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

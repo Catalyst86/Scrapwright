@@ -20,10 +20,24 @@ var _particles: Array = []
 var _stats_nodes: Array = []
 var _skull_icon: TextureRect
 var _ember_tex: Texture2D
+var _retry_btn: Button = null
+var _return_btn: Button = null
+var _leaving: bool = false  # One exit per screen: a double press used to burn two extra lives
+
+const UIFocus = preload("res://scripts/ui_focus.gd")
 
 func _ready() -> void:
+	# A scene must never start paused: the arena's death timer can fire while
+	# paused, and this screen's buttons and fade-ins would be frozen for good.
+	get_tree().paused = false
 	AudioManager.play_music("game_over")
 	_build_ui()
+	# Keyboard / controller: start on the primary action
+	if _retry_btn:
+		UIFocus.trap([_retry_btn, _return_btn])
+		_retry_btn.grab_focus()
+	elif _return_btn:
+		_return_btn.grab_focus()
 
 func _load_tex(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
@@ -187,6 +201,7 @@ func _build_ui() -> void:
 		stats_y += 24; delay += 0.1
 
 		var retry_btn = Button.new()
+		_retry_btn = retry_btn
 		retry_btn.text = "RETRY"
 		retry_btn.custom_minimum_size = Vector2(220, 44)
 		retry_btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -226,6 +241,7 @@ func _build_ui() -> void:
 	# Return button with sprite-based style
 	stats_y += 8
 	var return_btn = Button.new()
+	_return_btn = return_btn
 	return_btn.text = "RETURN TO HUB"
 	return_btn.custom_minimum_size = Vector2(220, 44)
 	return_btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -377,6 +393,9 @@ func _update_embers(delta: float) -> void:
 
 
 func _retry_run() -> void:
+	if _leaving:
+		return
+	_leaving = true
 	# Use one extra life, restore wave-start snapshot, reload arena
 	GameState.extra_lives -= 1
 	GameState.restore_wave_start()
@@ -389,6 +408,9 @@ func _retry_run() -> void:
 	)
 
 func _return_to_base() -> void:
+	if _leaving:
+		return
+	_leaving = true
 	# If run is still active (player had lives but chose to quit), end it
 	if GameState.run_in_progress:
 		GameState.end_run()

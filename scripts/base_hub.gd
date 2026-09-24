@@ -87,6 +87,10 @@ const BUST_ONESHOT_ANIMS: Array[String] = [
 	"idle_steady", "idle_sitting",
 ]
 
+const UIFocus = preload("res://scripts/ui_focus.gd")
+# Controller / keyboard scrolling speed for the list tabs (px per second held)
+const LIST_SCROLL_SPEED := 600.0
+
 # --- Scene node refs (from .tscn) ---
 @onready var _key_container: HBoxContainer = %KeyContainer
 @onready var _mat_container: HBoxContainer = %MatContainer
@@ -132,12 +136,19 @@ var _tab_containers: Dictionary = {}
 var _tab_buttons: Dictionary = {}
 var _udb: Node = null
 var _wave_indicator: Label = null
+var _hub_save_btn: Button = null
+var _pause_menu: CanvasLayer = null          # One instance, reused on every Esc
+var _detail_cat_id: String = ""             # Category the detail panel shows
+var _overlay_return_focus: Dictionary = {}  # UIFocus.capture() from before the popup
+var _tab_scrolls: Dictionary = {}           # tab_id -> ScrollContainer of a list tab
 
 # ===================================================================
 # LIFECYCLE
 # ===================================================================
 
 func _ready() -> void:
+	# A scene must never start paused (the arena's hub-return timer can fire while paused).
+	get_tree().paused = false
 	_udb = get_node_or_null("/root/UpgradeDB")
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	AudioManager.play_music("base_hub")
@@ -195,6 +206,7 @@ func _ready() -> void:
 		tw.tween_callback(func(): save_btn.text = "SAVE")
 	)
 	add_child(save_btn)
+	_hub_save_btn = save_btn
 
 	# Initial state
 	_switch_tab("den_upgrades")
@@ -244,20 +256,34 @@ func _process(delta: float) -> void:
 	# Gentle bob (base Y comes from scene position)
 	if _puppy_sprite and is_instance_valid(_puppy_sprite):
 		_puppy_sprite.position.y = _puppy_base_y + sin(Time.get_ticks_msec() * 0.001 * 1.5) * 1.2
+	# Stick / D-pad / arrow keys scroll a list tab while it has focus (a
+	# ScrollContainer has no keyboard or controller scrolling of its own)
+	var list: ScrollContainer = _tab_scrolls.get(_current_tab)
+	if list and list.has_focus():
+		var dir := Input.get_axis("ui_up", "ui_down")
+		if dir != 0.0:
+			list.scroll_vertical += roundi(dir * LIST_SCROLL_SPEED * delta)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		# Close detail panel first, otherwise open pause menu
+		# Back out one level: detail panel / popup, then a tab's list (when it was
+		# reached by keyboard / controller, not clicked), then pause
 		if _detail_panel and is_instance_valid(_detail_panel):
-			_close_detail_panel()
+			_dismiss_detail_panel()
 		elif _overlay_panel and is_instance_valid(_overlay_panel):
-			_overlay_panel.queue_free()
-			_overlay_panel = null
+			_dismiss_overlay()
+		elif _tab_scrolls.has(_current_tab) and _tab_scrolls[_current_tab].has_focus(true):
+			_tab_buttons[_current_tab].grab_focus()
 		else:
-			var pause = load("res://scripts/pause_menu.gd").new()
-			add_child(pause)
-			pause.open()
+			_open_pause_menu()
 		get_viewport().set_input_as_handled()
+
+func _open_pause_menu() -> void:
+	# Reuse one menu: a new CanvasLayer per Esc used to pile up for the whole visit
+	if _pause_menu == null or not is_instance_valid(_pause_menu):
+		_pause_menu = load("res://scripts/pause_menu.gd").new()
+		add_child(_pause_menu)
+	_pause_menu.open()
 
 func _exit_tree() -> void:
 	if GameState.materials_changed.is_connected(_refresh_top_bar):
@@ -514,9 +540,15 @@ func _switch_tab(tab_id: String) -> void:
 	for tid in _tab_containers:
 		if _tab_containers[tid] and is_instance_valid(_tab_containers[tid]):
 			_tab_containers[tid].visible = (tid == tab_id)
+	_wire_hub_focus()
 	# Audit FP-9: give gamepad users a starting focus on the radial wheel
 	if tab_id == "den_upgrades" and _left_card and is_instance_valid(_left_card):
 		_left_card.call_deferred("grab_focus")
+	elif _tab_scrolls.has(tab_id):
+		# Straight into the list so the stick scrolls it (B / Esc steps back out
+		# to the tab button). Keep the focus ring hidden if the tab was clicked.
+		var tab_btn: Button = _tab_buttons[tab_id]
+		_tab_scrolls[tab_id].call_deferred("grab_focus", tab_btn.has_focus() and not tab_btn.has_focus(true))
 	# Bottom buttons always visible in new radial layout
 	for tid in _tab_buttons:
 		var btn: Button = _tab_buttons[tid]
@@ -932,31 +964,79 @@ func _refresh_category_nodes() -> void:
 			slot.gui_input.disconnect(conn.callable)
 		_populate_card_slot(slot, cat_id)
 		_category_nodes[cat_id] = slot
-	_wire_slot_focus_neighbors()
+	_wire_hub_focus()
 
-func _wire_slot_focus_neighbors() -> void:
-	# Gamepad-friendly focus traversal (audit FP-9)
-	# Layout: _left_card (left) ↔ _right_card (right)
-	#         _bottom_card1/2/3 in a row along the bottom
-	var L = _left_card
-	var R = _right_card
-	var B1 = _bottom_card1
-	var B2 = _bottom_card2
-	var B3 = _bottom_card3
-	var valid := func(n): return n and is_instance_valid(n)
-	var link := func(from: Control, dir: String, to: Control):
-		if not valid.call(from) or not valid.call(to):
-			return
-		match dir:
-			"left":  from.focus_neighbor_left  = from.get_path_to(to)
-			"right": from.focus_neighbor_right = from.get_path_to(to)
-			"top":   from.focus_neighbor_top   = from.get_path_to(to)
-			"bottom":from.focus_neighbor_bottom= from.get_path_to(to)
-	link.call(L, "right", R); link.call(L, "bottom", B1)
-	link.call(R, "left", L); link.call(R, "bottom", B3)
-	link.call(B1, "right", B2); link.call(B1, "top", L)
-	link.call(B2, "left", B1); link.call(B2, "right", B3); link.call(B2, "top", L)
-	link.call(B3, "left", B2); link.call(B3, "top", R)
+# D-pad / stick routes around the hub (audit FP-9, C7). Godot's automatic
+# neighbour search follows raw geometry, which cuts across the wheel oddly and
+# leads nowhere once a tab is hidden, so every hop is explicit. Layout
+# (base_hub.tscn; the slot names predate the wheel):
+#
+#   [DEN tab]           B2 (top)            [CARD tab]  [SAVE]
+#                  L                  R
+#   [ACHIEVE tab]                          [INVENTORY tab]
+#                  B1                 B3
+#   [JUNKYARD]         [WARDROBE]          [ENTER DUNGEON]
+#
+# On the den tab the sidebar leads into the wheel; on the other tabs it leads
+# into that tab's scroll list. Re-run on every tab switch.
+func _wire_hub_focus() -> void:
+	var L: Control = _left_card
+	var R: Control = _right_card
+	var B1: Control = _bottom_card1
+	var B2: Control = _bottom_card2
+	var B3: Control = _bottom_card3
+	var den: Control = _den_btn
+	var ach: Control = _ach_btn
+	var cards: Control = _card_btn
+	var inv: Control = _archive_btn
+	var save: Control = _hub_save_btn
+	var jy: Control = _junkyard_btn
+	var wardrobe: Control = _wardrobe_btn
+	var dungeon: Control = _enter_dungeon_btn
+	# [up, down, left, right]; null = stay put (never guess into hidden controls)
+	var routes := {}
+	if _current_tab == "den_upgrades":
+		routes = {
+			B2: [null, wardrobe, L, R],
+			L: [B2, B1, den, R],
+			R: [B2, B3, L, cards],
+			B1: [L, wardrobe, ach, B3],
+			B3: [R, dungeon, B1, inv],
+			den: [null, ach, null, L],
+			ach: [den, jy, null, B1],
+			cards: [save, inv, R, null],
+			inv: [cards, dungeon, B3, null],
+			save: [null, cards, B2, null],
+			jy: [ach, null, null, wardrobe],
+			wardrobe: [B1, null, jy, dungeon],
+			dungeon: [B3, null, wardrobe, null],
+		}
+	else:
+		var list: Control = _tab_scrolls.get(_current_tab)
+		if list == null:
+			list = _tab_buttons[_current_tab]
+		var own: Control = _tab_buttons[_current_tab]
+		# Up / down scroll the list (see _process); sideways returns to the sidebar
+		routes = {
+			list: [null, null, own if own in [den, ach] else den, own if own in [cards, inv] else cards],
+			den: [null, ach, null, list],
+			ach: [den, jy, null, list],
+			cards: [save, inv, list, null],
+			inv: [cards, dungeon, list, null],
+			save: [null, cards, list, null],
+			jy: [ach, null, null, wardrobe],
+			wardrobe: [list, null, jy, dungeon],
+			dungeon: [inv, null, wardrobe, null],
+		}
+	var sides := [SIDE_TOP, SIDE_BOTTOM, SIDE_LEFT, SIDE_RIGHT]
+	for from in routes:
+		if from == null or not is_instance_valid(from):
+			continue
+		var targets: Array = routes[from]
+		for i in sides.size():
+			var to: Control = targets[i]
+			var valid_to: bool = to != null and is_instance_valid(to)
+			from.set_focus_neighbor(sides[i], from.get_path_to(to) if valid_to else NodePath("."))
 
 # ===================================================================
 # DETAIL PANEL
@@ -966,12 +1046,24 @@ func _close_detail_panel() -> void:
 	if _detail_panel and is_instance_valid(_detail_panel):
 		_detail_panel.queue_free()
 		_detail_panel = null
+	_update_focus_modal()
 	_enter_dungeon_btn.visible = true
 	_junkyard_btn.visible = true
 	_wardrobe_btn.visible = true
 
-func _show_detail_panel(cat_id: String) -> void:
+# The player closed the panel (Close, B / Esc, click outside): put focus back on
+# the category it was opened from so a controller carries on around the wheel.
+func _dismiss_detail_panel() -> void:
+	var slot: Control = _category_nodes.get(_detail_cat_id)
 	_close_detail_panel()
+	if slot and is_instance_valid(slot) and slot.is_visible_in_tree():
+		slot.grab_focus()
+
+# `focus_upgrade`: the upgrade just bought, so its button keeps focus after the
+# panel rebuilds (repeat presses keep buying).
+func _show_detail_panel(cat_id: String, focus_upgrade: String = "") -> void:
+	_close_detail_panel()
+	_detail_cat_id = cat_id
 
 	var cat = _udb.CATEGORIES[cat_id]
 	var accent = _udb.CAT_COLORS.get(cat_id, CLR_GOLD)
@@ -993,7 +1085,7 @@ func _show_detail_panel(cat_id: String) -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	dim.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_close_detail_panel()
+			_dismiss_detail_panel()
 	)
 	overlay.add_child(dim)
 
@@ -1026,6 +1118,7 @@ func _show_detail_panel(cat_id: String) -> void:
 	var scroll = ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true  # D-pad onto a card further down scrolls to it
 	panel.add_child(scroll)
 
 	var vbox = VBoxContainer.new()
@@ -1053,19 +1146,34 @@ func _show_detail_panel(cat_id: String) -> void:
 	var sep = HSeparator.new()
 	vbox.add_child(sep)
 
+	var upgrade_cards := {}
 	for upgrade_id in cat.upgrades:
 		var upgrade_card = _create_upgrade_card(upgrade_id, accent, cat_id)
 		vbox.add_child(upgrade_card)
+		upgrade_cards[upgrade_id] = upgrade_card
 
 	var close_btn = Button.new()
 	close_btn.text = "✕  Close"
 	close_btn.add_theme_font_size_override("font_size", 12)
 	close_btn.add_theme_color_override("font_color", CLR_SILVER)
 	_style_button_flat(close_btn)
-	close_btn.pressed.connect(func():
-		_close_detail_panel()
-	)
+	close_btn.pressed.connect(_dismiss_detail_panel)
 	vbox.add_child(close_btn)
+
+	# Keyboard / controller: focus stays inside the panel and starts on the first
+	# affordable upgrade, else Close. After a purchase it stays on the upgrade just
+	# bought even once that is unaffordable (disabled buttons ignore A), so
+	# repeated presses can never spill over into buying a different one; if it
+	# just maxed out, Close. Unaffordable upgrades can still be browsed to.
+	_update_focus_modal()
+	var target: Control = null
+	if upgrade_cards.has(focus_upgrade):
+		var buy_btns: Array = upgrade_cards[focus_upgrade].find_children("*", "Button", true, false)
+		target = buy_btns[0] if not buy_btns.is_empty() else close_btn
+	else:
+		target = UIFocus.first_focusable(vbox)
+	if target:
+		target.grab_focus()
 
 	overlay.modulate.a = 0.0
 	var tw = overlay.create_tween()
@@ -1195,7 +1303,7 @@ func _create_upgrade_card(upgrade_id: String, accent: Color, cat_id: String) -> 
 				Achievements.check_building_achievements()
 				_refresh_top_bar()
 				_refresh_category_nodes()
-				_show_detail_panel(cid)
+				_show_detail_panel(cid, uid)
 			else:
 				btn.disabled = false
 		)
@@ -1233,6 +1341,7 @@ func _build_card_collection_tab() -> void:
 	scroll.size = Vector2(540, 410)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_card_tab.add_child(scroll)
+	_register_tab_scroll("card_collection", scroll)
 
 	var main_vbox = VBoxContainer.new()
 	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1371,6 +1480,7 @@ func _build_achievements_tab() -> void:
 	scroll.size = Vector2(540, 410)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_ach_tab.add_child(scroll)
+	_register_tab_scroll("achievements", scroll)
 
 	var main_vbox = VBoxContainer.new()
 	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1503,6 +1613,7 @@ func _build_archive_tab() -> void:
 	scroll.size = Vector2(540, 410)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_archive_tab.add_child(scroll)
+	_register_tab_scroll("archive", scroll)
 
 	var vbox = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1614,6 +1725,13 @@ func _build_archive_tab() -> void:
 		item_hbox.add_child(info_vbox)
 		key_grid.add_child(item_hbox)
 
+# Makes a read-only list tab usable without a mouse: the list takes focus (with
+# a focus border) and _process scrolls it while ui_up / ui_down is held.
+func _register_tab_scroll(tab_id: String, scroll: ScrollContainer) -> void:
+	scroll.focus_mode = Control.FOCUS_ALL
+	scroll.draw_focus_border = true
+	_tab_scrolls[tab_id] = scroll
+
 # ===================================================================
 # BOTTOM BAR
 # ===================================================================
@@ -1689,7 +1807,9 @@ func _update_wave_indicator() -> void:
 # ARMOR POPUP
 # ===================================================================
 
-func _open_armor_popup() -> void:
+# `focus_armor_id`: the armor just equipped, when the popup is rebuilt after an
+# equip, so keyboard / controller focus stays on that card.
+func _open_armor_popup(focus_armor_id: String = "") -> void:
 	var result = _create_overlay("WARDROBE", 700, 440)
 	if result.is_empty():
 		return
@@ -1700,11 +1820,13 @@ func _open_armor_popup() -> void:
 		lbl.text = "Armor system not available"
 		lbl.add_theme_color_override("font_color", CLR_DIM)
 		content.add_child(lbl)
+		UIFocus.focus_first(result.panel)  # The X
 		return
 	var all_armor = armor_db.get_all_armors()
 	var scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true  # D-pad onto a lower row scrolls to it
 	content.add_child(scroll)
 	var grid = GridContainer.new()
 	grid.columns = 3
@@ -1712,9 +1834,25 @@ func _open_armor_popup() -> void:
 	grid.add_theme_constant_override("v_separation", 8)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(grid)
+	var cards: Array = []
+	var start := 0
 	for armor in all_armor:
 		var card = _create_armor_card(armor, armor_db)
 		grid.add_child(card)
+		if armor.id == focus_armor_id:
+			start = cards.size()
+		cards.append(card)
+	# Keyboard / controller: start on that card's remaining button (or the next
+	# card that has one), else the X. Equipped / locked cards have no buttons.
+	var target: Control = null
+	for i in cards.size():
+		target = UIFocus.first_focusable(cards[(start + i) % cards.size()])
+		if target:
+			break
+	if target == null:
+		target = UIFocus.first_focusable(result.panel)
+	if target:
+		target.grab_focus()
 
 func _create_armor_card(armor: Dictionary, armor_db) -> PanelContainer:
 	var card = PanelContainer.new()
@@ -1810,8 +1948,7 @@ func _create_armor_card(armor: Dictionary, armor_db) -> PanelContainer:
 			eq_btn.pressed.connect(func():
 				GameState.equipped_armor_stat = aid
 				SaveManager.save_game()
-				_close_overlay()
-				_open_armor_popup()
+				_open_armor_popup(aid)  # Rebuilds in place
 			)
 			btn_row.add_child(eq_btn)
 		if not is_look_equipped:
@@ -1823,8 +1960,7 @@ func _create_armor_card(armor: Dictionary, armor_db) -> PanelContainer:
 			lk_btn.pressed.connect(func():
 				GameState.equipped_armor_visual = aid
 				SaveManager.save_game()
-				_close_overlay()
-				_open_armor_popup()
+				_open_armor_popup(aid)  # Rebuilds in place
 			)
 			btn_row.add_child(lk_btn)
 	else:
@@ -1841,9 +1977,14 @@ func _create_armor_card(armor: Dictionary, armor_db) -> PanelContainer:
 # ===================================================================
 
 func _create_overlay(title: String, panel_w: int = 640, panel_h: int = 420) -> Dictionary:
-	if _overlay_panel and is_instance_valid(_overlay_panel):
+	# Rebuilding an open popup (e.g. the wardrobe after an equip) swaps it in
+	# place: no fade, and focus still returns to what opened it originally.
+	var replacing: bool = _overlay_panel != null and is_instance_valid(_overlay_panel)
+	if replacing:
 		_overlay_panel.queue_free()
 		_overlay_panel = null
+	else:
+		_overlay_return_focus = UIFocus.capture(get_viewport())
 	var dim = ColorRect.new()
 	dim.color = Color(0.0, 0.0, 0.0, 0.55)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1891,28 +2032,54 @@ func _create_overlay(title: String, panel_w: int = 640, panel_h: int = 420) -> D
 	close_btn.add_theme_color_override("font_color", CLR_RED)
 	close_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4))
 	_style_button_flat(close_btn)
-	close_btn.pressed.connect(_close_overlay)
+	close_btn.pressed.connect(_dismiss_overlay)
 	panel_bg.add_child(close_btn)
 	var content = VBoxContainer.new()
 	content.position = Vector2(14, 44)
 	content.size = Vector2(panel_w - 28, panel_h - 56)
 	content.add_theme_constant_override("separation", 6)
 	panel_bg.add_child(content)
-	_overlay_panel.modulate.a = 0.0
-	var tw = _overlay_panel.create_tween()
-	tw.tween_property(_overlay_panel, "modulate:a", 1.0, 0.2)
+	if not replacing:
+		_overlay_panel.modulate.a = 0.0
+		var tw = _overlay_panel.create_tween()
+		tw.tween_property(_overlay_panel, "modulate:a", 1.0, 0.2)
+	_update_focus_modal()
 	return {"overlay": _overlay_panel, "content": content, "panel": panel_bg}
 
 func _on_dim_click(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		_close_overlay()
+		_dismiss_overlay()
 
 func _close_overlay() -> void:
 	if _overlay_panel and is_instance_valid(_overlay_panel):
-		var tw = _overlay_panel.create_tween()
-		tw.tween_property(_overlay_panel, "modulate:a", 0.0, 0.15)
-		tw.tween_callback(_overlay_panel.queue_free)
+		var closing: Control = _overlay_panel
+		# Fading out: no longer a focus target
+		closing.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED
+		var tw = closing.create_tween()
+		tw.tween_property(closing, "modulate:a", 0.0, 0.15)
+		tw.tween_callback(closing.queue_free)
 		_overlay_panel = null
+	_update_focus_modal()
+
+# The player closed the popup (X, B / Esc, click outside): hand focus back to
+# what opened it (the WARDROBE button) so a controller isn't left stranded.
+func _dismiss_overlay() -> void:
+	_close_overlay()
+	UIFocus.restore(_overlay_return_focus)
+	_overlay_return_focus = {}
+
+# Confines keyboard / controller focus to the open popup (wardrobe overlay,
+# else upgrade detail panel). The hub's buttons stay visible behind its dim, and
+# D-pad navigation would otherwise wander onto them. No popup -> no confinement.
+func _update_focus_modal() -> void:
+	var modal: Control = null
+	if _overlay_panel and is_instance_valid(_overlay_panel):
+		modal = _overlay_panel
+	elif _detail_panel and is_instance_valid(_detail_panel):
+		modal = _detail_panel
+	if modal:
+		modal.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_ENABLED
+	focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED if modal else Control.FOCUS_BEHAVIOR_INHERITED
 
 # ===================================================================
 # SCENE TRANSITIONS

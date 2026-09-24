@@ -13,6 +13,8 @@ const CLR_ORANGE       = Color(0.95, 0.55, 0.15)
 const CLR_RED          = Color(0.85, 0.25, 0.25)
 const CLR_GREEN        = Color(0.35, 0.82, 0.40)
 
+const UIFocus = preload("res://scripts/ui_focus.gd")
+
 var _time: float = 0.0
 var _buttons: Array = []
 var _continue_btn: Button
@@ -20,6 +22,7 @@ var _options_panel: Control
 var _hover_labels: Dictionary = {}  # btn -> Label
 var _profile_layer: Control
 var _game_menu_layer: Control  # The btn_container + options
+var _opts_btn: Button  # Refocused when the options panel closes
 
 # Ambient effect nodes
 var _wind_particles: Array = []
@@ -114,6 +117,7 @@ func _build_ui() -> void:
 
 	# Options
 	var opts_btn = _make_menu_button("OPTIONS", CLR_SILVER_TEXT, btn_idx, "Settings and preferences")
+	_opts_btn = opts_btn
 	opts_btn.pressed.connect(_on_options)
 	btn_container.add_child(opts_btn)
 	_buttons.append(opts_btn)
@@ -421,6 +425,7 @@ func _build_options_panel() -> void:
 	var back_btn = _make_options_button("BACK", CLR_GOLD_TEXT)
 	back_btn.pressed.connect(_close_options)
 	vbox.add_child(back_btn)
+	UIFocus.trap([vol_slider, fs_check, delete_btn, back_btn])
 
 
 func _make_options_button(text: String, color: Color) -> Button:
@@ -494,18 +499,21 @@ func _make_menu_button(text: String, accent: Color, idx: int, description: Strin
 		hover_lbl.z_index = 5
 		_hover_labels[btn] = hover_lbl
 
-	btn.mouse_entered.connect(func():
+	var on_hover := func():
 		var htw = btn.create_tween()
 		htw.tween_property(btn, "scale", Vector2(1.05, 1.05), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		if hover_lbl and is_instance_valid(hover_lbl):
 			_show_hover_label(btn, hover_lbl)
-	)
-	btn.mouse_exited.connect(func():
+	var on_unhover := func():
 		var htw = btn.create_tween()
 		htw.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.1).set_ease(Tween.EASE_OUT)
 		if hover_lbl and is_instance_valid(hover_lbl):
 			_hide_hover_label(hover_lbl)
-	)
+	btn.mouse_entered.connect(on_hover)
+	btn.mouse_exited.connect(on_unhover)
+	# Same highlight for keyboard / controller focus
+	btn.focus_entered.connect(on_hover)
+	btn.focus_exited.connect(on_unhover)
 	btn.pressed.connect(func():
 		var ptw = btn.create_tween()
 		ptw.tween_property(btn, "scale", Vector2(0.92, 0.92), 0.05)
@@ -628,7 +636,10 @@ func _show_new_game_confirm() -> void:
 	no_btn.pressed.connect(func():
 		overlay.queue_free()
 		panel.queue_free()
+		UIFocus.focus_first(_game_menu_layer)
 	)
+	UIFocus.trap([yes_btn, no_btn])
+	no_btn.grab_focus()  # Safe default for a destructive prompt
 
 func _execute_new_game() -> void:
 	SaveManager.delete_save()
@@ -659,12 +670,15 @@ func _on_options() -> void:
 		_options_panel.modulate.a = 0.0
 		var tw = create_tween()
 		tw.tween_property(_options_panel, "modulate:a", 1.0, 0.2)
+		UIFocus.focus_first(_options_panel)
 
 func _close_options() -> void:
 	if _options_panel:
 		var tw = create_tween()
 		tw.tween_property(_options_panel, "modulate:a", 0.0, 0.15)
 		tw.tween_callback(func(): _options_panel.visible = false)
+		if _opts_btn and is_instance_valid(_opts_btn):
+			_opts_btn.grab_focus()
 
 func _on_quit() -> void:
 	SaveManager.save_game()
@@ -731,6 +745,8 @@ func _refresh_profile_cards() -> void:
 			cards.add_child(_build_profile_card(slot, occupied_slots[slot]))
 		else:
 			cards.add_child(_build_empty_card(slot))
+	if _profile_layer.visible:
+		UIFocus.focus_first(cards)
 
 func _build_profile_card(slot: int, data: Dictionary) -> Control:
 	var card = PanelContainer.new()
@@ -871,6 +887,7 @@ func _on_profile_selected(slot: int) -> void:
 	tw.tween_callback(func():
 		_profile_layer.visible = false
 		_game_menu_layer.visible = true
+		UIFocus.focus_first(_game_menu_layer)  # CONTINUE if shown, else NEW GAME
 	)
 	var tw2 = create_tween()
 	tw2.tween_property(_game_menu_layer, "modulate:a", 1.0, 0.3).set_delay(0.2)
@@ -915,6 +932,10 @@ func _show_create_popup(slot: int) -> void:
 	var input = LineEdit.new()
 	input.max_length = 12
 	input.placeholder_text = "Name (max 12)"
+	# Pre-filled + fully selected: typing replaces it, and a controller player
+	# (no keyboard) can simply press CREATE.
+	input.text = "Player %d" % slot
+	input.select_all_on_focus = true
 	input.add_theme_font_size_override("font_size", 14)
 	input.custom_minimum_size = Vector2(200, 28)
 	vbox.add_child(input)
@@ -928,7 +949,7 @@ func _show_create_popup(slot: int) -> void:
 	ok_btn.text = "CREATE"
 	ok_btn.add_theme_font_size_override("font_size", 13)
 	ok_btn.custom_minimum_size = Vector2(80, 26)
-	ok_btn.pressed.connect(func():
+	var submit := func():
 		var pname = input.text.strip_edges()
 		if pname.is_empty():
 			input.placeholder_text = "Name required!"
@@ -936,6 +957,15 @@ func _show_create_popup(slot: int) -> void:
 		SaveManager.create_profile(slot, pname)
 		popup.queue_free()
 		_on_profile_selected(slot)
+	ok_btn.pressed.connect(submit)
+	input.text_submitted.connect(func(_t): submit.call())  # Enter submits
+	# LineEdit only submits on Enter (ui_text_submit), and the name field starts
+	# focused, so pad A would do nothing. A controller can't type anyway: A takes
+	# the prefilled name. (Keyboard Space still types a space.)
+	input.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventJoypadButton and ev.is_action_pressed("ui_accept"):
+			input.accept_event()
+			submit.call()
 	)
 	btn_row.add_child(ok_btn)
 
@@ -943,9 +973,13 @@ func _show_create_popup(slot: int) -> void:
 	cancel_btn.text = "CANCEL"
 	cancel_btn.add_theme_font_size_override("font_size", 13)
 	cancel_btn.custom_minimum_size = Vector2(80, 26)
-	cancel_btn.pressed.connect(func(): popup.queue_free())
+	cancel_btn.pressed.connect(func():
+		popup.queue_free()
+		_refocus_profile_cards()
+	)
 	btn_row.add_child(cancel_btn)
 
+	UIFocus.trap([input, ok_btn, cancel_btn])
 	# Focus the input
 	input.call_deferred("grab_focus")
 
@@ -1018,6 +1052,7 @@ func _confirm_delete_profile(slot: int, profile_name: String) -> void:
 			SaveManager.delete_profile(slot)
 			popup.queue_free()
 			_refresh_profile_cards()
+			_refocus_profile_cards()
 	)
 	btn_row.add_child(yes_btn)
 
@@ -1025,14 +1060,21 @@ func _confirm_delete_profile(slot: int, profile_name: String) -> void:
 	no_btn.text = "CANCEL"
 	no_btn.add_theme_font_size_override("font_size", 13)
 	no_btn.custom_minimum_size = Vector2(90, 28)
-	no_btn.pressed.connect(func(): popup.queue_free())
+	no_btn.pressed.connect(func():
+		popup.queue_free()
+		_refocus_profile_cards()
+	)
 	btn_row.add_child(no_btn)
+	UIFocus.trap([confirm_input, yes_btn, no_btn])
 
 	# Enable the DELETE button only when the typed text matches exactly.
 	confirm_input.text_changed.connect(func(t: String):
 		yes_btn.disabled = (t != profile_name)
 	)
 	confirm_input.call_deferred("grab_focus")
+
+func _refocus_profile_cards() -> void:
+	UIFocus.focus_first(_profile_layer.get_node_or_null("ProfileCards"))
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and _options_panel and _options_panel.visible:

@@ -42,11 +42,14 @@ var _scroll_container: ScrollContainer
 var _content: VBoxContainer
 var _scroll_active := false
 var _auto_scroll := true
+var _leaving := false  # Scene change already requested
 var _time: float = 0.0
 var _particles: Array = []
 var _particle_tex: Texture2D
 
 func _ready() -> void:
+	# A scene must never start paused (the arena's victory timer can fire while paused).
+	get_tree().paused = false
 	# Victory music continues from arena — don't restart it
 	_build_ui()
 	# Start scrolling after a short delay
@@ -294,19 +297,33 @@ func _update_particles(delta: float) -> void:
 
 # --- Input ---
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		# Click skips to end of scroll
-		_auto_scroll = false
+# Actions instead of hardcoded keys, so rebinds and gamepads work:
+#   ui_cancel (Esc / B / Start)      -> back to the hub
+#   click or ui_accept (Enter / A)   -> skip to the end; again at the end -> hub
+func _input(event: InputEvent) -> void:
+	if _leaving:
+		return
+	var clicked: bool = event is InputEventMouseButton and event.pressed \
+		and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]
+	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		_return_to_hub()
+	elif clicked or event.is_action_pressed("ui_accept"):
+		get_viewport().set_input_as_handled()
 		var max_scroll = _content.size.y - _scroll_container.size.y
+		if not _auto_scroll and _scroll_container.scroll_vertical >= max_scroll - 1:
+			_return_to_hub()
+			return
+		_auto_scroll = false
 		var tw = create_tween()
 		tw.tween_property(_scroll_container, "scroll_vertical", int(max_scroll), 0.5).set_ease(Tween.EASE_OUT)
-	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		_return_to_hub()
 
 # --- Navigation ---
 
 func _return_to_hub() -> void:
+	if _leaving:
+		return
+	_leaving = true
 	GameState.set_phase(GameState.Phase.BASE_HUB)
 	var tw = create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.3).set_ease(Tween.EASE_IN)

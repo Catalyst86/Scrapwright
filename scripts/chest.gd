@@ -8,6 +8,8 @@ extends Area2D
 # ============================================================
 
 
+const UIFocus = preload("res://scripts/ui_focus.gd")
+
 const TIER_COLORS = {
 	"bronze": Color(0.72, 0.45, 0.20),
 	"silver": Color(0.75, 0.75, 0.80),
@@ -271,6 +273,12 @@ func _show_key_choice() -> void:
 	panel.pivot_offset = panel.size / 2.0
 	var tw = panel.create_tween()
 	tw.tween_property(panel, "scale", Vector2(1.0, 1.0), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+	# Keyboard / controller: start on the first key, keep focus inside the panel
+	var choices: Array = hbox.get_children()
+	choices.append(cancel)
+	UIFocus.trap(choices)
+	UIFocus.focus_first(hbox)
 
 func _close_key_choice() -> void:
 	if _choice_ui:

@@ -202,6 +202,16 @@ func save_game() -> void:
 	if current_profile_slot < 1:
 		push_warning("SaveManager: No profile selected, cannot save")
 		return
+	# While the Junkyard sandbox runs, GameState holds throwaway sandbox values.
+	# Persist the main run (plus Junkyard earnings so far) instead, so a crash,
+	# window close or mid-Junkyard save can never wipe the real stockpile or run.
+	var jy = get_node_or_null("/root/JunkyardState")
+	if jy and jy.is_active:
+		jy.run_with_main_state(_write_save)
+	else:
+		_write_save()
+
+func _write_save() -> void:
 	var path = get_save_path()
 	var config = ConfigFile.new()
 	var load_err = config.load(path)  # Load existing file so achievements aren't overwritten
@@ -282,6 +292,7 @@ func save_game() -> void:
 
 func load_game() -> void:
 	# Reset ALL state to defaults so nothing bleeds across profiles
+	GameState.clear_wave_start_snapshot()
 	GameState.permanent = DEFAULT_PERM.duplicate()
 	GameState.tutorial_completed = false
 	GameState.run_in_progress = false

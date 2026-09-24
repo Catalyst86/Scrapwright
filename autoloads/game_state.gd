@@ -161,6 +161,12 @@ func snapshot_wave_start() -> void:
 		"permanent": permanent.duplicate(),
 	}
 
+# Drop the wave-start snapshot. It must never outlive the run (or profile) it was
+# taken in: restoring a stale one rolls back hub purchases or, after a profile
+# switch, writes another profile's progress into this one.
+func clear_wave_start_snapshot() -> void:
+	_wave_start_snapshot = {}
+
 func restore_wave_start() -> void:
 	if _wave_start_snapshot.is_empty():
 		return
@@ -350,6 +356,7 @@ func has_any_key() -> bool:
 func start_new_run() -> void:
 	run_in_progress = true
 	current_wave = 0
+	clear_wave_start_snapshot()
 	AudioManager.reset_stage_tracking()
 	OrbitalWeapon.reset_orbit()  # Reset orbit phase and active slots for new run
 	# Apply new upgrade system HP, fallback to legacy max_health_bonus
@@ -561,6 +568,7 @@ func reapply_permanent_bonuses() -> void:
 
 func end_run(keep_materials: bool = false) -> void:
 	run_in_progress = false
+	clear_wave_start_snapshot()
 	# Reset run state
 	current_wave = 0
 	var hp_bonus_e = permanent.get("max_hp_level", 0) * 10

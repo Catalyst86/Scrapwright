@@ -11,6 +11,10 @@ const CLR_BORDER  = Color(0.72, 0.58, 0.25)
 const CLR_BTN     = Color(0.12, 0.10, 0.16)
 const CLR_BTN_HOV = Color(0.18, 0.15, 0.22)
 
+const ARENA_SCENE = "res://scenes/arena.tscn"
+const HUB_SCENE = "res://scenes/base_hub.tscn"
+const UIFocus = preload("res://scripts/ui_focus.gd")
+
 var _overlay: ColorRect
 var _panel: PanelContainer
 var _options_visible: bool = false
@@ -21,6 +25,8 @@ var _listening_action: String = ""
 var _listening_btn: Button = null
 var _save_feedback: Label
 var is_open: bool = false
+var _resume_btn: Button = null
+var _focus_before_open: Dictionary = {}  # UIFocus.capture() of what the menu covered
 
 func _ready() -> void:
 	layer = 20
@@ -30,19 +36,27 @@ func _ready() -> void:
 func open() -> void:
 	if is_open: return
 	is_open = true
+	_focus_before_open = UIFocus.capture(get_viewport())
 	visible = true
 	get_tree().paused = true
 	AudioManager.play("pause")
 	_build_menu()
+	if _resume_btn:
+		_resume_btn.grab_focus()  # Keyboard / controller start here
 
 func close() -> void:
 	if not is_open: return
 	is_open = false
+	_resume_btn = null
 	visible = false
 	get_tree().paused = false
 	# Clean up children
 	for child in get_children():
 		child.queue_free()
+	# Hand focus back to what the menu covered (e.g. the hub's upgrade wheel or
+	# a chest button); otherwise a controller has nothing to navigate from.
+	UIFocus.restore(_focus_before_open)
+	_focus_before_open = {}
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and is_open:
@@ -99,7 +113,7 @@ func _build_menu() -> void:
 	vbox.add_child(spacer)
 
 	# RESUME
-	_add_button(vbox, "RESUME", func(): close())
+	_resume_btn = _add_button(vbox, "RESUME", func(): close())
 
 	# SAVE GAME
 	_add_button(vbox, "SAVE GAME", func(): _do_save())
@@ -143,17 +157,23 @@ func _build_menu() -> void:
 	sep2.custom_minimum_size = Vector2(0, 1)
 	vbox.add_child(sep2)
 
-	# RETURN TO HUB
-	_add_button(vbox, "RETURN TO HUB", func(): _return_to_hub(), Color(0.5, 0.8, 0.5))
+	# RETURN TO HUB (pointless when this menu was opened from the hub itself)
+	if not _is_current_scene(HUB_SCENE):
+		_add_button(vbox, "RETURN TO HUB", func(): _return_to_hub(), Color(0.5, 0.8, 0.5))
 
 	# QUIT TO MENU
 	_add_button(vbox, "QUIT TO MENU", func(): _quit_to_menu(), Color(0.9, 0.7, 0.3))
 
 	# QUIT TO DESKTOP
-	_add_button(vbox, "QUIT TO DESKTOP", func():
-		SaveManager.save_game()
+	var quit_btn := _add_button(vbox, "QUIT TO DESKTOP", func():
+		_settle_and_save()
 		get_tree().quit()
 	, Color(0.8, 0.3, 0.3))
+
+	# Wrap focus top <-> bottom so D-pad navigation can't wander off the menu
+	# onto the (paused) buttons behind it, e.g. the hub's.
+	_resume_btn.focus_neighbor_top = _resume_btn.get_path_to(quit_btn)
+	quit_btn.focus_neighbor_bottom = quit_btn.get_path_to(_resume_btn)
 
 func _build_inventory(_parent: VBoxContainer) -> void:
 	# Build a separate side panel to the left of the main pause menu
@@ -471,6 +491,9 @@ func _add_button(parent: Control, text: String, callback: Callable, color: Color
 	btn.add_theme_stylebox_override("pressed", pressed)
 
 	btn.pressed.connect(callback)
+	# Menu is a single column: left/right must not move focus out of it
+	btn.focus_neighbor_left = NodePath(".")
+	btn.focus_neighbor_right = NodePath(".")
 	parent.add_child(btn)
 	return btn
 
@@ -591,31 +614,37 @@ func _do_save() -> void:
 func _return_to_hub() -> void:
 	get_tree().paused = false
 	is_open = false
-	# Stop the wave cleanly so spawn queue is cleared
-	WaveManager.abort_wave()
-	# Properly exit junkyard (merges materials) if active
-	var jy = get_node_or_null("/root/JunkyardState")
-	if jy and jy.is_active:
-		jy.exit_junkyard()
-	# Restore state to what it was at the START of this wave
-	# (undo any XP, materials, perks, health changes gained mid-wave)
-	GameState.restore_wave_start()
-	# Revert current_wave so re-entering replays the same wave
-	if WaveManager.current_wave > 0 and GameState.current_wave >= WaveManager.current_wave:
-		GameState.current_wave = WaveManager.current_wave - 1
-	SaveManager.save_game()
+	_settle_and_save()
 	GameState.set_phase(GameState.Phase.BASE_HUB)
-	get_tree().call_deferred("change_scene_to_file", "res://scenes/base_hub.tscn")
+	get_tree().call_deferred("change_scene_to_file", HUB_SCENE)
 
 func _quit_to_menu() -> void:
 	get_tree().paused = false
 	is_open = false
-	WaveManager.abort_wave()
-	GameState.restore_wave_start()
-	if WaveManager.current_wave > 0 and GameState.current_wave >= WaveManager.current_wave:
-		GameState.current_wave = WaveManager.current_wave - 1
-	SaveManager.save_game()
+	_settle_and_save()
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/main_menu.tscn")
+
+# Settles run state before leaving, then saves. Shared by every exit button so
+# they can't drift apart. This menu is opened from the arena, the hub and the
+# Junkyard, so only undo what the current context actually has in flight:
+#  - Junkyard: leave the sandbox properly (restores the main run, banks earnings).
+#  - Arena mid-wave: undo the partial wave (XP, loot, perks) so it is replayed
+#    from its start. GameState.current_wave is already the last *completed* wave.
+#  - Hub, chest phase, between waves: nothing is in flight — just save. (Restoring
+#    here used to roll back hub purchases and replay the last cleared wave.)
+func _settle_and_save() -> void:
+	var jy = get_node_or_null("/root/JunkyardState")
+	if jy and jy.is_active:
+		WaveManager.abort_wave()
+		jy.exit_junkyard()
+	elif _is_current_scene(ARENA_SCENE) and WaveManager.wave_active:
+		WaveManager.abort_wave()
+		GameState.restore_wave_start()
+	SaveManager.save_game()
+
+func _is_current_scene(path: String) -> bool:
+	var scene := get_tree().current_scene
+	return scene != null and scene.scene_file_path == path
 
 # ─── Keybinding Rebind UI ─────────────────────────────────
 

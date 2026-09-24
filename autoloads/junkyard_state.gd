@@ -11,31 +11,18 @@ var is_active: bool = false
 
 var _snapshot: Dictionary = {}
 
+# GameState fields that belong to the profile, not the run. The Junkyard may
+# legitimately change them (e.g. a boss skin unlock), so they are never rolled
+# back to the entry snapshot.
+const PROFILE_FIELDS = [
+	"permanent", "unlocked_armors", "equipped_armor_stat", "equipped_armor_visual",
+	"tutorial_completed", "last_death_wave", "last_death_level", "_wave_start_snapshot",
+]
+
 func enter_junkyard() -> void:
-	# Snapshot all run-related GameState fields
-	_snapshot = {
-		"run_in_progress": GameState.run_in_progress,
-		"current_wave": GameState.current_wave,
-		"player_health": GameState.player_health,
-		"player_max_health": GameState.player_max_health,
-		"player_xp": GameState.player_xp,
-		"player_level": GameState.player_level,
-		"xp_to_next_level": GameState.xp_to_next_level,
-		"materials": GameState.materials.duplicate(),
-		"_materials_at_run_start": GameState._materials_at_run_start.duplicate(),
-		"keys": GameState.keys.duplicate(),
-		"active_perks": GameState.active_perks.duplicate(),
-		"orbital_weapons": GameState.orbital_weapons.duplicate(true),
-		"perk_speed_multiplier": GameState.perk_speed_multiplier,
-		"perk_damage_bonus": GameState.perk_damage_bonus,
-		"perk_attack_speed_multiplier": GameState.perk_attack_speed_multiplier,
-		"perk_regen_active": GameState.perk_regen_active,
-		"perk_xp_multiplier": GameState.perk_xp_multiplier,
-		"current_phase": GameState.current_phase,
-		"is_player_sneaking": GameState.is_player_sneaking,
-		"dig_charges": GameState.dig_charges,
-		"dig_charges_max": GameState.dig_charges_max,
-	}
+	# Snapshot EVERY run field (not a hand-kept subset, which drifted and let
+	# Junkyard visits refund extra lives / Second Wind or spend the revival).
+	_snapshot = _capture_run_state()
 
 	# Reset junkyard counters
 	junkyard_wave = 0
@@ -119,37 +106,51 @@ func exit_junkyard() -> void:
 			maxi(junkyard_scrap, scores.get("best_scrap", 0))
 		)
 
-	# Merge junkyard materials INTO the pre-junkyard stockpile
-	# (junkyard started from 0, so current materials = what was earned in junkyard)
-	var junkyard_mats = GameState.materials.duplicate()
-	var pre_junkyard_mats = _snapshot.get("materials", {}).duplicate()
-	for mat in junkyard_mats:
-		pre_junkyard_mats[mat] = pre_junkyard_mats.get(mat, 0) + junkyard_mats[mat]
-
-	# Restore snapshotted GameState
-	GameState.run_in_progress = _snapshot.get("run_in_progress", false)
-	GameState.current_wave = _snapshot.get("current_wave", 0)
-	GameState.player_health = _snapshot.get("player_health", 100)
-	GameState.player_max_health = _snapshot.get("player_max_health", 100)
-	GameState.player_xp = _snapshot.get("player_xp", 0)
-	GameState.player_level = _snapshot.get("player_level", 1)
-	GameState.xp_to_next_level = _snapshot.get("xp_to_next_level", 100)
-	# Materials: pre-junkyard + junkyard earnings combined
-	GameState.materials = pre_junkyard_mats
-	GameState._materials_at_run_start = pre_junkyard_mats.duplicate()
-	GameState.keys = _snapshot.get("keys", {}).duplicate()
-	GameState.active_perks = _snapshot.get("active_perks", []).duplicate()
-	GameState.orbital_weapons = _snapshot.get("orbital_weapons", []).duplicate(true)
-	GameState.perk_speed_multiplier = _snapshot.get("perk_speed_multiplier", 1.0)
-	GameState.perk_damage_bonus = _snapshot.get("perk_damage_bonus", 0)
-	GameState.perk_attack_speed_multiplier = _snapshot.get("perk_attack_speed_multiplier", 1.0)
-	GameState.perk_regen_active = _snapshot.get("perk_regen_active", false)
-	GameState.perk_xp_multiplier = _snapshot.get("perk_xp_multiplier", 1.0)
-	GameState.current_phase = _snapshot.get("current_phase", GameState.Phase.MAIN_MENU)
-	GameState.is_player_sneaking = _snapshot.get("is_player_sneaking", false)
-	GameState.dig_charges = _snapshot.get("dig_charges", 2)
-	GameState.dig_charges_max = _snapshot.get("dig_charges_max", 2)
+	# Restore the main run, with Junkyard earnings merged into its stockpile
+	_apply_state(_main_run_state())
 	_snapshot.clear()
+
+
+# Temporarily swaps GameState back to the main run (plus Junkyard earnings so
+# far), calls `fn`, then restores the sandbox values. SaveManager uses this so
+# the sandbox is never written to disk. No signals fire during the swap.
+func run_with_main_state(fn: Callable) -> void:
+	if not is_active or _snapshot.is_empty():
+		fn.call()
+		return
+	var sandbox := _capture_run_state()
+	_apply_state(_main_run_state())
+	fn.call()
+	_apply_state(sandbox)
+
+
+# The entry snapshot with Junkyard earnings banked into the stockpile. The
+# Junkyard started from 0 materials, so current materials = what was earned here.
+func _main_run_state() -> Dictionary:
+	var state := _snapshot.duplicate(true)
+	var merged: Dictionary = state.get("materials", {}).duplicate()
+	for mat in GameState.materials:
+		merged[mat] = merged.get(mat, 0) + GameState.materials[mat]
+	state["materials"] = merged
+	# Banked: a later death in the main run shouldn't take Junkyard earnings away
+	state["_materials_at_run_start"] = merged.duplicate()
+	return state
+
+
+func _capture_run_state() -> Dictionary:
+	var state := {}
+	for prop in GameState.get_property_list():
+		if not (prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE) or prop.name in PROFILE_FIELDS:
+			continue
+		var value = GameState.get(prop.name)
+		state[prop.name] = value.duplicate(true) if (value is Dictionary or value is Array) else value
+	return state
+
+
+func _apply_state(state: Dictionary) -> void:
+	for key in state:
+		var value = state[key]
+		GameState.set(key, value.duplicate(true) if (value is Dictionary or value is Array) else value)
 
 func add_scrap(amount: int) -> void:
 	junkyard_scrap += amount

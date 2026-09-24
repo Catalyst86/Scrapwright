@@ -166,6 +166,13 @@ var _card_nodes: Array = []
 var _rerolls_remaining: int = 0
 var _reroll_btn: Button = null
 var _reroll_container: Control = null  # Parent vbox for adding reroll btn
+var _select_buttons: Array[Button] = []  # SELECT button of each card, in card order
+var _choosing: bool = false          # A card was picked; ignore further picks until the next popup
+var _dismiss_tween: Tween = null     # Fade-out after a pick; killed if a new popup opens meanwhile
+var _arm_tween: Tween = null         # Enables the buttons once the cards have animated in
+# Cards stay unclickable until they've animated in, so a player mashing Space/A
+# in combat can't blindly pick a perk the instant the popup appears.
+const INPUT_ARM_DELAY := 0.35
 
 func _ready() -> void:
 	_build_ui()
@@ -260,9 +267,17 @@ func _process(_delta: float) -> void:
 
 
 func show_level_up(_level: int) -> void:
+	# A previous pick may still be fading out: its tween ends in hide(), which
+	# would hide THIS popup while the tree stays paused (hard softlock).
+	for tw in [_dismiss_tween, _arm_tween]:
+		if tw and tw.is_valid():
+			tw.kill()
+	_dismiss_tween = null
+	_choosing = false
 	AudioManager.play("level_up")
 	_time = 0.0
 	_card_nodes.clear()
+	_select_buttons.clear()
 	for child in _choice_box.get_children():
 		child.queue_free()
 	# Remove old reroll button if any
@@ -308,6 +323,28 @@ func show_level_up(_level: int) -> void:
 		ctw.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		ctw.tween_property(card, "scale", Vector2(1, 1), 0.3).set_delay(0.15 + i * 0.1)
 		ctw.parallel().tween_property(card, "modulate:a", 1.0, 0.2).set_delay(0.15 + i * 0.1)
+
+	_set_choices_enabled(false)
+	_arm_tween = create_tween()
+	_arm_tween.tween_interval(INPUT_ARM_DELAY)
+	_arm_tween.tween_callback(_arm_choices)
+
+
+# Enables the cards and focuses the first one (keyboard / controller).
+func _arm_choices() -> void:
+	if _choosing:
+		return
+	_set_choices_enabled(true)
+	if not _select_buttons.is_empty() and is_instance_valid(_select_buttons[0]):
+		_select_buttons[0].grab_focus()
+
+
+func _set_choices_enabled(enabled: bool) -> void:
+	for btn in _select_buttons:
+		if is_instance_valid(btn):
+			btn.disabled = not enabled
+	if _reroll_btn and is_instance_valid(_reroll_btn) and _rerolls_remaining > 0:
+		_reroll_btn.disabled = not enabled
 
 
 func _make_perk_card(perk: Dictionary, _index: int) -> PanelContainer:
@@ -407,6 +444,7 @@ func _make_perk_card(perk: Dictionary, _index: int) -> PanelContainer:
 	btn.add_theme_color_override("font_hover_color", CLR_GREEN.lightened(0.3))
 	btn.pressed.connect(_on_chosen.bind(perk))
 	vbox.add_child(btn)
+	_select_buttons.append(btn)
 
 	card.mouse_entered.connect(func():
 		var htw = card.create_tween()
@@ -422,11 +460,12 @@ func _make_perk_card(perk: Dictionary, _index: int) -> PanelContainer:
 
 
 func _do_reroll(level: int) -> void:
-	if _rerolls_remaining <= 0:
+	if _rerolls_remaining <= 0 or _choosing:
 		return
 	_rerolls_remaining -= 1
 	# Clear current cards
 	_card_nodes.clear()
+	_select_buttons.clear()
 	for child in _choice_box.get_children():
 		child.queue_free()
 	# Build new choices
@@ -435,6 +474,9 @@ func _do_reroll(level: int) -> void:
 		var card = _make_perk_card(choices[i], i)
 		_choice_box.add_child(card)
 		_card_nodes.append(card)
+	# Rerolled cards appear instantly, so they're usable (and focusable) right away
+	if not _select_buttons.is_empty():
+		_select_buttons[0].grab_focus()
 	# Update reroll button
 	if _reroll_btn and is_instance_valid(_reroll_btn):
 		if _rerolls_remaining > 0:
@@ -539,6 +581,12 @@ func _build_choice_pool() -> Array:
 	return choices
 
 func _on_chosen(perk: Dictionary) -> void:
+	# One pick per popup: a double-click or a second card clicked during the
+	# fade-out used to grant two perks for a single level.
+	if _choosing:
+		return
+	_choosing = true
+	_set_choices_enabled(false)
 	AudioManager.play("card_select")
 	var chosen_idx = -1
 	for i in _card_nodes.size():
@@ -556,22 +604,25 @@ func _on_chosen(perk: Dictionary) -> void:
 			tw.tween_property(card, "modulate:a", 0.2, 0.2)
 			tw.tween_property(card, "scale", Vector2(0.8, 0.8), 0.2)
 
+	# Apply the perk NOW, not after the fade: the fade can be cut short (scene
+	# change, the next level-up) and the pick must never be lost with it.
+	if perk.get("is_orbital", false):
+		_apply_orbital(perk.weapon_id)
+	else:
+		GameState.active_perks.append(perk.id)
+		_apply(perk.id)
+	SaveManager.save_game()
+
 	# CRITICAL: Unpause IMMEDIATELY — not inside the tween callback.
 	# If a scene change happens during the 0.6s tween, the callback never fires
 	# and the tree stays paused forever, freezing the next scene.
 	get_tree().paused = false
-	var dismiss_tw = create_tween()
-	dismiss_tw.tween_interval(0.4)
-	dismiss_tw.tween_property(self, "modulate:a", 0.0, 0.2)
-	dismiss_tw.tween_callback(func():
-		hide()
-		if perk.get("is_orbital", false):
-			_apply_orbital(perk.weapon_id)
-		else:
-			GameState.active_perks.append(perk.id)
-			_apply(perk.id)
-		SaveManager.save_game()
-	)
+	# The fade is purely visual. show_level_up() kills it if another level-up
+	# opens first, so its hide() can never hide a newer popup.
+	_dismiss_tween = create_tween()
+	_dismiss_tween.tween_interval(0.4)
+	_dismiss_tween.tween_property(self, "modulate:a", 0.0, 0.2)
+	_dismiss_tween.tween_callback(hide)
 
 func _apply_orbital(wid: String) -> void:
 	var player = get_tree().get_first_node_in_group("player")

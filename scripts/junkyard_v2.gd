@@ -171,6 +171,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if level_up_screen and level_up_screen.visible:
 			return
+		# Dead: the game-over panel is coming (its delay would fire under the menu)
+		if phase == JYPhase.GAME_OVER and not (_pause_menu and _pause_menu.is_open):
+			return
 		if _pause_menu:
 			if _pause_menu.is_open:
 				_pause_menu.close()
@@ -1157,6 +1160,7 @@ func _show_junkyard_game_over() -> void:
 	btn.add_theme_stylebox_override("hover", btn_hover)
 	btn.add_theme_color_override("font_color", Color(0.9, 0.7, 0.3))
 	btn.pressed.connect(func():
+		btn.disabled = true  # One scene change, however fast it is pressed
 		get_tree().paused = false
 		var jy = get_node_or_null("/root/JunkyardState")
 		if jy:
@@ -1166,6 +1170,7 @@ func _show_junkyard_game_over() -> void:
 		get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
 	)
 	vbox.add_child(btn)
+	btn.grab_focus()  # The only way out: must be reachable by keyboard / controller
 
 
 # ─────────────────────────────────────────────────────────────

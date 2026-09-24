@@ -20,6 +20,7 @@ const ChestScene           = preload("res://scenes/chest.tscn")
 const SecretDoorScene      = preload("res://scenes/secret_door.tscn")
 const PauseMenuScript      = preload("res://scripts/pause_menu.gd")
 const CardPopupScene       = preload("res://scenes/card_popup.tscn")
+const UIFocus              = preload("res://scripts/ui_focus.gd")
 
 const ARENA_W = 1280
 const ARENA_H = 720
@@ -39,6 +40,9 @@ const SECRET_DOOR_DURATION = 10.0
 var _pause_menu: CanvasLayer = null
 var _card_popup: CanvasLayer = null
 var _wave_complete_pending: bool = false  # Re-entrancy guard for async _on_wave_complete
+var _chest_phase_ending: bool = false     # Re-entrancy guard for async _end_chest_phase
+var _death_handled: bool = false          # _on_player_died runs once per arena
+var _run_complete: bool = false           # Final wave cleared; a later death can't undo the win
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
@@ -97,6 +101,9 @@ func _ready() -> void:
 	add_child(_card_popup)
 
 func _exit_tree() -> void:
+	# A wave can't outlive its arena. Dying mid-wave used to leave
+	# WaveManager.wave_active stuck true in the hub and menus.
+	WaveManager.abort_wave()
 	# Disconnect autoload signals to prevent leaks after scene change
 	if WaveManager.wave_complete.is_connected(_on_wave_complete):
 		WaveManager.wave_complete.disconnect(_on_wave_complete)
@@ -122,6 +129,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		# Don't open pause if level-up is showing (already paused)
 		if level_up_screen and level_up_screen.visible:
+			return
+		# Nor during scene transitions (death, hub return, victory): their timers
+		# fire while paused and would load the next scene frozen.
+		if arena_phase == ArenaPhase.TRANSITION and not (_pause_menu and _pause_menu.is_open):
 			return
 		if _pause_menu:
 			if _pause_menu.is_open:
@@ -149,6 +160,10 @@ func _process(delta: float) -> void:
 
 
 func _check_level_up() -> void:
+	# Wait until the current popup (including its fade-out) is gone before showing
+	# the next level; otherwise the old fade hides the new popup while paused.
+	if level_up_screen and level_up_screen.visible:
+		return
 	# Only advance one level at a time so the player gets a perk choice per level
 	if GameState.player_level > last_player_level:
 		last_player_level += 1
@@ -249,9 +264,10 @@ func _on_wave_complete(wave_num: int) -> void:
 	if not is_inside_tree():
 		_wave_complete_pending = false
 		return
-	await get_tree().create_timer(1.3).timeout
-	if not is_inside_tree():
-		_wave_complete_pending = false
+	# Pause-aware (process_always = false): if the vacuumed XP opens a level-up, or the
+	# player pauses, wait for it instead of stacking the chest screen on top of it.
+	await get_tree().create_timer(1.3, false).timeout
+	if _wave_flow_aborted():
 		return
 
 	if wave_num >= GameState.total_waves:
@@ -265,18 +281,15 @@ func _on_wave_complete(wave_num: int) -> void:
 		# Boss: 2 pairs of chests, one after the other
 		_start_chest_phase(2, true)
 		await _wait_for_chest_phase()
-		if not is_inside_tree():
-			_wave_complete_pending = false
+		if _wave_flow_aborted():
 			return
 		_start_chest_phase(2, true)
 		await _wait_for_chest_phase()
-		if not is_inside_tree():
-			_wave_complete_pending = false
+		if _wave_flow_aborted():
 			return
 		if GameState.get_key_count("secret") > 0:
 			await _spawn_secret_door()
-		if not is_inside_tree():
-			_wave_complete_pending = false
+		if _wave_flow_aborted():
 			return
 		arena_phase = ArenaPhase.TRANSITION
 		GameState.set_phase(GameState.Phase.BASE_HUB)
@@ -286,8 +299,7 @@ func _on_wave_complete(wave_num: int) -> void:
 			_wave_complete_pending = false
 			return
 		await get_tree().create_timer(1.5).timeout
-		if not is_inside_tree():
-			_wave_complete_pending = false
+		if _wave_flow_aborted():
 			return
 		_wave_complete_pending = false
 		get_tree().change_scene_to_file("res://scenes/base_hub.tscn")
@@ -295,11 +307,20 @@ func _on_wave_complete(wave_num: int) -> void:
 		# Normal: 1 pair of chests
 		_start_chest_phase(2, false)
 		await _wait_for_chest_phase()
-		if not is_inside_tree():
-			_wave_complete_pending = false
+		if _wave_flow_aborted():
 			return
 		_wave_complete_pending = false
 		_start_combat()
+
+# True when the wave-clear sequence must stop: the arena left the tree, or the
+# player died during it (e.g. killed by a last-enemy exploder or a leftover
+# hazard). Carrying on would pause the tree for a chest phase underneath the
+# death sequence, and Game Over would load frozen.
+func _wave_flow_aborted() -> bool:
+	if is_inside_tree() and is_instance_valid(player) and not player.get("is_dead"):
+		return false
+	_wave_complete_pending = false
+	return true
 
 func _vacuum_xp_orbs() -> void:
 	if not pickups_container:
@@ -321,6 +342,7 @@ func _vacuum_xp_orbs() -> void:
 
 func _start_chest_phase(count: int, _is_boss: bool) -> void:
 	arena_phase = ArenaPhase.CHEST_PHASE
+	_chest_phase_ending = false
 	GameState.set_phase(GameState.Phase.CHEST_PHASE)
 	_active_chests.clear()
 	_chest_opened_count = 0
@@ -342,8 +364,14 @@ func _wait_for_chest_phase() -> void:
 		await get_tree().process_frame
 
 func _end_chest_phase() -> void:
-	if arena_phase != ArenaPhase.CHEST_PHASE:
+	# Re-entrancy guard: this awaits below, so a double-click on Collect used to run
+	# it twice, and the second pass reset arena_phase to TRANSITION after the next
+	# wave had already started (no level-ups, no safety net, deaths ignored).
+	if arena_phase != ArenaPhase.CHEST_PHASE or _chest_phase_ending:
 		return
+	_chest_phase_ending = true
+	if is_instance_valid(_collect_btn):
+		_collect_btn.disabled = true
 	if _chest_event_ui:
 		for child in _chest_event_ui.get_children():
 			var tw2 = child.create_tween()
@@ -359,6 +387,7 @@ func _end_chest_phase() -> void:
 	process_mode = Node.PROCESS_MODE_INHERIT
 	get_tree().paused = false
 	arena_phase = ArenaPhase.TRANSITION
+	_chest_phase_ending = false
 
 # ═══════════════════════════════════════════════════════════════
 # Chest Event UI — Full-screen overlay with big animated chests
@@ -930,6 +959,7 @@ func _on_chest_key_chosen(chest_idx: int, tier: String) -> void:
 func _process_chest_phase(delta: float) -> void:
 	if not _chest_event_ui:
 		return
+	_keep_chest_focus()
 
 	for i in _chest_states.size():
 		var state = _chest_states[i]
@@ -985,6 +1015,25 @@ func _process_chest_phase(delta: float) -> void:
 			var tw = collect_btn.create_tween()
 			var delay = 1.5 if all_opened else 0.3
 			tw.tween_property(collect_btn, "modulate:a", 1.0, 0.3).set_delay(delay)
+
+# Keyboard / controller: the chest screen rebuilds its key buttons whenever keys
+# change, which drops focus. Keep something sensible focused: a key button while
+# chests can still be opened, then Collect / Skip once it has appeared.
+func _keep_chest_focus() -> void:
+	if not is_instance_valid(_chest_event_ui):
+		return
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused and is_instance_valid(focused) and focused.is_visible_in_tree() \
+			and _chest_event_ui.is_ancestor_of(focused) \
+			and not (focused is BaseButton and (focused as BaseButton).disabled):
+		return
+	for kp in _chest_key_panels:
+		if UIFocus.focus_first(kp):
+			return
+	if is_instance_valid(_collect_btn) and _collect_btn.visible and not _collect_btn.disabled:
+		_collect_btn.grab_focus()
+		return
+	UIFocus.focus_first(_combine_panel)
 
 func _generate_chest_loot(chest_idx: int) -> void:
 	var state = _chest_states[chest_idx]
@@ -1218,6 +1267,7 @@ func _spawn_orbital_card_reveal(loot_node: Control, item: Dictionary, item_idx: 
 	tw.tween_property(card, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.2)
 
 func _on_all_waves_complete() -> void:
+	_run_complete = true
 	arena_phase = ArenaPhase.TRANSITION
 	GameState.permanent["runs_completed"] = GameState.permanent.get("runs_completed", 0) + 1
 	GameState.end_run(true)  # keep_materials = true — player earned them!
@@ -1246,8 +1296,13 @@ func _on_health_changed(current: int, max_hp: int) -> void:
 	_last_known_health = current
 
 func _on_player_died() -> void:
-	if arena_phase == ArenaPhase.TRANSITION:
+	# Handle each death exactly once, whatever the phase. (Guarding on
+	# arena_phase == TRANSITION used to swallow deaths during the hub-return
+	# beat, leaving a dead dog in the arena.) A death after the final wave was
+	# cleared must not undo the completed run.
+	if _death_handled or _run_complete:
 		return
+	_death_handled = true
 	arena_phase = ArenaPhase.TRANSITION
 	# CRITICAL: Always unpause the tree — chest phase or level-up may have paused it
 	get_tree().paused = false
